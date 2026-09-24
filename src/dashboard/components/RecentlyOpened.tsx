@@ -16,8 +16,10 @@ function RecentFileItem({
 
   return (
     <>
-      <div className="recent-file-item">
-        <button className="recent-file-open" onClick={handleClick}>
+      {/* The whole pill opens the file, not just its text. The inner button stays for
+          keyboard/screen-reader access — its clicks bubble up to this handler. */}
+      <div className="recent-file-item" onClick={handleClick}>
+        <button className="recent-file-open">
           {file.filename}
         </button>
         <button

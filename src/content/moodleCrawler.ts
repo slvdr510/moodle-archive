@@ -3,7 +3,7 @@
 // back to the background worker (see main.ts) for in-IndexedDB versioning.
 import { bytesToBase64 } from '../lib/base64';
 import { message } from './message';
-import { randStr } from './util';
+import { randStr, stableSuffix } from './util';
 
 type ResourceType = 'courseView' | 'courseResources' | 'modFolderView' | 'modResourceView' | 'pluginfile';
 interface Resource {
@@ -97,8 +97,12 @@ function urlToFilename(url: string): string {
   return getValidFilename(decodeURIComponent(url.split('#').shift()!.split('?').shift()!.split('/').pop()!));
 }
 
-function getValidFilename(name: string): string {
+export function getValidFilename(name: string): string {
   const newName = name
+    // Split accented letters into base letter + accent mark, then drop the marks, so
+    // "Cálculo" becomes "Calculo" rather than losing the "á" altogether below.
+    .normalize('NFD')
+    .replaceAll(/[\u0300-\u036f]/gu, '')
     .trim()
     .replaceAll(' ', '_')
     .replaceAll(/[^-\w.]/gu, '');
@@ -372,12 +376,15 @@ function buildEntries(moodleFiles: MoodleFile[]): CrawledEntry[] {
   const entries: CrawledEntry[] = [];
 
   for (const moodleFile of moodleFiles) {
-    const { filenamePrefix, extension, content, resourceName } = moodleFile;
+    const { filenamePrefix, extension, content, resourceName, sourceUrl } = moodleFile;
 
     let path = filenamePrefix + resourceName + '.' + extension;
     if (seenPaths.has(path)) {
-      // If the path already exists, appending random string
-      path = filenamePrefix + resourceName + '_' + randStr(8) + '.' + extension;
+      // Two resources in the same folder share a name: tell them apart with a suffix
+      // derived from the resource's own URL. It has to be the same on every download —
+      // a random one made each re-download look like the old file was deleted and a
+      // brand-new one appeared.
+      path = filenamePrefix + resourceName + '_' + stableSuffix(sourceUrl) + '.' + extension;
     }
     seenPaths.add(path);
 

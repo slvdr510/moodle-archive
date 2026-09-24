@@ -1,8 +1,7 @@
-// chrome.runtime.sendMessage serializes with plain JSON by default (structured
-// clone is opt-in, Chrome 148+, via the manifest's `message_serialization` key —
-// see manifest.config.ts), and JSON.stringify turns an ArrayBuffer/Uint8Array into
-// `{}`. A base64 string survives JSON serialization intact on every Chrome version,
-// so file content crosses the content-script/background boundary encoded as one.
+// chrome.runtime.sendMessage serializes with plain JSON, and JSON.stringify turns an
+// ArrayBuffer/Uint8Array into `{}`. A base64 string survives JSON serialization
+// intact on every Chrome version, so file content crosses the content-script/background
+// boundary encoded as one.
 
 export function bytesToBase64(bytes: Uint8Array): string {
   // Chunked to avoid blowing the call stack on String.fromCharCode(...bytes) for large files.

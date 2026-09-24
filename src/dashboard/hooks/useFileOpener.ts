@@ -18,7 +18,7 @@ export function useFileOpener(file: FileRecord, onOpened?: () => void) {
   }, [file.id]);
 
   async function open(version: VersionRecord): Promise<void> {
-    await openVersionInBrowser(version.content, file.filename);
+    await openVersionInBrowser(version.content, file.filename, version.id);
     await recentOpenStore.recordOpen({
       id: `${file.courseId}::${file.id}`,
       courseId: file.courseId,

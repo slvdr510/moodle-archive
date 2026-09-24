@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatBytes } from '../lib/bytes';
-import { openOrFocusDashboard } from '../lib/dashboardTab';
-import type { Status } from '../content/main';
-
-interface DownloadProgress {
-  current: number;
-  total: number;
-}
+import { openDashboard } from '../lib/dashboardTab';
+import {
+  INITIAL_DOWNLOAD_STATE,
+  onDownloadStateChanged,
+  readDownloadState,
+  writeDownloadState,
+  type DownloadState
+} from '../lib/downloadState';
 
 interface FileDownloadProgress {
   /** Cumulative bytes downloaded so far across the whole course — never reset
@@ -16,10 +17,12 @@ interface FileDownloadProgress {
 }
 
 export function App() {
-  const [status, setStatus] = useState<Status>('initialized');
-  const [statusLog, setStatusLog] = useState<string | undefined>(undefined);
-  const [downloadCount, setDownloadCount] = useState(0);
-  const [progress, setProgress] = useState<DownloadProgress | undefined>(undefined);
+  // Mirrored by the background from the content script's messages, so it's still
+  // accurate when the popup is re-opened mid-download (see lib/downloadState.ts).
+  const [downloadState, setDownloadState] = useState<DownloadState>(INITIAL_DOWNLOAD_STATE);
+  // Set only when the downloader couldn't even be injected, so it never reaches the
+  // background's state.
+  const [injectionError, setInjectionError] = useState<string | undefined>(undefined);
   const [speedBps, setSpeedBps] = useState<number | undefined>(undefined);
   const [shaking, setShaking] = useState(false);
 
@@ -28,13 +31,17 @@ export function App() {
   const lastSampleRef = useRef<{ bytes: number; time: number } | null>(null);
 
   useEffect(() => {
+    // Subscribe before reading, so a change landing in between isn't missed. A stale
+    // read can still overwrite a newer change, but only by one update's worth.
+    const unsubscribe = onDownloadStateChanged(setDownloadState);
+    void readDownloadState().then(setDownloadState);
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
     function onMessage(message: unknown): void {
       if (typeof message !== 'object' || message === null) return;
       const { topic, payload } = message as { topic?: string; payload?: unknown };
-      if (topic === 'status') setStatus(payload as Status);
-      if (topic === 'status-log') setStatusLog(payload as string);
-      if (topic === 'downloaded') setDownloadCount((c) => c + 1);
-      if (topic === 'download-progress') setProgress(payload as DownloadProgress);
       if (topic === 'download-bytes') {
         const { current } = payload as FileDownloadProgress;
         const now = performance.now();
@@ -56,12 +63,11 @@ export function App() {
   }, []);
 
   async function handleDownload(): Promise<void> {
-    setStatusLog(undefined);
-    setDownloadCount(0);
-    setProgress(undefined);
+    setInjectionError(undefined);
     setSpeedBps(undefined);
     lastSampleRef.current = null;
     setShaking(false);
+    await writeDownloadState(INITIAL_DOWNLOAD_STATE);
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab.id === undefined) {
@@ -78,11 +84,13 @@ export function App() {
       // Injection itself failed — e.g. a chrome:// page, the Web Store, or a PDF
       // viewer tab, none of which can ever host a Moodle course.
       console.error('Could not run the downloader on this tab:', err);
-      setStatusLog('This page cannot be scanned — open a Moodle course tab first.');
+      setInjectionError('This page cannot be scanned — open a Moodle course tab first.');
       setShaking(true);
     }
   }
 
+  const { status, downloadCount, progress } = downloadState;
+  const statusLog = injectionError ?? downloadState.statusLog;
   const isProcessing = status === 'processing';
 
   return (
@@ -102,7 +110,7 @@ export function App() {
         </a>
       </header>
 
-      {status !== 'initialized' && (statusLog || isProcessing) && (
+      {(status !== 'initialized' || injectionError) && (statusLog || isProcessing) && (
         <div className="popup-body">
           <p className={`popup-status${!isProcessing ? ' popup-status-done' : ''}`}>{statusLog}</p>
 
@@ -132,16 +140,16 @@ export function App() {
         >
           {isProcessing ? 'Wait a moment here, please' : 'Download'}
         </button>
-        <button className="secondary popup-history" onClick={() => void openOrFocusDashboard()}>
+        <button className="secondary popup-history" onClick={() => void openDashboard()}>
           History
         </button>
       </div>
 
       {isProcessing && (
         <p className="popup-notice">
-          Don't click anywhere else
+          You can close this popup —
           <br />
-          until download finishes.
+          the download keeps running.
         </p>
       )}
     </div>

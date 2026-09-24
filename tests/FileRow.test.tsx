@@ -9,10 +9,12 @@ const byFileMock = vi.hoisted(() => vi.fn());
 const recordOpenMock = vi.hoisted(() => vi.fn());
 const openVersionInBrowserMock = vi.hoisted(() => vi.fn());
 const downloadVersionMock = vi.hoisted(() => vi.fn());
+const deleteFileMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/lib/db', () => ({
   versionStore: { byFile: byFileMock },
-  recentOpenStore: { recordOpen: recordOpenMock }
+  recentOpenStore: { recordOpen: recordOpenMock },
+  deleteFile: deleteFileMock
 }));
 vi.mock('../src/lib/openFile', () => ({
   openVersionInBrowser: openVersionInBrowserMock,
@@ -63,6 +65,52 @@ function renderFileRow(file: FileRecord) {
 }
 
 describe('FileRow', () => {
+  it('asks for confirmation before deleting, and only deletes once confirmed', async () => {
+    byFileMock.mockResolvedValue([makeVersion()]);
+    deleteFileMock.mockResolvedValue(undefined);
+    const file = makeFile();
+    const onFileDeleted = vi.fn();
+
+    render(
+      <ul>
+        <FileRow file={file} onFileDeleted={onFileDeleted} />
+      </ul>
+    );
+    await screen.findByText('notes.pdf');
+
+    await userEvent.click(screen.getByTitle('Delete this file from your history'));
+    expect(screen.getByText('Delete "notes.pdf"?')).toBeInTheDocument();
+    expect(deleteFileMock).not.toHaveBeenCalled();
+    expect(openVersionInBrowserMock).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(deleteFileMock).toHaveBeenCalledWith(file);
+    await vi.waitFor(() => expect(onFileDeleted).toHaveBeenCalledWith(file));
+    expect(screen.queryByText('Delete "notes.pdf"?')).not.toBeInTheDocument();
+  });
+
+  it('keeps the file when the delete confirmation is cancelled', async () => {
+    byFileMock.mockResolvedValue([makeVersion()]);
+
+    renderFileRow(makeFile());
+    await screen.findByText('notes.pdf');
+
+    await userEvent.click(screen.getByTitle('Delete this file from your history'));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(deleteFileMock).not.toHaveBeenCalled();
+    expect(screen.queryByText('Delete "notes.pdf"?')).not.toBeInTheDocument();
+  });
+
+  it('shows how long ago the latest version was scanned, in the same compact format as the course list', async () => {
+    byFileMock.mockResolvedValue([makeVersion({ timestamp: Date.now() - 6 * 24 * 60 * 60 * 1000 })]);
+
+    renderFileRow(makeFile());
+
+    expect(await screen.findByText('6d ago')).toHaveClass('file-date');
+  });
+
   it('opens the file directly when it has a single version', async () => {
     const version = makeVersion();
     byFileMock.mockResolvedValue([version]);
@@ -71,7 +119,7 @@ describe('FileRow', () => {
     await screen.findByText('notes.pdf');
     await userEvent.click(screen.getByText('notes.pdf'));
 
-    expect(openVersionInBrowserMock).toHaveBeenCalledWith(version.content, 'notes.pdf');
+    expect(openVersionInBrowserMock).toHaveBeenCalledWith(version.content, 'notes.pdf', version.id);
     expect(screen.queryByText('Which version?')).not.toBeInTheDocument();
   });
 
@@ -91,17 +139,16 @@ describe('FileRow', () => {
     const items = screen.getAllByRole('button', { name: /v\d/ });
     await userEvent.click(items[0]);
 
-    expect(openVersionInBrowserMock).toHaveBeenCalledWith(v2.content, 'notes.pdf');
+    expect(openVersionInBrowserMock).toHaveBeenCalledWith(v2.content, 'notes.pdf', v2.id);
     expect(screen.queryByText('Which version?')).not.toBeInTheDocument();
   });
 
-  it('shows the last-saved date from the latest version', async () => {
+  it('shows the exact last-saved date from the latest version in the tooltip', async () => {
     const version = makeVersion({ timestamp: new Date('2026-03-05').getTime() });
     byFileMock.mockResolvedValue([version]);
 
     renderFileRow(makeFile());
-    const date = await screen.findByTitle('Last saved');
-    expect(date).toHaveTextContent('05/03/2026');
+    expect(await screen.findByTitle('Last saved: 05/03/2026')).toHaveClass('file-date');
   });
 
   it('hides the history button when the file only has a single version', async () => {
@@ -166,5 +213,13 @@ describe('FileRow', () => {
     await screen.findByText('notes.pdf');
 
     expect(screen.queryByText('Unchanged')).not.toBeInTheDocument();
+  });
+
+  it('tags a file added by hand as "Manual", but not a crawled one', () => {
+    const { rerender } = render(<FileRow file={makeFile({ currentStatus: 'unchanged', manual: true })} />);
+    expect(screen.getByText('Manual')).toBeInTheDocument();
+
+    rerender(<FileRow file={makeFile({ currentStatus: 'unchanged' })} />);
+    expect(screen.queryByText('Manual')).not.toBeInTheDocument();
   });
 });

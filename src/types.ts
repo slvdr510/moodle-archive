@@ -30,6 +30,9 @@ export interface FileRecord {
   filename: string;
   currentStatus: FileStatus;
   deletedAt?: number;
+  /** Added by hand (upload / drag-and-drop) rather than crawled from Moodle. Such a
+   *  file is never in a Moodle snapshot, so a download must not mark it as deleted. */
+  manual?: boolean;
 }
 
 export interface VersionRecord {

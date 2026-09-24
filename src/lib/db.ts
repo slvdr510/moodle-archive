@@ -171,6 +171,9 @@ export const fileStore = {
 };
 
 export const versionStore = {
+  async get(id: string): Promise<VersionRecord | undefined> {
+    return (await getDb()).get('versions', id);
+  },
   async byFile(fileId: string): Promise<VersionRecord[]> {
     const versions = await (await getDb()).getAllFromIndex('versions', 'by-file', fileId);
     return versions.sort((a, b) => a.timestamp - b.timestamp);
@@ -211,6 +214,24 @@ export const recentOpenStore = {
     await (await getDb()).delete('recentOpens', id);
   }
 };
+
+/**
+ * Deletes a single tracked file: its versions, its recently-opened entry, and the
+ * file record itself. If the file is still in Moodle, the next download of the
+ * course will simply pick it up again as a new file.
+ */
+export async function deleteFile(file: FileRecord): Promise<void> {
+  await versionStore.removeByFile(file.id);
+  await recentOpenStore.remove(`${file.courseId}::${file.id}`);
+  await fileStore.remove(file.id);
+}
+
+/** Deletes several files (e.g. everything inside a folder) — see `deleteFile`. */
+export async function deleteFiles(files: FileRecord[]): Promise<void> {
+  for (const file of files) {
+    await deleteFile(file);
+  }
+}
 
 /**
  * Deletes a course along with its tracked file/version metadata.

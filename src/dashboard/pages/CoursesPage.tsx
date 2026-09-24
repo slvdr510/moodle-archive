@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { exportAllData, exportCourse, importAllData } from '../../lib/backup';
+import { InvalidBackupError, exportAllData, exportCourse, importAllData } from '../../lib/backup';
 import { courseStore, deleteCourse, resetTrackedData } from '../../lib/db';
 import type { Course } from '../../types';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -8,6 +8,7 @@ import { CourseRow } from '../components/CourseRow';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { HiddenCoursesModal } from '../components/HiddenCoursesModal';
 import { Spinner } from '../components/Spinner';
+import { useFileDrop } from '../hooks/useFileDrop';
 
 type TransientMessage = { kind: 'info' | 'error'; text: string };
 type PendingExport = { kind: 'all' } | { kind: 'course'; course: Course };
@@ -156,25 +157,63 @@ export function CoursesPage({
     }
   }
 
-  async function handleImportFileChosen(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file later
-    if (!file) return;
-
+  /**
+   * Imports each file in turn (see `importAllData`) and reports one combined result.
+   * A file that isn't a zip in this extension's course format is skipped with a
+   * notice, without importing anything from it — and doesn't stop the ones after it.
+   */
+  async function importBackups(files: File[]) {
+    setMessage(null);
     setBusy('import');
+    const total = { courses: 0, files: 0, versions: 0 };
+    let importedCount = 0;
+    const invalid: string[] = [];
+    const failures: string[] = [];
+    for (const file of files) {
+      if (!file.name.toLowerCase().endsWith('.zip')) {
+        invalid.push(file.name);
+        continue;
+      }
+      try {
+        const summary = await importAllData(file);
+        total.courses += summary.courses;
+        total.files += summary.files;
+        total.versions += summary.versions;
+        importedCount++;
+      } catch (err) {
+        if (err instanceof InvalidBackupError) invalid.push(file.name);
+        else failures.push(`"${file.name}": ${String(err)}`);
+      }
+    }
     try {
-      const summary = await importAllData(file);
       await reload();
-      setMessage({
-        kind: 'info',
-        text: `Imported ${summary.courses} course(s), ${summary.files} file(s), ${summary.versions} version(s).`
-      });
-    } catch (err) {
-      setMessage({ kind: 'error', text: `Could not import: ${String(err)}` });
     } finally {
       setBusy(null);
     }
+
+    const parts: string[] = [];
+    if (importedCount > 0) {
+      parts.push(`Imported ${total.courses} course(s), ${total.files} file(s), ${total.versions} version(s).`);
+    }
+    for (const name of invalid) {
+      parts.push(`"${name}" is not a zip file in the course format used by this extension.`);
+    }
+    if (failures.length > 0) parts.push(`Could not import ${failures.join('; ')}`);
+    setMessage({ kind: invalid.length > 0 || failures.length > 0 ? 'error' : 'info', text: parts.join(' ') });
   }
+
+  async function handleImportFileChosen(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ''; // allow re-selecting the same file later
+    if (files.length > 0) await importBackups(files);
+  }
+
+  // Backups can be dropped anywhere on the page — see importBackups for what happens to
+  // a file that isn't one. Ignored while something is already running or a dialog is open.
+  const draggingFiles = useFileDrop(
+    (dropped) => void importBackups(dropped),
+    busy !== null || pendingExport !== null || pendingDelete !== null || showHiddenModal
+  );
 
   const visibleCourses = courses.filter((c) => !c.hidden);
   const hiddenCourses = courses.filter((c) => c.hidden);
@@ -201,22 +240,24 @@ export function CoursesPage({
         ref={fileInputRef}
         type="file"
         accept=".zip"
+        multiple
         hidden
         onChange={(e) => void handleImportFileChosen(e)}
       />
 
-      {(busy || (loaded && courses.length === 0)) && (
-        <div className="toolbar">
-          {loaded && courses.length === 0 && (
-            <span className="hint-text">
-              Open Moodle, go to the course, click the extension icon, then press "Download".
-            </span>
-          )}
-          {busy && <Spinner label={busy === 'export' ? 'Exporting…' : 'Importing…'} />}
+      {busy && (
+        <div className="busy-notice">
+          <Spinner label={busy === 'export' ? 'Exporting…' : 'Importing…'} />
         </div>
       )}
 
       {message && <p className={message.kind === 'error' ? 'hint-text error' : 'hint-text'}>{message.text}</p>}
+
+      {draggingFiles && (
+        <div className="drop-overlay" aria-hidden="true">
+          <div className="drop-overlay-message">Drop .zip backups to import their courses</div>
+        </div>
+      )}
 
       {pendingExport && (
         <ConfirmModal
@@ -292,11 +333,26 @@ export function CoursesPage({
           />
         ))}
         {loaded && visibleCourses.length === 0 && (
-          <li className="empty">
+          <li className={courses.length === 0 ? 'empty empty-welcome' : 'empty'}>
             {courses.length === 0 ? (
               <>
-                No courses yet — open Moodle, go to the course, click the extension icon, then press "Download".
-                Courses are created automatically.
+                <div className="empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7h18v3H3zM5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9M10 14h4" />
+                  </svg>
+                </div>
+                <h2 className="empty-title">No courses yet</h2>
+                <p className="empty-subtitle">Courses are created automatically the first time you download one.</p>
+                <ol className="empty-steps">
+                  <li>Open a course in Moodle</li>
+                  <li>Click the extension icon</li>
+                  <li>
+                    Press <strong>Download</strong>
+                  </li>
+                </ol>
+                <p className="empty-hint">
+                  Already have a backup? Drop its <strong>.zip</strong> anywhere on this page to import it.
+                </p>
               </>
             ) : (
               'All your courses are hidden. Use "Show hidden courses" in the ⋮ menu to bring one back.'

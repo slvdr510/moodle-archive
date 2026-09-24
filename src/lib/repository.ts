@@ -1,4 +1,5 @@
 import { fileStore, versionStore } from './db';
+import { sha256 } from './hash';
 import { guessMimeType } from './fileKind';
 import type { ExtractedEntry, FileRecord, FileStatus, VersionRecord } from '../types';
 
@@ -9,7 +10,7 @@ export interface ProcessCourseResult {
   unchanged: number;
 }
 
-function fileId(courseId: string, relativePath: string): string {
+export function fileId(courseId: string, relativePath: string): string {
   return `${courseId}::${relativePath}`;
 }
 
@@ -79,7 +80,8 @@ export async function processEntryBatchForCourse(
 /**
  * Marks every currently-tracked file of the course that isn't in
  * `presentRelativePaths` as deleted — call once per snapshot, after every batch of
- * that snapshot's entries has gone through `processEntryBatchForCourse`.
+ * that snapshot's entries has gone through `processEntryBatchForCourse`. Files added
+ * by hand are left alone: they were never in Moodle to begin with.
  */
 export async function markDeletedForCourse(
   courseId: string,
@@ -91,7 +93,7 @@ export async function markDeletedForCourse(
   let deletedCount = 0;
 
   for (const file of existingFiles) {
-    if (file.currentStatus !== 'deleted' && !present.has(file.relativePath)) {
+    if (!file.manual && file.currentStatus !== 'deleted' && !present.has(file.relativePath)) {
       await fileStore.put({ ...file, currentStatus: 'deleted', deletedAt: timestampMs });
       deletedCount++;
     }
@@ -115,4 +117,36 @@ export async function processEntriesForCourse(
     timestampMs
   );
   return result;
+}
+
+/**
+ * Adds files the user provided directly (not crawled from Moodle) to a course. A
+ * path that's already tracked gets the new content as one more version (the old one
+ * stays in its history); a new path becomes a new file. Either way the file is
+ * flagged `manual` and left 'unchanged': it was never in Moodle, so later downloads
+ * must not report it as deleted (not even if it replaced a file Moodle had
+ * dropped), and a file you added yourself isn't "new" or "modified" news. Never
+ * touches any other file of the course.
+ */
+export async function addManualFiles(
+  courseId: string,
+  files: { relativePath: string; content: Uint8Array }[],
+  timestampMs: number = Date.now()
+): Promise<void> {
+  for (const { relativePath, content } of files) {
+    const id = fileId(courseId, relativePath);
+    const existing = await fileStore.get(id);
+    const latestSha256 = existing ? (await versionStore.byFile(id)).at(-1)?.sha256 : undefined;
+
+    const entry: ExtractedEntry = { relativePath, content, sha256: await sha256(content), size: content.byteLength };
+    // Re-adding the very same content to a file that's still live is a no-op.
+    const changed = !existing || existing.currentStatus === 'deleted' || latestSha256 !== entry.sha256;
+
+    await processEntryBatchForCourse(courseId, [entry], timestampMs, true);
+
+    if (changed) {
+      const stored = await fileStore.get(id);
+      if (stored) await fileStore.put({ ...stored, currentStatus: 'unchanged', deletedAt: undefined, manual: true });
+    }
+  }
 }

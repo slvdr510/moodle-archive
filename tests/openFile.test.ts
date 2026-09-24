@@ -52,6 +52,8 @@ function fakeSizedBlob(sizeBytes: number, type: string): Blob {
  * the download "completes" immediately, so waitForDownloadComplete resolves via
  * its `search` call without ever needing `onChanged` to actually fire.
  */
+const getURL = (path: string) => `chrome-extension://test-id/${path}`;
+
 function stubChromeDownloads(options: { downloadId?: number; state?: 'complete' | 'interrupted'; open?: ReturnType<typeof vi.fn> } = {}) {
   const downloadId = options.downloadId ?? 1;
   const download = vi.fn().mockResolvedValue(downloadId);
@@ -60,45 +62,38 @@ function stubChromeDownloads(options: { downloadId?: number; state?: 'complete' 
     callback([{ id: downloadId, state: options.state ?? 'complete' }]);
   });
   const onChanged = { addListener: vi.fn(), removeListener: vi.fn() };
-  vi.stubGlobal('chrome', { downloads: { download, open, search, onChanged } });
+  vi.stubGlobal('chrome', { downloads: { download, open, search, onChanged }, runtime: { getURL } });
   return { download, open, search };
 }
 
 describe('openVersionInBrowser for PDFs', () => {
-  it('navigates a new tab directly to the PDF as a blob: URL, without downloading or wrapping it in our own page', async () => {
+  it('opens a new tab at a stable extension URL keyed by the version id — not a blob: URL, which would not survive a browser restart', async () => {
     const blobs = stubCreateObjectURL();
     const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
     const { download } = stubChromeDownloads();
 
-    await openVersionInBrowser(new Blob(['%PDF-1.4'], { type: 'application/pdf' }), 'notes.pdf');
+    await openVersionInBrowser(new Blob(['%PDF-1.4'], { type: 'application/pdf' }), 'notes.pdf', 'version-1');
 
     expect(download).not.toHaveBeenCalled();
-    expect(windowOpen).toHaveBeenCalledWith('blob:fake-1', '_blank');
-    expect(blobs[0].type).toBe('application/pdf');
+    expect(blobs).toHaveLength(0);
+    expect(windowOpen).toHaveBeenCalledWith('chrome-extension://test-id/src/viewer/index.html?version=version-1', '_blank');
   });
 
-  it('corrects a stale/missing Blob type before opening it — a version saved before content typing existed would otherwise silently fail to render', async () => {
-    const blobs = stubCreateObjectURL();
-    vi.spyOn(window, 'open').mockReturnValue(null);
+  it('URL-encodes the version id', async () => {
+    const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
     stubChromeDownloads();
 
-    // No `type` set at all — simulates a version whose content Blob was created
-    // before repository.ts started tagging it with the correct MIME type.
-    const untyped = new Blob(['%PDF-1.4']);
-    expect(untyped.type).toBe('');
+    await openVersionInBrowser(new Blob(['%PDF-1.4']), 'notes.pdf', 'a b&c');
 
-    await openVersionInBrowser(untyped, 'notes.pdf');
-
-    expect(blobs[0].type).toBe('application/pdf');
+    expect(windowOpen).toHaveBeenCalledWith('chrome-extension://test-id/src/viewer/index.html?version=a%20b%26c', '_blank');
   });
 
-  it('does not fall back to a download even for a very large PDF (a blob: URL is cheap regardless of size)', async () => {
-    stubCreateObjectURL();
+  it('does not fall back to a download even for a very large PDF', async () => {
     const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
     const { download } = stubChromeDownloads();
 
     const huge = fakeSizedBlob(MAX_INLINE_BYTES + 1, 'application/pdf');
-    await openVersionInBrowser(huge, 'huge-manual.pdf');
+    await openVersionInBrowser(huge, 'huge-manual.pdf', 'version-1');
 
     expect(download).not.toHaveBeenCalled();
     expect(windowOpen).toHaveBeenCalledOnce();
@@ -106,69 +101,20 @@ describe('openVersionInBrowser for PDFs', () => {
 });
 
 describe('openVersionInBrowser for images and text', () => {
-  it('opens a viewer tab (not chrome.downloads) that shows the filename and an <img> for images', async () => {
+  it.each([
+    ['photo.png', 'image/png'],
+    ['notes.txt', 'text/plain'],
+    ['page.html', 'text/html']
+  ])('opens %s at the stable viewer URL — no blob: URL left behind in the dashboard, no download', async (name, type) => {
     const blobs = stubCreateObjectURL();
     const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
     const { download } = stubChromeDownloads();
 
-    await openVersionInBrowser(new Blob(['fake-image-bytes'], { type: 'image/png' }), 'photo.png');
+    await openVersionInBrowser(new Blob(['data'], { type }), name, 'version-1');
 
     expect(download).not.toHaveBeenCalled();
-    // Exactly one blob: URL — for the viewer page itself. The image content is
-    // inlined as a data: URI rather than a second, separately-referenced blob: URL
-    // (see openFile.ts for why: it isn't reliably resolvable across tabs).
-    expect(windowOpen).toHaveBeenCalledWith('blob:fake-1', '_blank');
-
-    const viewerHtml = await blobs[0].text();
-    expect(viewerHtml).toContain('<title>photo.png</title>');
-    expect(viewerHtml).toContain('<img src="data:image/png;base64,');
-  });
-
-  it('corrects a stale/missing Blob type before rendering it inline', async () => {
-    const blobs = stubCreateObjectURL();
-    vi.spyOn(window, 'open').mockReturnValue(null);
-    stubChromeDownloads();
-
-    await openVersionInBrowser(new Blob(['fake-image-bytes']), 'photo.png');
-
-    const viewerHtml = await blobs[0].text();
-    expect(viewerHtml).toContain('<img src="data:image/png;base64,');
-  });
-
-  it('shows text content in a <pre>, HTML-escaped so it never executes as script', async () => {
-    const blobs = stubCreateObjectURL();
-    vi.spyOn(window, 'open').mockReturnValue(null);
-    stubChromeDownloads();
-
-    await openVersionInBrowser(new Blob(['<script>alert(1)</script>']), 'notes.txt');
-
-    const viewerHtml = await blobs[0].text();
-    expect(viewerHtml).toContain('<pre>');
-    expect(viewerHtml).not.toContain('<script>alert(1)</script>');
-    expect(viewerHtml).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
-  });
-
-  it('treats an .html file as escaped text too, never as live markup', async () => {
-    const blobs = stubCreateObjectURL();
-    vi.spyOn(window, 'open').mockReturnValue(null);
-    stubChromeDownloads();
-
-    await openVersionInBrowser(new Blob(['<b>bold</b>']), 'page.html');
-
-    const viewerHtml = await blobs[0].text();
-    expect(viewerHtml).toContain('&lt;b&gt;bold&lt;/b&gt;');
-  });
-
-  it('escapes a filename containing HTML-sensitive characters', async () => {
-    const blobs = stubCreateObjectURL();
-    vi.spyOn(window, 'open').mockReturnValue(null);
-    stubChromeDownloads();
-
-    await openVersionInBrowser(new Blob(['data'], { type: 'image/png' }), '<evil>.png');
-
-    const viewerHtml = await blobs[0].text();
-    expect(viewerHtml).toContain('&lt;evil&gt;.png');
-    expect(viewerHtml).not.toContain('<evil>.png');
+    expect(blobs).toHaveLength(0);
+    expect(windowOpen).toHaveBeenCalledWith('chrome-extension://test-id/src/viewer/index.html?version=version-1', '_blank');
   });
 
   it('falls back to a download when an image is too large to inline', async () => {
@@ -177,23 +123,22 @@ describe('openVersionInBrowser for images and text', () => {
     const { download, open } = stubChromeDownloads();
 
     const huge = fakeSizedBlob(MAX_INLINE_BYTES + 1, 'image/png');
-    await openVersionInBrowser(huge, 'huge-scan.png');
+    await openVersionInBrowser(huge, 'huge-scan.png', 'version-1');
 
     expect(download).toHaveBeenCalledOnce();
     expect(open).toHaveBeenCalledWith(1);
     expect(windowOpen).not.toHaveBeenCalled();
   });
 
-  it('still opens text files inline regardless of size (no data: URI involved there)', async () => {
-    const blobs = stubCreateObjectURL();
-    vi.spyOn(window, 'open').mockReturnValue(null);
+  it('still opens text files in the viewer regardless of size', async () => {
+    const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
     const { download } = stubChromeDownloads();
 
     const bigText = fakeSizedBlob(MAX_INLINE_BYTES + 1, 'text/plain');
-    await openVersionInBrowser(bigText, 'notes.txt');
+    await openVersionInBrowser(bigText, 'notes.txt', 'version-1');
 
     expect(download).not.toHaveBeenCalled();
-    expect(await blobs[0].text()).toContain('<pre>');
+    expect(windowOpen).toHaveBeenCalledOnce();
   });
 });
 
@@ -211,7 +156,7 @@ describe('openVersionInBrowser for video, audio and other non-previewable types'
     const onChanged = { addListener: vi.fn(), removeListener: vi.fn() };
     vi.stubGlobal('chrome', { downloads: { download, open: openMock, search, onChanged } });
 
-    const openPromise = openVersionInBrowser(new Blob(['data']), 'clip.mp4');
+    const openPromise = openVersionInBrowser(new Blob(['data']), 'clip.mp4', 'version-1');
 
     await vi.waitFor(() => expect(onChanged.addListener).toHaveBeenCalled());
     expect(openMock).not.toHaveBeenCalled();
@@ -235,7 +180,7 @@ describe('openVersionInBrowser for video, audio and other non-previewable types'
       vi.spyOn(window, 'open').mockReturnValue(null);
       const { download, open } = stubChromeDownloads();
 
-      await openVersionInBrowser(content, name);
+      await openVersionInBrowser(content, name, 'version-1');
 
       expect(download).toHaveBeenCalledWith({ url: 'blob:fake-1', filename: name });
       expect(open).toHaveBeenCalledWith(1);
@@ -248,7 +193,7 @@ describe('openVersionInBrowser for video, audio and other non-previewable types'
     vi.spyOn(console, 'error').mockImplementation(() => {});
     stubChromeDownloads({ open: vi.fn().mockRejectedValue(new Error('not a user gesture')) });
 
-    await expect(openVersionInBrowser(new Blob(['data']), 'notes.xls')).resolves.toBeUndefined();
+    await expect(openVersionInBrowser(new Blob(['data']), 'notes.xls', 'version-1')).resolves.toBeUndefined();
 
     expect(alert).toHaveBeenCalledOnce();
     expect(alert.mock.calls[0][0]).toContain('notes.xls');
@@ -261,7 +206,7 @@ describe('openVersionInBrowser for video, audio and other non-previewable types'
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const { open } = stubChromeDownloads({ state: 'interrupted' });
 
-    await expect(openVersionInBrowser(new Blob(['data']), 'clip.mp4')).resolves.toBeUndefined();
+    await expect(openVersionInBrowser(new Blob(['data']), 'clip.mp4', 'version-1')).resolves.toBeUndefined();
 
     expect(open).not.toHaveBeenCalled();
     expect(alert).toHaveBeenCalledOnce();

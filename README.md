@@ -17,12 +17,25 @@ everything else is deduplicated by content hash.
   version is kept; unchanged files aren't re-stored.
 - **Diff viewer** — compare any two versions of a text file side by side.
 - **Open or download any version** — preview images/PDFs/text inline, or send
-  any file straight to your Downloads folder, current or historical.
+  any file straight to your Downloads folder, current or historical. Previews
+  live at a stable extension URL per version, so a restored tab still works
+  after restarting the browser.
+- **Add your own files** — drag files onto a course (or pick them) and choose
+  the folder they go in: the course root, an existing folder, or a new one. A
+  file with the same name as one already in that folder is added as a new
+  version of it, so nothing is overwritten. A file with a new name is tagged
+  **Manual**, and later downloads never mark it as deleted, since Moodle never
+  had it.
+- **Download a folder as a zip, or delete files and folders** — from any
+  folder or file row in the dashboard.
 - **Recently opened** — quick access back to the last files you opened in a
   course.
 - **Backup / restore** — export everything (courses, files, every version's
   content) to a single `.zip` in your Downloads folder, and import it back
-  later or on another machine.
+  later or on another machine — by dropping one or several `.zip` files
+  anywhere on the course list, or from the menu's **Import course(s)**. A file
+  that isn't a zip in this extension's course format is left alone and reported
+  with a notice; nothing is imported from it.
 - **Drag-and-drop course ordering, light/dark/system theme, configurable date
   format** — small dashboard touches that don't need their own section.
 
@@ -55,6 +68,7 @@ writes to your Downloads folder when you ask it to (via **Download**,
 | `tabs` | Reads the active tab's URL to confirm it's a Moodle course page, and lets the popup and dashboard communicate with it. |
 | `downloads` | Saves fetched files — and full backup `.zip` exports, if you use that feature — to your Downloads folder. |
 | `downloads.open` | Lets you open a previously downloaded file straight from the extension's history view. |
+| `storage` | Keeps the progress of a running download in session storage (cleared when the browser closes), so the popup shows where things stand if you close and reopen it mid-download. |
 
 ### Data storage and retention
 
@@ -100,7 +114,23 @@ Then in Chrome:
 3. Click **History** to open the dashboard and browse tracked courses, files,
    and versions.
 
-Re-running **Download** on the same course later only stores what changed.
+Re-running **Download** on the same course later only stores what changed. The
+download keeps running if you close the popup; reopening it shows the current
+progress. If the Moodle tab is closed or navigates away mid-download, the
+download is reported as interrupted.
+
+To add a file yourself, open a course in the dashboard and drop the file onto
+the page (or choose **Add file…** from the course's menu), then pick its
+folder. Same name in the same folder = a new version of that file; a new name =
+a new file tagged **Manual**.
+
+To move courses between browsers, use **Export** (a single course's menu, or
+**Export all courses** in the ⋮ menu) and then drop the resulting `.zip` onto
+the course list on the other browser — or use **Import course(s)**, which
+accepts several files at once. A course that already exists there (same id) is
+merged rather than duplicated: its name stays as you have it, and only content
+it doesn't already have is added. Files that aren't a Moodle Archive backup
+are skipped with a notice, and the rest of the batch still imports.
 
 ## Development
 
@@ -123,6 +153,8 @@ npm test             # vitest
   version history.
 - `src/popup/` — the small popup shown when clicking the extension's toolbar
   icon.
+- `src/viewer/` — the page that previews a stored version (PDF, image or text)
+  at a stable `?version=<id>` URL, re-reading it from IndexedDB on every load.
 - `src/lib/` — shared, testable logic (hashing, diffing, storage, file-type
   detection, backup/restore, etc.) used by more than one of the above.
 

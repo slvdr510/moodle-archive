@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { courseStore, fileStore, versionStore } from '../src/lib/db';
-import { markDeletedForCourse, processEntriesForCourse, processEntryBatchForCourse } from '../src/lib/repository';
+import { addManualFiles, markDeletedForCourse, processEntriesForCourse, processEntryBatchForCourse } from '../src/lib/repository';
 import { sha256 } from '../src/lib/hash';
 import type { Course, ExtractedEntry } from '../src/types';
 
@@ -224,5 +224,94 @@ describe('processEntriesForCourse for a brand new course', () => {
     const result = await processEntriesForCourse(course.id, entries, 1_000);
 
     expect(result).toEqual({ created: 1, modified: 0, deleted: 0, unchanged: 0 });
+  });
+});
+
+describe('addManualFiles (integration)', () => {
+  const encoder = new TextEncoder();
+
+  async function makeCourse(): Promise<Course> {
+    const course: Course = {
+      id: crypto.randomUUID(),
+      name: 'Manual',
+      url: '',
+      matchedUrls: [],
+      createdAt: Date.now(),
+      lastSyncedAt: Date.now(),
+      order: 0,
+      firstSyncCompleted: true,
+      hidden: false
+    };
+    await courseStore.put(course);
+    return course;
+  }
+
+  it('stores a new file with its content, flagged manual and not badged as new', async () => {
+    const course = await makeCourse();
+    await addManualFiles(course.id, [{ relativePath: 'IRC/Tema_1/notes.txt', content: encoder.encode('hello') }], 1_000);
+
+    const [file] = await fileStore.byCourse(course.id);
+    expect(file).toMatchObject({ relativePath: 'IRC/Tema_1/notes.txt', filename: 'notes.txt', currentStatus: 'unchanged', manual: true });
+    const [version] = await versionStore.byFile(file.id);
+    expect(await version.content.text()).toBe('hello');
+  });
+
+  it('adds different content at an existing path as a new version, and ignores identical content', async () => {
+    const course = await makeCourse();
+    const path = 'a.txt';
+    await addManualFiles(course.id, [{ relativePath: path, content: encoder.encode('v1') }], 1_000);
+    await addManualFiles(course.id, [{ relativePath: path, content: encoder.encode('v2') }], 2_000);
+
+    const [file] = await fileStore.byCourse(course.id);
+    expect(await versionStore.byFile(file.id)).toHaveLength(2);
+    expect(file.currentStatus).toBe('unchanged');
+
+    await addManualFiles(course.id, [{ relativePath: path, content: encoder.encode('v2') }], 3_000);
+    expect(await versionStore.byFile(file.id)).toHaveLength(2);
+  });
+
+  it('adds a version to a file that is still in Moodle, without touching the course\'s other files', async () => {
+    const course = await makeCourse();
+    await processEntriesForCourse(course.id, await buildEntries({ 'Tema/a.txt': 'from moodle', 'Tema/b.txt': 'other' }), 1_000, true);
+
+    await addManualFiles(course.id, [{ relativePath: 'Tema/a.txt', content: encoder.encode('my update') }], 2_000);
+
+    const byPath = Object.fromEntries((await fileStore.byCourse(course.id)).map((f) => [f.relativePath, f]));
+    expect(Object.keys(byPath).sort()).toEqual(['Tema/a.txt', 'Tema/b.txt']);
+    const versions = await versionStore.byFile(byPath['Tema/a.txt'].id);
+    expect(await Promise.all(versions.map((v) => v.content.text()))).toEqual(['from moodle', 'my update']);
+    expect(await versionStore.byFile(byPath['Tema/b.txt'].id)).toHaveLength(1);
+    expect(byPath['Tema/b.txt'].manual).toBeUndefined();
+  });
+
+  it('replaces a file Moodle already dropped: it comes back to life and stays, instead of being flagged deleted again', async () => {
+    const course = await makeCourse();
+    await processEntriesForCourse(course.id, await buildEntries({ 'old.txt': 'from moodle' }), 1_000);
+    await processEntriesForCourse(course.id, [], 2_000);
+    expect((await fileStore.byCourse(course.id))[0].currentStatus).toBe('deleted');
+
+    await addManualFiles(course.id, [{ relativePath: 'old.txt', content: encoder.encode('mine') }], 3_000);
+    let [file] = await fileStore.byCourse(course.id);
+    expect(file).toMatchObject({ currentStatus: 'unchanged', manual: true });
+    expect(file.deletedAt).toBeUndefined();
+    expect(await versionStore.byFile(file.id)).toHaveLength(2);
+
+    // Another download that still doesn't include it.
+    await processEntriesForCourse(course.id, [], 4_000);
+    [file] = await fileStore.byCourse(course.id);
+    expect(file.currentStatus).toBe('unchanged');
+  });
+
+  it('is not marked deleted by a later download that does not include it, while Moodle files still are', async () => {
+    const course = await makeCourse();
+    await addManualFiles(course.id, [{ relativePath: 'mine.txt', content: encoder.encode('mine') }], 1_000);
+    await processEntriesForCourse(course.id, await buildEntries({ 'moodle.txt': 'm' }), 2_000);
+
+    // A second download in which the Moodle file has vanished.
+    await processEntriesForCourse(course.id, [], 3_000);
+
+    const byPath = Object.fromEntries((await fileStore.byCourse(course.id)).map((f) => [f.relativePath, f]));
+    expect(byPath['mine.txt'].currentStatus).toBe('unchanged');
+    expect(byPath['moodle.txt'].currentStatus).toBe('deleted');
   });
 });

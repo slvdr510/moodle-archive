@@ -12,6 +12,7 @@ const resetTrackedDataMock = vi.hoisted(() => vi.fn());
 const exportAllDataMock = vi.hoisted(() => vi.fn());
 const exportCourseMock = vi.hoisted(() => vi.fn());
 const importAllDataMock = vi.hoisted(() => vi.fn());
+const { InvalidBackupError } = vi.hoisted(() => ({ InvalidBackupError: class extends Error {} }));
 
 vi.mock('../src/lib/db', () => ({
   courseStore: { all: allMock, put: putMock },
@@ -21,7 +22,8 @@ vi.mock('../src/lib/db', () => ({
 vi.mock('../src/lib/backup', () => ({
   exportAllData: exportAllDataMock,
   exportCourse: exportCourseMock,
-  importAllData: importAllDataMock
+  importAllData: importAllDataMock,
+  InvalidBackupError
 }));
 
 import { CoursesPage } from '../src/dashboard/pages/CoursesPage';
@@ -354,5 +356,145 @@ describe('CoursesPage hiding courses', () => {
     renderCoursesPage();
 
     expect(await screen.findByText(/All your courses are hidden/)).toBeInTheDocument();
+  });
+});
+
+describe('CoursesPage dropping zip backups to import', () => {
+  const summary = { courses: 1, files: 2, versions: 3, recentOpens: 0 };
+  const zip = (name: string) => new File(['zip-bytes'], name, { type: 'application/zip' });
+
+  /** A drag of files from outside the browser, as the window sees it. */
+  function dropFiles(files: File[]) {
+    fireEvent.drop(window, { dataTransfer: { types: ['Files'], files, items: [] } });
+  }
+
+  it('imports a dropped .zip and refreshes the list', async () => {
+    allMock.mockResolvedValue([]);
+    importAllDataMock.mockResolvedValue(summary);
+    renderCoursesPage();
+    await waitFor(() => expect(allMock).toHaveBeenCalledOnce());
+
+    const backup = zip('moodle-archive-backup.zip');
+    dropFiles([backup]);
+
+    expect(await screen.findByText('Imported 1 course(s), 2 file(s), 3 version(s).')).toBeInTheDocument();
+    expect(importAllDataMock).toHaveBeenCalledOnce();
+    expect(importAllDataMock).toHaveBeenCalledWith(backup);
+    expect(allMock).toHaveBeenCalledTimes(2);
+  });
+
+  const NOT_A_BACKUP = /is not a zip file in the course format used by this extension\./;
+
+  it('imports every dropped zip and adds their totals up', async () => {
+    allMock.mockResolvedValue([]);
+    importAllDataMock.mockResolvedValue(summary);
+    renderCoursesPage();
+    await waitFor(() => expect(allMock).toHaveBeenCalledOnce());
+
+    dropFiles([zip('a.zip'), zip('B.ZIP')]);
+
+    expect(await screen.findByText('Imported 2 course(s), 4 file(s), 6 version(s).')).toBeInTheDocument();
+    expect(importAllDataMock.mock.calls.map(([file]) => (file as File).name)).toEqual(['a.zip', 'B.ZIP']);
+  });
+
+  it('warns, importing nothing, when a dropped file is not a zip at all', async () => {
+    allMock.mockResolvedValue([]);
+    renderCoursesPage();
+    await waitFor(() => expect(allMock).toHaveBeenCalledOnce());
+
+    dropFiles([new File(['x'], 'notes.pdf')]);
+
+    const message = await screen.findByText(NOT_A_BACKUP);
+    expect(message).toHaveTextContent('"notes.pdf" is not a zip file in the course format used by this extension.');
+    expect(message).toHaveClass('error');
+    expect(importAllDataMock).not.toHaveBeenCalled();
+  });
+
+  it('warns about a .zip that is not in the extension\'s course format, and changes nothing', async () => {
+    allMock.mockResolvedValue([]);
+    importAllDataMock.mockRejectedValue(new InvalidBackupError('missing data.json'));
+    renderCoursesPage();
+    await waitFor(() => expect(allMock).toHaveBeenCalledOnce());
+
+    dropFiles([zip('holiday-photos.zip')]);
+
+    const message = await screen.findByText(NOT_A_BACKUP);
+    expect(message).toHaveTextContent('"holiday-photos.zip" is not a zip file in the course format');
+    expect(message).not.toHaveTextContent('Imported');
+    expect(message).toHaveClass('error');
+  });
+
+  it('still imports the valid backups in a drop that also holds files that are not', async () => {
+    allMock.mockResolvedValue([]);
+    importAllDataMock.mockResolvedValue(summary);
+    renderCoursesPage();
+    await waitFor(() => expect(allMock).toHaveBeenCalledOnce());
+
+    dropFiles([new File(['x'], 'notes.pdf'), zip('good.zip')]);
+
+    const message = await screen.findByText(NOT_A_BACKUP);
+    expect(message).toHaveTextContent('Imported 1 course(s), 2 file(s), 3 version(s).');
+    expect(message).toHaveTextContent('"notes.pdf" is not a zip file');
+    expect(importAllDataMock).toHaveBeenCalledOnce();
+  });
+
+  it('keeps going after a valid-looking zip that fails for another reason, and reports both outcomes', async () => {
+    allMock.mockResolvedValue([]);
+    importAllDataMock.mockRejectedValueOnce(new Error('disk full')).mockResolvedValueOnce(summary);
+    renderCoursesPage();
+    await waitFor(() => expect(allMock).toHaveBeenCalledOnce());
+
+    dropFiles([zip('broken.zip'), zip('good.zip')]);
+
+    const message = await screen.findByText(/Could not import/);
+    expect(message).toHaveTextContent('Imported 1 course(s), 2 file(s), 3 version(s).');
+    expect(message).toHaveTextContent('"broken.zip": Error: disk full');
+    expect(message).not.toHaveTextContent('course format');
+    expect(message).toHaveClass('error');
+  });
+
+  it('shows a drop overlay while files are dragged over the page, but not for reordering a course', async () => {
+    allMock.mockResolvedValue([makeCourse({ id: 'a', name: 'Course A' })]);
+    renderCoursesPage();
+    await screen.findByText('Course A');
+
+    fireEvent.dragEnter(window, { dataTransfer: { types: ['text/plain'] } });
+    expect(screen.queryByText(/Drop \.zip backups/)).not.toBeInTheDocument();
+
+    fireEvent.dragEnter(window, { dataTransfer: { types: ['Files'] } });
+    expect(screen.getByText(/Drop \.zip backups/)).toBeInTheDocument();
+
+    fireEvent.dragLeave(window, { dataTransfer: { types: ['Files'] } });
+    expect(screen.queryByText(/Drop \.zip backups/)).not.toBeInTheDocument();
+  });
+
+  it('ignores a drop while a confirmation dialog is open', async () => {
+    allMock.mockResolvedValue([]);
+    renderCoursesPage();
+    await userEvent.click(await screen.findByTitle('More options'));
+    await userEvent.click(screen.getByText('Delete all courses'));
+    expect(screen.getByText('Delete all courses?')).toBeInTheDocument();
+
+    dropFiles([zip('backup.zip')]);
+
+    expect(importAllDataMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('CoursesPage with no courses yet', () => {
+  it('explains how to get started exactly once, as three steps', async () => {
+    allMock.mockResolvedValue([]);
+    const { container } = renderCoursesPage();
+
+    expect(await screen.findAllByText('No courses yet')).toHaveLength(1);
+    const steps = Array.from(container.querySelectorAll('.empty-steps li')).map((step) => step.textContent);
+    expect(steps).toEqual(['Open a course in Moodle', 'Click the extension icon', 'Press Download']);
+  });
+
+  it('mentions that a backup .zip can be dropped on the page', async () => {
+    allMock.mockResolvedValue([]);
+    renderCoursesPage();
+
+    expect(await screen.findByText(/Already have a backup\?/)).toHaveTextContent('Drop its .zip anywhere on this page to import it.');
   });
 });

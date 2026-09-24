@@ -350,6 +350,7 @@ body {
      overlays the text on hover instead of reserving its own flex space —
      the pill's width is just the text plus this padding. */
   padding: 6px 14px;
+  cursor: pointer;
   transition: background 0.15s ease;
 }
 
@@ -689,6 +690,82 @@ button.course-open-url {
   font-size: 14px;
 }
 
+/* The "no courses yet" welcome: an icon, a title, and the three steps to get started. */
+.empty-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 24px;
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.empty-title {
+  margin: 6px 0 0;
+  color: var(--fg);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.empty-subtitle {
+  max-width: 420px;
+  margin: 0;
+}
+
+.empty-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 24px;
+  margin: 14px 0 4px;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.empty-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  counter-increment: step;
+}
+
+.empty-steps li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.empty-hint {
+  margin: 10px 0 0;
+  padding: 8px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.empty-hint strong {
+  color: var(--fg);
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -789,6 +866,13 @@ button.course-open-url {
   white-space: nowrap;
 }
 
+/* The "Exporting…" / "Importing…" notice: on a row of its own, centered horizontally. */
+.busy-notice {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
 .spinner {
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
@@ -804,16 +888,73 @@ button.course-open-url {
   border-bottom: 1px solid var(--border);
 }
 
-.file-row:last-child {
-  border-bottom: none;
-}
-
+/* Both kinds of row are at least this tall, so a tree connector's elbow (which sits
+   at the row's vertical middle) lines up with the row's label. */
+.file-row,
 .folder-row {
-  border-bottom: 1px solid var(--border);
+  position: relative;
+  --row-mid: 25px;
+  --guide: color-mix(in srgb, var(--fg) 24%, transparent);
 }
 
-.folder-row:last-child {
-  border-bottom: none;
+.file-row-header,
+.folder-row-header {
+  min-height: calc(var(--row-mid) * 2);
+}
+
+/* Tree connectors (see TreeGuides.tsx): a gutter of 20px columns, one per nesting
+   level, stretched over the row's bottom border so the lines never break between rows. */
+.tree-guides {
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  left: 16px;
+  display: flex;
+  pointer-events: none;
+}
+
+.tree-guide {
+  position: relative;
+  flex: 0 0 20px;
+}
+
+/* An ancestor's line, passing straight through this row. The line sits under that
+   ancestor's ▸/▾ toggle: 7px is the middle of the toggle's 14px width. */
+.tree-guide.through::before,
+.tree-guide.elbow::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--guide);
+}
+
+/* The connector into this row: a tee (├) when siblings follow, ... */
+.tree-guide.elbow::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: calc(var(--row-mid) - 1px);
+  width: 11px;
+  height: 1px;
+  background: var(--guide);
+}
+
+/* ... or a rounded corner (└) on the last child, where the line ends. */
+.tree-guide.elbow.last::before {
+  bottom: auto;
+  width: 11px;
+  height: var(--row-mid);
+  background: none;
+  border-left: 1px solid var(--guide);
+  border-bottom: 1px solid var(--guide);
+  border-bottom-left-radius: 7px;
+}
+
+.tree-guide.elbow.last::after {
+  display: none;
 }
 
 .file-row-header {
@@ -830,18 +971,49 @@ button.course-open-url {
 }
 
 .file-path {
+  /* Takes whatever room the meta column leaves and truncates with "…" instead of
+     wrapping or pushing the meta column, so it stays put on every row. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 14.5px;
 }
 
 .file-row-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-shrink: 0;
+  gap: 8px;
+  margin-left: 16px;
 }
 
 .file-date {
+  /* Fixed width + right-aligned so the relative-time labels ("just now", "3d ago",
+     "11mo ago") end at the same x on every row. */
+  width: 64px;
+  text-align: right;
+  margin-right: 4px;
+  white-space: nowrap;
   color: var(--muted);
   font-size: 12.5px;
+}
+
+.file-meta-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.file-version-slot {
+  width: 32px;
+}
+
+.file-status-slot {
+  /* Wide enough for the longest badge ("Deleted"), which is centered in it. */
+  width: 72px;
 }
 
 .icon-button {
@@ -862,7 +1034,7 @@ button.course-open-url {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
-.download-button {
+.row-action-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -873,12 +1045,31 @@ button.course-open-url {
   opacity: 0;
 }
 
-.file-row-header:hover .download-button {
+.file-row-header:hover .row-action-button,
+.folder-row-header:hover .row-action-button {
   opacity: 0.75;
 }
 
-.file-row-header:hover .download-button:hover {
+.file-row-header:hover .row-action-button:hover,
+.folder-row-header:hover .row-action-button:hover {
   opacity: 1;
+}
+
+.row-action-button:disabled {
+  /* Still takes up its slot (so columns don't shift) while the file's versions load. */
+  visibility: hidden;
+}
+
+.folder-row-header .row-action-button:disabled {
+  /* A folder's button is disabled only while its zip is being built — keep it in
+     view, dimmed, so it's clear something is happening. */
+  visibility: visible;
+  opacity: 0.4;
+  cursor: progress;
+}
+
+.delete-button:hover {
+  color: var(--deleted);
 }
 
 .version-count {
@@ -1034,6 +1225,11 @@ button.course-open-url {
   background: var(--unchanged);
 }
 
+/* Added by hand rather than downloaded from Moodle — see FileRecord.manual. */
+.status-badge.status-manual {
+  background: var(--accent);
+}
+
 .version-timeline {
   padding: 10px 18px 18px;
   background: var(--surface);
@@ -1101,4 +1297,95 @@ button.course-open-url {
   padding: 14px;
   color: var(--muted);
   font-size: 13.5px;
+}
+
+.folder-row-header .row-action-button {
+  margin-left: 4px;
+}
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  /* Opaque — mixed into the page background rather than into transparent — so nothing
+     of the page shows through while dragging. */
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  /* Lets the drag events keep reaching the page underneath, so leaving and
+     re-entering it doesn't fight with this overlay. */
+  pointer-events: none;
+}
+
+.drop-overlay-message {
+  padding: 28px 40px;
+  border: 2px dashed var(--accent);
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.upload-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal .upload-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.modal .upload-option input {
+  padding: 0;
+  margin: 0;
+}
+
+.upload-options select,
+.upload-options > input[type='text'] {
+  margin-left: 24px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.upload-hint {
+  margin-left: 24px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.upload-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--modified);
+  border-radius: 8px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.upload-modal {
+  /* Grows to fit the filename in its title, up to a cap (and never wider than the
+     window); anything longer than that wraps inside the modal instead of sticking out. */
+  width: fit-content;
+  min-width: 360px;
+  max-width: min(640px, calc(100vw - 32px));
+}
+
+.upload-modal h2 {
+  /* A filename like "Como_anadir_libreria_JCSP.pdf" has no spaces to break on. */
+  overflow-wrap: anywhere;
 }

@@ -1,7 +1,9 @@
 import { base64ToBytes } from '../lib/base64';
 import { courseStore } from '../lib/db';
 import { humanizeCourseTitle, matchCourseForResource } from '../lib/courseMatcher';
+import { INITIAL_DOWNLOAD_STATE, readDownloadState, writeDownloadState, type DownloadState } from '../lib/downloadState';
 import { sha256 } from '../lib/hash';
+import type { Status } from '../content/main';
 import { markDeletedForCourse, processEntryBatchForCourse, type ProcessCourseResult } from '../lib/repository';
 import type { Course, ExtractedEntry } from '../types';
 
@@ -102,7 +104,58 @@ async function handleCourseSnapshotChunk(
   return { courseId: course.id, courseName: course.name, result };
 }
 
-chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+// Updates are chained so two messages arriving back to back can't both read the
+// same stored state and have the later write clobber the earlier one.
+let stateUpdate: Promise<void> = Promise.resolve();
+
+function updateDownloadState(update: (state: DownloadState) => DownloadState): void {
+  stateUpdate = stateUpdate
+    .then(async () => writeDownloadState(update(await readDownloadState())))
+    .catch((error: unknown) => console.error('Could not persist download state:', error));
+}
+
+function trackDownloadState(message: unknown, sender: chrome.runtime.MessageSender): void {
+  if (typeof message !== 'object' || message === null) return;
+  const { topic, payload } = message as { topic?: string; payload?: unknown };
+
+  switch (topic) {
+    case 'status':
+      if (payload === 'processing') {
+        updateDownloadState(() => ({ ...INITIAL_DOWNLOAD_STATE, status: 'processing', tabId: sender.tab?.id }));
+      } else {
+        updateDownloadState((s) => ({ ...s, status: payload as Status, tabId: undefined }));
+      }
+      break;
+    case 'status-log':
+      updateDownloadState((s) => ({ ...s, statusLog: payload as string }));
+      break;
+    case 'downloaded':
+      updateDownloadState((s) => ({ ...s, downloadCount: s.downloadCount + 1 }));
+      break;
+    case 'download-progress':
+      updateDownloadState((s) => ({ ...s, progress: payload as DownloadState['progress'] }));
+      break;
+  }
+}
+
+// The content script dies with its tab or on navigation, without ever reporting
+// 'finished' — which would leave the popup showing "processing" forever.
+function interruptIfDownloadTab(tabId: number): void {
+  updateDownloadState((s) =>
+    s.status === 'processing' && s.tabId === tabId
+      ? { ...s, status: 'finished', statusLog: 'Download interrupted: the tab was closed or navigated away.', tabId: undefined }
+      : s
+  );
+}
+
+chrome.tabs.onRemoved.addListener(interruptIfDownloadTab);
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status === 'loading') interruptIfDownloadTab(tabId);
+});
+
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  trackDownloadState(message, sender);
+
   if (!isCourseSnapshotChunkMessage(message)) {
     return undefined;
   }

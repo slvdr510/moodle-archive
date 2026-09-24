@@ -58,9 +58,49 @@ function buildRawTree(files: FileRecord[]): FolderTreeNode {
  */
 export function buildFileTree(files: FileRecord[], referenceFiles: FileRecord[] = files): TreeNode[] {
   const root = buildRawTree(files);
-  const unwrapLevels =
-    referenceFiles === files ? countRedundantRootLevels(root.children) : countRedundantRootLevels(buildRawTree(referenceFiles).children);
-  return dropLevels(root.children, unwrapLevels);
+  return dropLevels(root.children, countRedundantRootLevels(buildRawTree(withoutManual(referenceFiles)).children));
+}
+
+/**
+ * Files added by hand don't take part in deciding what the redundant wrapper is:
+ * moodle-dl-ext's wrapper only ever comes from a crawled course. Otherwise the first
+ * folder someone creates in a course with nothing else in it would itself look like
+ * a wrapper, and be hidden.
+ */
+function withoutManual(files: FileRecord[]): FileRecord[] {
+  return files.filter((f) => !f.manual);
+}
+
+/**
+ * Full path of the redundant wrapper folder(s) `buildFileTree` hides at the top —
+ * i.e. what "the root of the course" is, as far as real `relativePath`s go. A file
+ * shown at the top level of the tree actually lives at `<this path>/<filename>`.
+ * Empty when nothing is hidden (including for a course with no files yet).
+ */
+export function getRootFolderPath(files: FileRecord[]): string {
+  let nodes = buildRawTree(withoutManual(files)).children;
+  let path = '';
+  for (let i = countRedundantRootLevels(nodes); i > 0; i--) {
+    const wrapper = nodes[0] as FolderTreeNode;
+    path = wrapper.path;
+    nodes = wrapper.children;
+  }
+  return path;
+}
+
+/** Every file under this folder, at any depth. */
+export function collectFolderFiles(node: FolderTreeNode): FileRecord[] {
+  return node.children.flatMap((child) => (child.kind === 'file' ? [child.file] : collectFolderFiles(child)));
+}
+
+/** Every folder in the tree, depth-first in display order, with its real full path. */
+export function listFolders(nodes: TreeNode[]): { path: string; name: string; depth: number }[] {
+  function walk(list: TreeNode[], depth: number): { path: string; name: string; depth: number }[] {
+    return list.flatMap((node) =>
+      node.kind === 'folder' ? [{ path: node.path, name: node.name, depth }, ...walk(node.children, depth + 1)] : []
+    );
+  }
+  return walk(nodes, 0);
 }
 
 /**
@@ -100,8 +140,9 @@ const FOLDER_BADGE_ORDER: FileStatus[] = ['new', 'modified', 'deleted'];
 
 /**
  * Every distinct non-"unchanged" status found anywhere under this folder
- * (recursively), in a fixed display order — so a folder can show New,
- * Modified and Deleted badges together when it contains a mix.
+ * (recursively), in a fixed display order. A folder holding both New and
+ * Deleted files is shown as a single Modified instead: files added and
+ * removed inside the same folder read as the folder itself having changed.
  */
 export function collectFolderStatuses(node: FolderTreeNode): FileStatus[] {
   const found = new Set<FileStatus>();
@@ -114,6 +155,12 @@ export function collectFolderStatuses(node: FolderTreeNode): FileStatus[] {
     }
   }
   for (const child of node.children) walk(child);
+
+  if (found.has('new') && found.has('deleted')) {
+    found.delete('new');
+    found.delete('deleted');
+    found.add('modified');
+  }
 
   return FOLDER_BADGE_ORDER.filter((s) => found.has(s));
 }

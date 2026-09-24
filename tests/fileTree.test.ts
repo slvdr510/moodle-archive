@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildFileTree, collectFolderStatuses, type FolderTreeNode, type TreeNode } from '../src/lib/fileTree';
+import {
+  buildFileTree,
+  collectFolderFiles,
+  collectFolderStatuses,
+  getRootFolderPath,
+  listFolders,
+  type FolderTreeNode,
+  type TreeNode
+} from '../src/lib/fileTree';
 import type { FileRecord, FileStatus } from '../src/types';
 
 function makeFile(relativePath: string, currentStatus: FileStatus): FileRecord {
@@ -109,15 +117,40 @@ describe('collectFolderStatuses', () => {
     expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual([]);
   });
 
-  it('surfaces new/modified/deleted together when a folder has a mix, in a fixed order', () => {
+  it('shows a single Modified when a folder has both new and deleted files', () => {
+    const tree = buildFileTree([
+      makeFile('f/a.pdf', 'deleted'),
+      makeFile('f/b.pdf', 'new'),
+      makeFile('f/d.pdf', 'unchanged'),
+      makeFile('_sibling.pdf', 'unchanged')
+    ]);
+    expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['modified']);
+  });
+
+  it('does not duplicate Modified when the folder also has modified files', () => {
     const tree = buildFileTree([
       makeFile('f/a.pdf', 'deleted'),
       makeFile('f/b.pdf', 'new'),
       makeFile('f/c.pdf', 'modified'),
-      makeFile('f/d.pdf', 'unchanged'),
       makeFile('_sibling.pdf', 'unchanged')
     ]);
-    expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['new', 'modified', 'deleted']);
+    expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['modified']);
+  });
+
+  it('keeps new + modified, or modified + deleted, as separate badges — only new + deleted merge', () => {
+    const newAndModified = buildFileTree([
+      makeFile('f/a.pdf', 'new'),
+      makeFile('f/b.pdf', 'modified'),
+      makeFile('_sibling.pdf', 'unchanged')
+    ]);
+    expect(collectFolderStatuses(newAndModified[0] as FolderTreeNode)).toEqual(['new', 'modified']);
+
+    const modifiedAndDeleted = buildFileTree([
+      makeFile('f/a.pdf', 'modified'),
+      makeFile('f/b.pdf', 'deleted'),
+      makeFile('_sibling.pdf', 'unchanged')
+    ]);
+    expect(collectFolderStatuses(modifiedAndDeleted[0] as FolderTreeNode)).toEqual(['modified', 'deleted']);
   });
 
   it('aggregates recursively from nested subfolders', () => {
@@ -139,5 +172,61 @@ describe('collectFolderStatuses', () => {
       makeFile('_sibling.pdf', 'unchanged')
     ]);
     expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['new']);
+  });
+});
+
+describe('getRootFolderPath', () => {
+  it('is the hidden wrapper folder that buildFileTree strips from the top', () => {
+    const files = [makeFile('IRC/a.pdf', 'unchanged'), makeFile('IRC/Tema_1/b.pdf', 'unchanged')];
+    expect(getRootFolderPath(files)).toBe('IRC');
+    expect(namesOf(buildFileTree(files))).toEqual(['Tema_1', 'a.pdf']);
+  });
+
+  it('includes every wrapper level when several are stripped', () => {
+    const files = [makeFile('A/B/a.pdf', 'unchanged'), makeFile('A/B/c/d.pdf', 'unchanged')];
+    expect(getRootFolderPath(files)).toBe('A/B');
+  });
+
+  it('is empty when nothing is stripped, or there are no files', () => {
+    expect(getRootFolderPath([makeFile('a.pdf', 'unchanged'), makeFile('F/b.pdf', 'unchanged')])).toBe('');
+    expect(getRootFolderPath([])).toBe('');
+  });
+});
+
+describe('collectFolderFiles and listFolders', () => {
+  const files = [
+    makeFile('W/a/x.pdf', 'unchanged'),
+    makeFile('W/a/deep/y.pdf', 'unchanged'),
+    makeFile('W/b/z.pdf', 'unchanged'),
+    makeFile('W/top.pdf', 'unchanged')
+  ];
+
+  it('collects every file under a folder at any depth', () => {
+    const folderA = buildFileTree(files).find((n) => n.name === 'a') as FolderTreeNode;
+    expect(collectFolderFiles(folderA).map((f) => f.relativePath).sort()).toEqual(['W/a/deep/y.pdf', 'W/a/x.pdf']);
+  });
+
+  it('lists every folder with its real path and depth, in display order', () => {
+    expect(listFolders(buildFileTree(files))).toEqual([
+      { path: 'W/a', name: 'a', depth: 0 },
+      { path: 'W/a/deep', name: 'deep', depth: 1 },
+      { path: 'W/b', name: 'b', depth: 0 }
+    ]);
+  });
+});
+
+describe('manually added files and the hidden wrapper folder', () => {
+  const manual = (path: string): FileRecord => ({ ...makeFile(path, 'unchanged'), manual: true });
+
+  it('does not treat a folder made of manual files as a redundant wrapper', () => {
+    const files = [manual('Nueva/a.pdf')];
+    expect(getRootFolderPath(files)).toBe('');
+    expect(namesOf(buildFileTree(files))).toEqual(['Nueva']);
+  });
+
+  it('still strips the crawled wrapper, with manual files sitting inside it', () => {
+    const files = [makeFile('Curso/a.pdf', 'unchanged'), makeFile('Curso/b/c.pdf', 'unchanged'), manual('Curso/Nueva/d.pdf')];
+    expect(getRootFolderPath(files)).toBe('Curso');
+    expect(namesOf(buildFileTree(files))).toEqual(['b', 'Nueva', 'a.pdf']);
   });
 });

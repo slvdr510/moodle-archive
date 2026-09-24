@@ -115,6 +115,53 @@ export async function exportCourse(courseId: string): Promise<void> {
   await downloadZip(blob, filename);
 }
 
+/** The file given to `importAllData` isn't a zip in the format `exportAllData`/`exportCourse` produce. */
+export class InvalidBackupError extends Error {
+  constructor(reason: string) {
+    super(`Not a valid Moodle Archive backup (${reason}).`);
+    this.name = 'InvalidBackupError';
+  }
+}
+
+/**
+ * Reads and checks the backup's manifest, throwing `InvalidBackupError` if `file`
+ * isn't a zip, has no `data.json`, or its contents don't have the expected shape.
+ * Runs before anything is written, so a file that isn't a backup changes nothing.
+ */
+async function readManifest(file: File | Blob): Promise<{ zip: JSZip; manifest: BackupManifest }> {
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(file);
+  } catch {
+    throw new InvalidBackupError('not a zip file');
+  }
+
+  const manifestEntry = zip.file(MANIFEST_NAME);
+  if (!manifestEntry) throw new InvalidBackupError('missing data.json');
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await manifestEntry.async('string'));
+  } catch {
+    throw new InvalidBackupError('data.json is not valid JSON');
+  }
+
+  const manifest = parsed as Partial<BackupManifest> | null;
+  const isList = (value: unknown): value is unknown[] => Array.isArray(value);
+  if (
+    typeof manifest !== 'object' ||
+    manifest === null ||
+    !isList(manifest.courses) ||
+    !isList(manifest.files) ||
+    !isList(manifest.versions) ||
+    !manifest.courses.every((c) => typeof (c as Course)?.id === 'string')
+  ) {
+    throw new InvalidBackupError('data.json does not describe courses');
+  }
+
+  return { zip, manifest: { ...manifest, recentOpens: isList(manifest.recentOpens) ? manifest.recentOpens : [] } as BackupManifest };
+}
+
 export interface ImportSummary {
   courses: number;
   files: number;
@@ -138,15 +185,11 @@ export interface ImportSummary {
  * its files start as the baseline rather than all flagged "new"). Every
  * historical version from the import is restored either way, deduplicated
  * by hash against whatever that file already has.
+ *
+ * Throws `InvalidBackupError`, before touching anything, if `file` isn't such a zip.
  */
 export async function importAllData(file: File | Blob): Promise<ImportSummary> {
-  const zip = await JSZip.loadAsync(file);
-  const manifestEntry = zip.file(MANIFEST_NAME);
-  if (!manifestEntry) {
-    throw new Error('Not a valid Moodle Archive backup (missing data.json).');
-  }
-
-  const manifest = JSON.parse(await manifestEntry.async('string')) as BackupManifest;
+  const { zip, manifest } = await readManifest(file);
   const existingById = new Map((await courseStore.all()).map((c) => [c.id, c]));
 
   let importedFileCount = 0;
@@ -199,6 +242,10 @@ export async function importAllData(file: File | Blob): Promise<ImportSummary> {
           size: latest.size
         };
         await processEntryBatchForCourse(importedCourse.id, [entry], latest.timestamp, isFirstSync);
+        if (importedFile.manual) {
+          const restored = await fileStore.get(fileId);
+          if (restored && !restored.manual) await fileStore.put({ ...restored, manual: true });
+        }
         if (willWrite) importedVersionCount++;
         knownHashes.add(latest.sha256);
       }

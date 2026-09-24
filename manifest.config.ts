@@ -25,11 +25,5 @@ export default defineManifest({
     service_worker: 'src/background/index.ts',
     type: 'module'
   },
-  permissions: ['tabs', 'downloads', 'downloads.open', 'activeTab', 'scripting'],
-  // Without this, chrome.runtime.sendMessage serializes with JSON by default, which
-  // silently turns every ArrayBuffer of file content sent from the content script to
-  // the background into `{}` — corrupting every downloaded file's bytes long before
-  // they ever reach IndexedDB. This opts into real structured clone (Chrome 148+).
-  // Not yet in @types/chrome's ManifestV3Options — hence the cast.
-  message_serialization: 'structured_clone'
-} as Parameters<typeof defineManifest>[0] & { message_serialization: 'structured_clone' });
+  permissions: ['tabs', 'downloads', 'downloads.open', 'activeTab', 'scripting', 'storage']
+});

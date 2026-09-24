@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { exportAllData, exportCourse, importAllData } from '../src/lib/backup';
+import { InvalidBackupError, exportAllData, exportCourse, importAllData } from '../src/lib/backup';
 import { courseStore, fileStore, recentOpenStore, resetTrackedData, versionStore } from '../src/lib/db';
 import type { Course, FileRecord, VersionRecord } from '../src/types';
 
@@ -246,13 +246,31 @@ describe('exportAllData + importAllData round-trip', () => {
 describe('importAllData', () => {
   beforeEach(resetTrackedData);
 
-  it('rejects a zip that is not a Moodle Archive backup', async () => {
+  async function zipBlob(files: Record<string, string>): Promise<Blob> {
     const JSZip = (await import('jszip')).default;
     const zip = new JSZip();
-    zip.file('unrelated.txt', 'nope');
-    const blob = await zip.generateAsync({ type: 'blob' });
+    for (const [name, content] of Object.entries(files)) zip.file(name, content);
+    return zip.generateAsync({ type: 'blob' });
+  }
 
-    await expect(importAllData(blob)).rejects.toThrow(/not a valid moodle archive backup/i);
+  async function trackedCounts() {
+    return { courses: (await courseStore.all()).length, recentOpens: (await recentOpenStore.all()).length };
+  }
+
+  it.each([
+    ['a zip with no data.json', () => zipBlob({ 'unrelated.txt': 'nope' })],
+    ['a file that is not a zip at all', async () => new Blob(['just some text'])],
+    ['a data.json that is not JSON', () => zipBlob({ 'data.json': '{ nope' })],
+    ['a data.json that is not a backup manifest', () => zipBlob({ 'data.json': JSON.stringify({ hello: 'world' }) })],
+    ['a manifest whose courses have no id', () => zipBlob({ 'data.json': JSON.stringify({ courses: [{ name: 'x' }], files: [], versions: [] }) })]
+  ])('rejects %s with an InvalidBackupError, before writing anything', async (_label, makeInput) => {
+    const before = await trackedCounts();
+
+    const failure = await importAllData(await makeInput()).catch((err: unknown) => err);
+
+    expect(failure).toBeInstanceOf(InvalidBackupError);
+    expect((failure as Error).message).toMatch(/not a valid moodle archive backup/i);
+    expect(await trackedCounts()).toEqual(before);
   });
 
   it('never persists hidden: true in the export — importing into an empty database leaves it visible', async () => {

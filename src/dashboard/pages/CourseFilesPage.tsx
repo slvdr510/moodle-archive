@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exportCourse } from '../../lib/backup';
 import { courseStore, deleteCourse, fileStore, recentOpenStore } from '../../lib/db';
-import { buildFileTree } from '../../lib/fileTree';
+import { buildFileTree, getRootFolderPath, listFolders } from '../../lib/fileTree';
+import { addManualFiles } from '../../lib/repository';
 import { filterFilesByQuery } from '../../lib/search';
 import type { Course, FileRecord, RecentOpenRecord } from '../../types';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -10,6 +11,15 @@ import { FileRow } from '../components/FileRow';
 import { FolderRow } from '../components/FolderRow';
 import { RecentlyOpened } from '../components/RecentlyOpened';
 import { Spinner } from '../components/Spinner';
+import { joinPath } from '../../lib/uploadPath';
+import { UploadFilesModal } from '../components/UploadFilesModal';
+import { useFileDrop } from '../hooks/useFileDrop';
+
+/** A file the user picked or dropped, already read into memory. */
+interface StagedFile {
+  name: string;
+  content: Uint8Array;
+}
 
 export function CourseFilesPage({
   courseId,
@@ -38,15 +48,71 @@ export function CourseFilesPage({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Manual upload: files picked or dropped, waiting for the user to choose where they go.
+  const [pendingUpload, setPendingUpload] = useState<StagedFile[] | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     void fileStore.byCourse(courseId).then(setFiles);
     void recentOpenStore.byCourse(courseId).then(setRecentOpens);
     void courseStore.get(courseId).then((c) => c && setCourse(c));
   }, [courseId]);
 
+  // The bytes are read the moment a file is picked or dropped, not later when the user
+  // confirms: a `File` is only a handle to something on disk, and by then it may be
+  // gone (a browser download still being finalized, a temp file, an unplugged drive),
+  // which fails with a NotFoundError.
+  async function stageFiles(files: File[]) {
+    setMessage(null);
+    try {
+      setPendingUpload(
+        await Promise.all(files.map(async (file) => ({ name: file.name, content: new Uint8Array(await file.arrayBuffer()) })))
+      );
+    } catch (err) {
+      setMessage(
+        `Could not read ${files.length === 1 ? `"${files[0].name}"` : 'the dropped files'} — the file may have been moved or ` +
+          `deleted, or it is still being downloaded. Try again from a stable location. (${String(err)})`
+      );
+    }
+  }
+
+  // Already choosing a destination for other files — a second drop is ignored.
+  const draggingFiles = useFileDrop((dropped) => void stageFiles(dropped), pendingUpload !== null);
+
   const refreshRecentOpens = useCallback(() => {
     void recentOpenStore.byCourse(courseId).then(setRecentOpens);
   }, [courseId]);
+
+  function handleFileDeleted(deleted: FileRecord) {
+    setFiles((current) => current.filter((f) => f.id !== deleted.id));
+    refreshRecentOpens();
+  }
+
+  function handleFilesDeleted(deleted: FileRecord[]) {
+    const ids = new Set(deleted.map((f) => f.id));
+    setFiles((current) => current.filter((f) => !ids.has(f.id)));
+    refreshRecentOpens();
+  }
+
+  async function handleUploadConfirm(folderPath: string) {
+    if (!pendingUpload) return;
+    setUploading(true);
+    setMessage(null);
+    try {
+      await addManualFiles(
+        courseId,
+        pendingUpload.map((file) => ({ relativePath: joinPath(folderPath, file.name), content: file.content }))
+      );
+      setFiles(await fileStore.byCourse(courseId));
+      setPendingUpload(null);
+    } catch (err) {
+      setPendingUpload(null);
+      setMessage(`Could not add the file${pendingUpload.length === 1 ? '' : 's'}: ${String(err)}`);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function commitRename() {
     setEditing(false);
@@ -99,6 +165,20 @@ export function CourseFilesPage({
   // however few files happen to match the search.
   const tree = useMemo(() => buildFileTree(displayedFiles, files), [displayedFiles, files]);
 
+  // Where the upload modal can put things. Always built from the full file list, never
+  // the search-filtered one, and expressed in real paths (the root is the hidden
+  // wrapper folder, if any — see getRootFolderPath).
+  const rootPath = useMemo(() => getRootFolderPath(files), [files]);
+  const folderOptions = useMemo(
+    () =>
+      listFolders(buildFileTree(files)).map((folder) => ({
+        path: folder.path,
+        label: rootPath && folder.path.startsWith(`${rootPath}/`) ? folder.path.slice(rootPath.length + 1) : folder.path
+      })),
+    [files, rootPath]
+  );
+  const existingPaths = useMemo(() => new Set(files.map((f) => f.relativePath)), [files]);
+
   return (
     <div className="course-files-page">
       <div className="toolbar course-files-toolbar">
@@ -128,7 +208,6 @@ export function CourseFilesPage({
         )}
 
         <div className="course-files-toolbar-actions">
-          {busy && <Spinner label="Exporting…" />}
           {courseUrl && (
             <button
               className="secondary back-button"
@@ -154,6 +233,7 @@ export function CourseFilesPage({
                   setEditing(true);
                 }
               },
+              { label: 'Add file…', onClick: () => fileInputRef.current?.click() },
               { label: 'Export', onClick: () => setPendingExport(true) },
               { label: 'Hide course', onClick: () => void handleHide() },
               { label: 'Delete course', onClick: () => setPendingDelete(true), danger: true }
@@ -161,6 +241,42 @@ export function CourseFilesPage({
           />
         </div>
       </div>
+
+      {busy && (
+        <div className="busy-notice">
+          <Spinner label="Exporting…" />
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        hidden
+        onChange={(e) => {
+          const picked = Array.from(e.target.files ?? []);
+          e.target.value = '';
+          if (picked.length > 0) void stageFiles(picked);
+        }}
+      />
+
+      {draggingFiles && (
+        <div className="drop-overlay" aria-hidden="true">
+          <div className="drop-overlay-message">Drop files to add them to "{name}"</div>
+        </div>
+      )}
+
+      {pendingUpload && (
+        <UploadFilesModal
+          files={pendingUpload}
+          rootPath={rootPath}
+          folders={folderOptions}
+          existingPaths={existingPaths}
+          busy={uploading}
+          onConfirm={(folderPath) => void handleUploadConfirm(folderPath)}
+          onCancel={() => setPendingUpload(null)}
+        />
+      )}
 
       {pendingExport && (
         <ConfirmModal
@@ -209,6 +325,9 @@ export function CourseFilesPage({
               node={node}
               depth={0}
               onFileOpened={refreshRecentOpens}
+              onFileDeleted={handleFileDeleted}
+              onFolderDeleted={isSearching ? undefined : handleFilesDeleted}
+              canDownload={!isSearching}
               defaultExpanded={isSearching}
             />
           ) : (
@@ -217,6 +336,7 @@ export function CourseFilesPage({
               file={node.file}
               depth={0}
               onFileOpened={refreshRecentOpens}
+              onFileDeleted={handleFileDeleted}
             />
           )
         )}

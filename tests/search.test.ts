@@ -72,8 +72,23 @@ describe('filterFilesByQuery', () => {
     expect(results.map((f) => f.filename)).toEqual(['TEMA_5_-_NAT.pdf']);
   });
 
-  it('does not match a term against a filename token that merely contains it as a substring (e.g. "tema" inside "temas")', () => {
-    const files = [makeFile('todos_los_temas.pdf')];
-    expect(filterFilesByQuery(files, 'tema')).toEqual([]);
+  it('matches a term against the start of a word, e.g. "20" finds "2011" and "tem" finds "temas"', () => {
+    const files = [makeFile('INF_EX_2011_SEP.pdf'), makeFile('todos_los_temas.pdf'), makeFile('notes.pdf')];
+    expect(filterFilesByQuery(files, '20').map((f) => f.filename)).toEqual(['INF_EX_2011_SEP.pdf']);
+    expect(filterFilesByQuery(files, 'tem').map((f) => f.filename)).toEqual(['todos_los_temas.pdf']);
+  });
+
+  it('does not match a term in the middle of a word (e.g. "ema" inside "temas")', () => {
+    expect(filterFilesByQuery([makeFile('todos_los_temas.pdf')], 'ema')).toEqual([]);
+  });
+
+  it('ignores accents in both the filename and the query', () => {
+    const files = [makeFile('Prácticas/Práctica_1.pdf')];
+    expect(filterFilesByQuery(files, 'practica')).toHaveLength(1);
+    expect(filterFilesByQuery([makeFile('practica_1.pdf')], 'práctica')).toHaveLength(1);
+  });
+
+  it('splits punctuation inside a term like a space, e.g. "tema-3" finds "TEMA_3.pdf"', () => {
+    expect(filterFilesByQuery([makeFile('TEMA_3.pdf'), makeFile('TEMA_4.pdf')], 'tema-3')).toHaveLength(1);
   });
 });

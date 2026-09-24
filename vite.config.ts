@@ -9,7 +9,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         dashboard: 'src/dashboard/index.html',
-        popup: 'src/popup/index.html'
+        popup: 'src/popup/index.html',
+        viewer: 'src/viewer/index.html'
       }
     }
   }
