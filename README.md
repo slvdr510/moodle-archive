@@ -1,5 +1,7 @@
 # Moodle Archive
 
+[Chrome web store link](https://chromewebstore.google.com/detail/fnhkaidabjeciifnkipdeodjdmheejpj?utm_source=item-share-cb)
+
 A Chrome extension (Manifest V3) that downloads the files from a Moodle course
 and keeps a full version history of them — entirely inside the browser, with no
 server, no account, and no folder permissions.

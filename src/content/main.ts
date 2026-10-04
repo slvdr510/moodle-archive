@@ -1,5 +1,6 @@
-import { crawlCourse, type CrawledEntry } from './moodleCrawler';
+import { DownloadCancelledError, crawlCourse, type CrawledEntry } from './moodleCrawler';
 import { message } from './message';
+import { loadMessages, type Messages } from '../lib/i18n';
 
 export type Status = 'initialized' | 'processing' | 'finished';
 
@@ -50,13 +51,13 @@ function chunkEntries(entries: CrawledEntry[]): CrawledEntry[][] {
   return chunks;
 }
 
-function sendMessageWithTimeout(msg: unknown): Promise<SnapshotResponse> {
+function sendMessageWithTimeout(msg: unknown, t: Messages): Promise<SnapshotResponse> {
   return new Promise((resolve) => {
     let settled = false;
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
-      resolve({ ok: false, error: 'timed out waiting for a response — try again' });
+      resolve({ ok: false, error: t.download.timedOut });
     }, SAVE_TIMEOUT_MS);
 
     chrome.runtime.sendMessage(msg, (response: SnapshotResponse) => {
@@ -68,14 +69,19 @@ function sendMessageWithTimeout(msg: unknown): Promise<SnapshotResponse> {
   });
 }
 
-async function saveSnapshot(courseUrl: string, courseTitle: string, entries: CrawledEntry[]): Promise<string | undefined> {
+async function saveSnapshot(
+  courseUrl: string,
+  courseTitle: string,
+  entries: CrawledEntry[],
+  t: Messages
+): Promise<string | undefined> {
   const chunks = chunkEntries(entries);
   const allRelativePaths = entries.map((e) => e.relativePath);
   const timestampMs = Date.now();
 
   for (const [chunkIndex, chunk] of chunks.entries()) {
     if (chunks.length > 1) {
-      message<string>('status-log', `Saving to history... (${chunkIndex + 1}/${chunks.length})`);
+      message<string>('status-log', t.download.savingChunk(chunkIndex + 1, chunks.length));
     }
 
     const chunkMessage: CourseSnapshotChunkMessage = {
@@ -91,9 +97,9 @@ async function saveSnapshot(courseUrl: string, courseTitle: string, entries: Cra
       }
     };
 
-    const response = await sendMessageWithTimeout(chunkMessage);
+    const response = await sendMessageWithTimeout(chunkMessage, t);
     if (!response?.ok) {
-      return response?.error ?? 'unknown error';
+      return response?.error ?? t.download.unknownError;
     }
   }
 
@@ -102,12 +108,13 @@ async function saveSnapshot(courseUrl: string, courseTitle: string, entries: Cra
 
 async function main(): Promise<void> {
   message<Status>('status', 'processing');
+  const t = await loadMessages();
 
-  const result = await crawlCourse(window.location.href);
+  const result = await crawlCourse(window.location.href, t);
   if (result && result.entries.length > 0) {
-    message<string>('status-log', 'Saving to history...');
-    const failure = await saveSnapshot(result.courseUrl, result.courseTitle, result.entries);
-    message<string>('status-log', failure ? `Could not save to history: ${failure}` : 'Saved to history.');
+    message<string>('status-log', t.download.saving);
+    const failure = await saveSnapshot(result.courseUrl, result.courseTitle, result.entries, t);
+    message<string>('status-log', failure ? t.download.saveFailed(failure) : t.download.saved);
     message<Status>('status', 'finished');
     return;
   }
@@ -118,4 +125,31 @@ async function main(): Promise<void> {
   message<Status>('status', 'finished');
 }
 
-main();
+declare global {
+  // Set while a download runs in this tab. Each injection of this script runs in the
+  // same isolated world as the previous ones, so it sees the flag they left.
+  var moodleArchiveDownloading: boolean | undefined;
+}
+
+// Injected a second time into a tab that's still downloading (the background only
+// ever starts one download at a time, but nothing else stops a stray second
+// injection), this does nothing rather than download the course twice at once.
+if (!globalThis.moodleArchiveDownloading) {
+  globalThis.moodleArchiveDownloading = true;
+  void main()
+    // An unexpected failure must still report 'finished', or the background would
+    // think this download is still running and never start the queued ones.
+    .catch(async (error: unknown) => {
+      if (error instanceof DownloadCancelledError) {
+        message<string>('status-log', error.message);
+      } else {
+        console.error('The download failed:', error);
+        const t = await loadMessages();
+        message<string>('status-log', t.download.saveFailed(String(error)));
+      }
+      message<Status>('status', 'finished');
+    })
+    .finally(() => {
+      globalThis.moodleArchiveDownloading = false;
+    });
+}

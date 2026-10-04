@@ -35,16 +35,16 @@ describe('recentOpenStore', () => {
     expect(results[0].openedAt).toBe(5000);
   });
 
-  it('keeps only the most recent entries once the limit is exceeded', async () => {
+  it('keeps every entry — how many are shown is a display setting', async () => {
     const courseId = crypto.randomUUID();
     for (let i = 0; i < 8; i++) {
       await recentOpenStore.recordOpen(makeRecord(`file-${i}`, i * 1000, courseId));
     }
 
     const results = await recentOpenStore.byCourse(courseId);
-    expect(results.length).toBeLessThanOrEqual(5);
-    // The most recently opened ones must be the ones kept.
-    expect(results.map((r) => r.fileId)).toEqual(['file-7', 'file-6', 'file-5', 'file-4', 'file-3']);
+    expect(results.map((r) => r.fileId)).toEqual(
+      ['file-7', 'file-6', 'file-5', 'file-4', 'file-3', 'file-2', 'file-1', 'file-0']
+    );
   });
 
   it('keeps separate courses independent of each other', async () => {

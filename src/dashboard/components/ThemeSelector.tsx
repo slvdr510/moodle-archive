@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import type { Theme } from '../../lib/theme';
 import { useTheme } from '../hooks/useTheme';
+import { useT } from '../hooks/useTranslation';
+import type { Messages } from '../../lib/i18n';
 
-const OPTIONS: { value: Theme; label: string; icon: ReactNode }[] = [
+const OPTIONS: { value: Theme; label: (t: Messages) => string; icon: ReactNode }[] = [
   {
     value: 'light',
-    label: 'Light',
+    label: (t) => t.header.themeLight,
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="4" />
@@ -15,7 +17,7 @@ const OPTIONS: { value: Theme; label: string; icon: ReactNode }[] = [
   },
   {
     value: 'system',
-    label: 'Match system',
+    label: (t) => t.header.themeSystem,
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="18" height="13" rx="2" />
@@ -25,7 +27,7 @@ const OPTIONS: { value: Theme; label: string; icon: ReactNode }[] = [
   },
   {
     value: 'dark',
-    label: 'Dark',
+    label: (t) => t.header.themeDark,
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
@@ -35,17 +37,18 @@ const OPTIONS: { value: Theme; label: string; icon: ReactNode }[] = [
 ];
 
 export function ThemeSelector() {
+  const t = useT();
   const [theme, setTheme] = useTheme();
 
   return (
-    <div className="theme-selector" role="radiogroup" aria-label="Theme">
+    <div className="theme-selector" role="radiogroup" aria-label={t.header.theme}>
       {OPTIONS.map((option) => (
         <button
           key={option.value}
           type="button"
           role="radio"
           aria-checked={theme === option.value}
-          title={option.label}
+          title={option.label(t)}
           className={`theme-option${theme === option.value ? ' active' : ''}`}
           onClick={() => setTheme(option.value)}
         >

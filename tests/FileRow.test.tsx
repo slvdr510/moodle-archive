@@ -4,6 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FileRecord, VersionRecord } from '../src/types';
+import { splitExtension } from '../src/dashboard/components/FileName';
 
 const byFileMock = vi.hoisted(() => vi.fn());
 const recordOpenMock = vi.hoisted(() => vi.fn());
@@ -76,7 +77,7 @@ describe('FileRow', () => {
         <FileRow file={file} onFileDeleted={onFileDeleted} />
       </ul>
     );
-    await screen.findByText('notes.pdf');
+    await screen.findByTitle('notes.pdf');
 
     await userEvent.click(screen.getByTitle('Delete this file from your history'));
     expect(screen.getByText('Delete "notes.pdf"?')).toBeInTheDocument();
@@ -94,7 +95,7 @@ describe('FileRow', () => {
     byFileMock.mockResolvedValue([makeVersion()]);
 
     renderFileRow(makeFile());
-    await screen.findByText('notes.pdf');
+    await screen.findByTitle('notes.pdf');
 
     await userEvent.click(screen.getByTitle('Delete this file from your history'));
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -108,7 +109,7 @@ describe('FileRow', () => {
 
     renderFileRow(makeFile());
 
-    expect(await screen.findByText('6d ago')).toHaveClass('file-date');
+    expect((await screen.findByText('6d ago')).closest('.file-date')).not.toBeNull();
   });
 
   it('opens the file directly when it has a single version', async () => {
@@ -116,10 +117,10 @@ describe('FileRow', () => {
     byFileMock.mockResolvedValue([version]);
 
     renderFileRow(makeFile());
-    await screen.findByText('notes.pdf');
-    await userEvent.click(screen.getByText('notes.pdf'));
+    await screen.findByTitle('notes.pdf');
+    await userEvent.click(screen.getByTitle('notes.pdf'));
 
-    expect(openVersionInBrowserMock).toHaveBeenCalledWith(version.content, 'notes.pdf', version.id);
+    expect(openVersionInBrowserMock).toHaveBeenCalledWith(version.content, 'notes.pdf', version.id, 'notes.pdf');
     expect(screen.queryByText('Which version?')).not.toBeInTheDocument();
   });
 
@@ -129,8 +130,8 @@ describe('FileRow', () => {
     byFileMock.mockResolvedValue([v1, v2]);
 
     renderFileRow(makeFile());
-    await screen.findByText('notes.pdf');
-    await userEvent.click(screen.getByText('notes.pdf'));
+    await screen.findByTitle('notes.pdf');
+    await userEvent.click(screen.getByTitle('notes.pdf'));
 
     expect(screen.getByText('Which version?')).toBeInTheDocument();
     expect(openVersionInBrowserMock).not.toHaveBeenCalled();
@@ -139,7 +140,7 @@ describe('FileRow', () => {
     const items = screen.getAllByRole('button', { name: /v\d/ });
     await userEvent.click(items[0]);
 
-    expect(openVersionInBrowserMock).toHaveBeenCalledWith(v2.content, 'notes.pdf', v2.id);
+    expect(openVersionInBrowserMock).toHaveBeenCalledWith(v2.content, 'notes.pdf', v2.id, 'notes.pdf');
     expect(screen.queryByText('Which version?')).not.toBeInTheDocument();
   });
 
@@ -155,7 +156,7 @@ describe('FileRow', () => {
     byFileMock.mockResolvedValue([makeVersion()]);
 
     renderFileRow(makeFile());
-    await screen.findByText('notes.pdf');
+    await screen.findByTitle('notes.pdf');
 
     expect(screen.queryByTitle('View version history')).not.toBeInTheDocument();
   });
@@ -164,7 +165,7 @@ describe('FileRow', () => {
     byFileMock.mockResolvedValue([makeVersion({ id: 'v1', timestamp: 1000 }), makeVersion({ id: 'v2', timestamp: 2000 })]);
 
     renderFileRow(makeFile());
-    await screen.findByText('notes.pdf');
+    await screen.findByTitle('notes.pdf');
 
     await userEvent.click(screen.getByTitle('View version history'));
     expect(screen.getByTestId('version-timeline')).toBeInTheDocument();
@@ -179,7 +180,7 @@ describe('FileRow', () => {
     byFileMock.mockResolvedValue([version]);
 
     renderFileRow(makeFile());
-    await screen.findByText('notes.pdf');
+    await screen.findByTitle('notes.pdf');
 
     await userEvent.click(screen.getByTitle('Download to your Downloads folder'));
 
@@ -202,7 +203,7 @@ describe('FileRow', () => {
   it('shows no status badge for a modified file — the version-count number covers that instead', async () => {
     byFileMock.mockResolvedValue([makeVersion({ id: 'v1', timestamp: 1000 }), makeVersion({ id: 'v2', timestamp: 2000 })]);
     renderFileRow(makeFile({ currentStatus: 'modified' }));
-    await screen.findByText('notes.pdf');
+    await screen.findByTitle('notes.pdf');
 
     expect(screen.queryByText('Modified')).not.toBeInTheDocument();
   });
@@ -210,7 +211,7 @@ describe('FileRow', () => {
   it('shows no status badge for an unchanged file', async () => {
     byFileMock.mockResolvedValue([makeVersion()]);
     renderFileRow(makeFile({ currentStatus: 'unchanged' }));
-    await screen.findByText('notes.pdf');
+    await screen.findByTitle('notes.pdf');
 
     expect(screen.queryByText('Unchanged')).not.toBeInTheDocument();
   });
@@ -221,5 +222,18 @@ describe('FileRow', () => {
 
     rerender(<FileRow file={makeFile({ currentStatus: 'unchanged' })} />);
     expect(screen.queryByText('Manual')).not.toBeInTheDocument();
+  });
+});
+
+describe('splitExtension', () => {
+  it('splits off a short extension, so the name can be cut off before it', () => {
+    expect(splitExtension('Examenes_y_ejercicios.pdf')).toEqual(['Examenes_y_ejercicios', '.pdf']);
+    expect(splitExtension('archive.tar.gz')).toEqual(['archive.tar', '.gz']);
+  });
+
+  it('leaves names without a real extension whole', () => {
+    expect(splitExtension('README')).toEqual(['README', '']);
+    expect(splitExtension('.bashrc')).toEqual(['.bashrc', '']);
+    expect(splitExtension('Tema_1.Introduccion_y_conceptos')).toEqual(['Tema_1.Introduccion_y_conceptos', '']);
   });
 });

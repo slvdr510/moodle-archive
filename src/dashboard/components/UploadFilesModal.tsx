@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { joinPath, sanitizeFolderName } from '../../lib/uploadPath';
+import { useT } from '../hooks/useTranslation';
 
 type Destination = 'root' | 'existing' | 'new';
 
@@ -37,6 +38,7 @@ export function UploadFilesModal({
   onConfirm: (folderPath: string) => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [destination, setDestination] = useState<Destination>('root');
   const [folderPath, setFolderPath] = useState(folders[0]?.path ?? '');
   const [newFolder, setNewFolder] = useState('');
@@ -56,18 +58,18 @@ export function UploadFilesModal({
 
   const submit = () => onConfirm(targetFolder);
 
-  const title = files.length === 1 ? `Add "${files[0].name}"` : `Add ${files.length} files`;
+  const title = files.length === 1 ? t.upload.titleOne(files[0].name) : t.upload.titleMany(files.length);
 
   return (
     <div className="modal-backdrop" onClick={busy ? undefined : onCancel}>
       <div className="modal upload-modal" onClick={(e) => e.stopPropagation()}>
         <h2>{title}</h2>
-        <p>Where do you want to save {files.length === 1 ? 'it' : 'them'}?</p>
+        <p>{t.upload.where(files.length)}</p>
 
         <div className="upload-options">
           <label className="upload-option">
             <input type="radio" name="destination" checked={destination === 'root'} onChange={() => setDestination('root')} />
-            <span>Course root</span>
+            <span>{t.upload.courseRoot}</span>
           </label>
 
           <label className="upload-option">
@@ -78,10 +80,10 @@ export function UploadFilesModal({
               disabled={folders.length === 0}
               onChange={() => setDestination('existing')}
             />
-            <span>Existing folder</span>
+            <span>{t.upload.existingFolder}</span>
           </label>
           {destination === 'existing' && (
-            <select value={folderPath} onChange={(e) => setFolderPath(e.target.value)} aria-label="Existing folder">
+            <select value={folderPath} onChange={(e) => setFolderPath(e.target.value)} aria-label={t.upload.existingFolder}>
               {folders.map((folder) => (
                 <option key={folder.path} value={folder.path}>
                   {folder.label}
@@ -92,15 +94,15 @@ export function UploadFilesModal({
 
           <label className="upload-option">
             <input type="radio" name="destination" checked={destination === 'new'} onChange={() => setDestination('new')} />
-            <span>New folder</span>
+            <span>{t.upload.newFolder}</span>
           </label>
           {destination === 'new' && (
             <input
               type="text"
               value={newFolder}
               autoFocus
-              placeholder="Folder name"
-              aria-label="New folder name"
+              placeholder={t.upload.folderNamePlaceholder}
+              aria-label={t.upload.newFolderNameLabel}
               // Only ever a folder name: separators can't be typed at all.
               onChange={(e) => setNewFolder(e.target.value.replace(/[/\\]/g, ''))}
               onKeyDown={(e) => {
@@ -112,16 +114,18 @@ export function UploadFilesModal({
 
         {updatedNames.map((name, index) => (
           <p key={index} className="upload-note">
-            <strong>{name}</strong> already exists in this folder — the new file will be added as a new version of it.
+            {t.upload.alreadyExistsBefore}
+            <strong>{name}</strong>
+            {t.upload.alreadyExistsAfter}
           </p>
         ))}
 
         <div className="modal-actions">
           <button className="secondary" onClick={onCancel} disabled={busy}>
-            Cancel
+            {t.common.cancel}
           </button>
           <button onClick={submit} disabled={!canConfirm}>
-            {busy ? 'Adding…' : 'Add'}
+            {busy ? t.upload.adding : t.upload.add}
           </button>
         </div>
       </div>

@@ -54,6 +54,18 @@ describe('viewer page', () => {
     expect(blob.type).toBe('application/pdf');
   });
 
+  it("remembers the PDF's filename for its blob URL so downloads keep the real name", async () => {
+    const set = vi.fn(async () => {});
+    vi.stubGlobal('chrome', { storage: { session: { set, remove: vi.fn(async () => {}) } } });
+    const versionId = await seedVersion('Tema_2.pdf', new Blob(['%PDF-1.4']));
+
+    await loadViewer(versionId);
+
+    await vi.waitFor(() => expect(document.querySelector('iframe')?.src).toBe('blob:fake'));
+    expect(set).toHaveBeenCalledWith({ 'viewerDownloadName:blob:fake': 'Tema_2.pdf' });
+    vi.unstubAllGlobals();
+  });
+
   it('shows an image under a filename header', async () => {
     const versionId = await seedVersion('photo.png', new Blob(['bytes']));
 

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useT } from '../hooks/useTranslation';
 
 export interface DropdownMenuItem {
   label: string;
@@ -11,7 +12,7 @@ export interface DropdownMenuItem {
  *  CourseRow's per-course menu and the courses toolbar's overflow menu. */
 export function DropdownMenu({
   items,
-  title = 'More options',
+  title,
   disabled = false,
   buttonClassName = 'menu-button',
   onOpenChange
@@ -27,8 +28,12 @@ export function DropdownMenu({
    *  out the moment the mouse leaves for the portaled menu below it. */
   onOpenChange?: (open: boolean) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, right: 0 });
+  // Where the menu hangs from: its top edge, and the x its middle lines up with.
+  const [anchor, setAnchor] = useState({ top: 0, centerX: 0 });
+  // The menu's left edge, once it's been measured — see the layout effect below.
+  const [left, setLeft] = useState<number | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -66,19 +71,29 @@ export function DropdownMenu({
     }
     const rect = buttonRef.current?.getBoundingClientRect();
     if (rect) {
-      // Anchored by its right edge (rather than a fixed width) so the menu can
-      // size itself to whatever its longest item needs to fit on one line.
-      setPosition({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+      setAnchor({ top: rect.bottom + 4, centerX: rect.left + rect.width / 2 });
     }
+    setLeft(null);
     setOpen(true);
   }
+
+  // Centered under the button. The menu sizes itself to its longest item, so it's only
+  // placed once its width is known (before it's painted); near a window edge it's
+  // shifted just enough to stay inside the window.
+  useLayoutEffect(() => {
+    if (!open || left !== null || !dropdownRef.current) return;
+    const width = dropdownRef.current.offsetWidth;
+    const edge = 12;
+    const centered = anchor.centerX - width / 2;
+    setLeft(Math.max(edge, Math.min(centered, window.innerWidth - edge - width)));
+  }, [open, left, anchor]);
 
   return (
     <>
       <button
         ref={buttonRef}
         className={buttonClassName}
-        title={title}
+        title={title ?? t.common.moreOptions}
         disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();
@@ -97,7 +112,7 @@ export function DropdownMenu({
           <div
             ref={dropdownRef}
             className="dropdown-menu"
-            style={{ top: position.top, right: position.right }}
+            style={{ top: anchor.top, left: left ?? 0, visibility: left === null ? 'hidden' : undefined }}
             onClick={(e) => e.stopPropagation()}
           >
             {items.map((item) => (

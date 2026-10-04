@@ -3,8 +3,11 @@ import pkg from './package.json';
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'Moodle Archive',
-  description: 'Downloads Moodle courses and archives file version history, all in the browser.',
+  // Translated in public/_locales/<lang>/messages.json — what Chrome and the Web Store
+  // show for the extension, picked by the browser's language.
+  name: '__MSG_extName__',
+  description: '__MSG_extDescription__',
+  default_locale: 'en',
   version: pkg.version,
   icons: {
     16: 'src/icons/icon16.png',

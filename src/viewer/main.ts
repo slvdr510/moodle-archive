@@ -1,6 +1,9 @@
 import { fileStore, versionStore } from '../lib/db';
+import { downloadNameFor } from '../lib/downloadNameSettings';
 import { getRenderKind } from '../lib/fileKind';
 import { withCorrectType } from '../lib/openFile';
+import { forgetDownloadName, rememberDownloadName } from '../lib/blobDownloadNames';
+import { applyDocumentLanguage, getMessages } from '../lib/i18n';
 
 /**
  * A file opened straight from a `blob:` URL can't survive a browser restart — the
@@ -30,12 +33,14 @@ function showFramed(filename: string, content: HTMLElement): void {
 }
 
 async function main(): Promise<void> {
+  applyDocumentLanguage();
+  const t = getMessages();
   const versionId = new URLSearchParams(window.location.search).get('version');
   const version = versionId ? await versionStore.get(versionId) : undefined;
   const file = version ? await fileStore.get(version.fileId) : undefined;
 
   if (!version || !file) {
-    showMessage('File not found', 'This file is no longer in your Moodle Archive history — it may have been deleted.');
+    showMessage(t.viewer.notFoundTitle, t.viewer.notFoundText);
     return;
   }
 
@@ -47,7 +52,14 @@ async function main(): Promise<void> {
     case 'pdf': {
       const frame = document.createElement('iframe');
       frame.title = filename;
-      frame.src = URL.createObjectURL(content);
+      const url = URL.createObjectURL(content);
+      // So the PDF viewer's own download button saves under `filename`, not the
+      // blob's UUID — see blobDownloadNames.ts. Best effort: the PDF shows either way.
+      await downloadNameFor(file.courseId, filename)
+        .then((name) => rememberDownloadName(url, name))
+        .catch((err: unknown) => console.error(err));
+      window.addEventListener('pagehide', () => void forgetDownloadName(url).catch(() => {}));
+      frame.src = url;
       document.body.append(frame);
       break;
     }
@@ -67,7 +79,7 @@ async function main(): Promise<void> {
       break;
     }
     default:
-      showMessage(filename, 'This kind of file can’t be previewed in the browser.');
+      showMessage(filename, t.viewer.cannotPreview);
   }
 }
 

@@ -1,4 +1,6 @@
+import { downloadBlobUrl } from './blobDownloadNames';
 import { getRenderKind, guessMimeType } from './fileKind';
+import { getMessages } from './i18n';
 
 // Above this size an image is downloaded and handed to the OS's default app instead
 // of being decoded in a browser tab. Doesn't apply to PDFs or text.
@@ -31,14 +33,7 @@ const VIEWER_PATH = 'src/viewer/index.html';
 
 /** Saves a version's content to the browser's default Downloads folder under `filename`. */
 async function saveToDownloads(content: Blob, filename: string): Promise<number> {
-  const url = URL.createObjectURL(content);
-  try {
-    return await chrome.downloads.download({ url, filename });
-  } finally {
-    // chrome.downloads.download reads the blob asynchronously in the background;
-    // give it plenty of time to finish before freeing the underlying data.
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  }
+  return downloadBlobUrl(URL.createObjectURL(content), filename);
 }
 
 /**
@@ -61,7 +56,7 @@ function waitForDownloadComplete(downloadId: number): Promise<void> {
     function onChanged(delta: chrome.downloads.DownloadDelta): void {
       if (delta.id !== downloadId || !delta.state) return;
       if (delta.state.current === 'complete') finish(resolve);
-      else if (delta.state.current === 'interrupted') finish(() => reject(new Error('The download was interrupted.')));
+      else if (delta.state.current === 'interrupted') finish(() => reject(new Error(getMessages().openFile.downloadInterrupted)));
     }
 
     chrome.downloads.onChanged.addListener(onChanged);
@@ -70,7 +65,7 @@ function waitForDownloadComplete(downloadId: number): Promise<void> {
     chrome.downloads.search({ id: downloadId }, ([item]) => {
       if (!item) return;
       if (item.state === 'complete') finish(resolve);
-      else if (item.state === 'interrupted') finish(() => reject(new Error('The download was interrupted.')));
+      else if (item.state === 'interrupted') finish(() => reject(new Error(getMessages().openFile.downloadInterrupted)));
     });
   });
 }
@@ -96,12 +91,7 @@ async function downloadAndOpenNatively(content: Blob, filename: string): Promise
     // surface why the auto-open step itself didn't work, rather than silently
     // pretending nothing happened.
     console.error('Could not automatically open the downloaded file:', err);
-    window.alert(
-      `Downloaded "${filename}", but couldn't open it automatically ` +
-        `(${String(err)}).\n\nYou can open it from Chrome's downloads (Ctrl+J / Cmd+Shift+J). ` +
-        'Tip: right-click a download there and choose "Always open files of this type" so this ' +
-        'happens automatically from now on.'
-    );
+    window.alert(getMessages().openFile.couldNotOpen(filename, String(err)));
   }
 }
 
@@ -114,7 +104,13 @@ async function downloadAndOpenNatively(content: Blob, filename: string): Promise
  * downloaded under its real filename and handed to the OS's default app, like
  * clicking "open" on a completed Chrome download.
  */
-export async function openVersionInBrowser(rawContent: Blob, filename: string, versionId: string): Promise<void> {
+export async function openVersionInBrowser(
+  rawContent: Blob,
+  filename: string,
+  versionId: string,
+  /** Name to save under when the file is downloaded rather than previewed. */
+  downloadName = filename
+): Promise<void> {
   const content = withCorrectType(rawContent, filename);
   const kind = getRenderKind(filename);
   const tooLargeToInline = kind === 'image' && content.size > MAX_INLINE_BYTES;
@@ -124,5 +120,5 @@ export async function openVersionInBrowser(rawContent: Blob, filename: string, v
     return;
   }
 
-  await downloadAndOpenNatively(content, filename);
+  await downloadAndOpenNatively(content, downloadName);
 }

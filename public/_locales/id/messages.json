@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Moodle Archive"
+  },
+  "extDescription": {
+    "message": "Mengunduh kursus Moodle dan mengarsipkan riwayat versi file, semuanya di browser."
+  }
+}

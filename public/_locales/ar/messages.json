@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Moodle Archive"
+  },
+  "extDescription": {
+    "message": "ينزّل مقررات Moodle ويحفظ سجل إصدارات ملفاتها، وكل ذلك داخل المتصفح."
+  }
+}

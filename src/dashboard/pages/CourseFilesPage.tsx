@@ -13,7 +13,9 @@ import { RecentlyOpened } from '../components/RecentlyOpened';
 import { Spinner } from '../components/Spinner';
 import { joinPath } from '../../lib/uploadPath';
 import { UploadFilesModal } from '../components/UploadFilesModal';
+import { useDateColumnWidth } from '../hooks/useDateColumnWidth';
 import { useFileDrop } from '../hooks/useFileDrop';
+import { useT } from '../hooks/useTranslation';
 
 /** A file the user picked or dropped, already read into memory. */
 interface StagedFile {
@@ -32,6 +34,7 @@ export function CourseFilesPage({
   courseUrl?: string;
   onBack: () => void;
 }) {
+  const t = useT();
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [recentOpens, setRecentOpens] = useState<RecentOpenRecord[]>([]);
   const [query, setQuery] = useState('');
@@ -52,6 +55,8 @@ export function CourseFilesPage({
   const [pendingUpload, setPendingUpload] = useState<StagedFile[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileListRef = useRef<HTMLUListElement>(null);
+  useDateColumnWidth(fileListRef);
 
   useEffect(() => {
     void fileStore.byCourse(courseId).then(setFiles);
@@ -70,10 +75,7 @@ export function CourseFilesPage({
         await Promise.all(files.map(async (file) => ({ name: file.name, content: new Uint8Array(await file.arrayBuffer()) })))
       );
     } catch (err) {
-      setMessage(
-        `Could not read ${files.length === 1 ? `"${files[0].name}"` : 'the dropped files'} — the file may have been moved or ` +
-          `deleted, or it is still being downloaded. Try again from a stable location. (${String(err)})`
-      );
+      setMessage(t.courseFiles.couldNotRead(files.length, files[0]?.name ?? '', String(err)));
     }
   }
 
@@ -108,7 +110,7 @@ export function CourseFilesPage({
       setPendingUpload(null);
     } catch (err) {
       setPendingUpload(null);
-      setMessage(`Could not add the file${pendingUpload.length === 1 ? '' : 's'}: ${String(err)}`);
+      setMessage(t.courseFiles.couldNotAdd(pendingUpload.length, String(err)));
     } finally {
       setUploading(false);
     }
@@ -117,8 +119,8 @@ export function CourseFilesPage({
   function commitRename() {
     setEditing(false);
     const trimmed = draft.trim();
-    if (course && trimmed && trimmed !== name) {
-      const updated = { ...course, name: trimmed };
+    if (course && trimmed && (trimmed !== name || !course.tagged)) {
+      const updated = { ...course, name: trimmed, tagged: true };
       setCourse(updated);
       setName(trimmed);
       void courseStore.put(updated);
@@ -132,9 +134,9 @@ export function CourseFilesPage({
     setBusy(true);
     try {
       await exportCourse(courseId);
-      setMessage(`"${name}" saved to your Downloads folder.`);
+      setMessage(t.common.savedToDownloads(name));
     } catch (err) {
-      setMessage(`Could not export "${name}": ${String(err)}`);
+      setMessage(t.common.couldNotExport(name, String(err)));
     } finally {
       setBusy(false);
     }
@@ -182,7 +184,7 @@ export function CourseFilesPage({
   return (
     <div className="course-files-page">
       <div className="toolbar course-files-toolbar">
-        <button className="secondary back-button" onClick={onBack} title="Back to courses" aria-label="Back to courses">
+        <button className="secondary back-button" onClick={onBack} title={t.courseFiles.backToCourses} aria-label={t.courseFiles.backToCourses}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M11 18l-6-6 6-6" />
           </svg>
@@ -212,8 +214,8 @@ export function CourseFilesPage({
             <button
               className="secondary back-button"
               onClick={() => void chrome.tabs.create({ url: courseUrl })}
-              title="Open the course in Moodle"
-              aria-label="Open the course in Moodle"
+              title={t.courseRow.openInMoodle}
+              aria-label={t.courseRow.openInMoodle}
             >
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -222,21 +224,21 @@ export function CourseFilesPage({
             </button>
           )}
           <DropdownMenu
-            title="More options"
+            title={t.common.moreOptions}
             buttonClassName="secondary toolbar-menu-button"
             disabled={!course || busy}
             items={[
               {
-                label: 'Set tag name',
+                label: t.courseRow.setTagName,
                 onClick: () => {
                   setDraft(name);
                   setEditing(true);
                 }
               },
-              { label: 'Add file…', onClick: () => fileInputRef.current?.click() },
-              { label: 'Export', onClick: () => setPendingExport(true) },
-              { label: 'Hide course', onClick: () => void handleHide() },
-              { label: 'Delete course', onClick: () => setPendingDelete(true), danger: true }
+              { label: t.courseFiles.addFile, onClick: () => fileInputRef.current?.click() },
+              { label: t.common.export, onClick: () => setPendingExport(true) },
+              { label: t.courseRow.hideCourse, onClick: () => void handleHide() },
+              { label: t.courseRow.deleteCourse, onClick: () => setPendingDelete(true), danger: true }
             ]}
           />
         </div>
@@ -244,7 +246,7 @@ export function CourseFilesPage({
 
       {busy && (
         <div className="busy-notice">
-          <Spinner label="Exporting…" />
+          <Spinner label={t.common.exporting} />
         </div>
       )}
 
@@ -262,7 +264,7 @@ export function CourseFilesPage({
 
       {draggingFiles && (
         <div className="drop-overlay" aria-hidden="true">
-          <div className="drop-overlay-message">Drop files to add them to "{name}"</div>
+          <div className="drop-overlay-message">{t.courseFiles.dropFiles(name)}</div>
         </div>
       )}
 
@@ -280,9 +282,9 @@ export function CourseFilesPage({
 
       {pendingExport && (
         <ConfirmModal
-          title={`Export "${name}"?`}
-          message="The course, its files, and every version will be saved to a zip in your Downloads folder."
-          confirmLabel="Export"
+          title={t.courses.exportCourseTitle(name)}
+          message={t.courses.exportCourseMessage}
+          confirmLabel={t.common.export}
           onCancel={() => setPendingExport(false)}
           onConfirm={() => {
             setPendingExport(false);
@@ -293,9 +295,9 @@ export function CourseFilesPage({
 
       {pendingDelete && (
         <ConfirmModal
-          title={`Delete "${name}"?`}
-          message="This removes it and its tracked file/version history. If you download this course again later, it will just be re-created from scratch."
-          confirmLabel="Delete"
+          title={t.courses.deleteCourseTitle(name)}
+          message={t.courses.deleteCourseMessage}
+          confirmLabel={t.common.delete}
           danger
           onCancel={() => setPendingDelete(false)}
           onConfirm={() => {
@@ -312,12 +314,12 @@ export function CourseFilesPage({
       <input
         className="search-input"
         type="text"
-        placeholder="Search files by name…"
+        placeholder={t.courseFiles.searchPlaceholder}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      <ul className="file-list">
+      <ul className="file-list" ref={fileListRef}>
         {tree.map((node) =>
           node.kind === 'folder' ? (
             <FolderRow
@@ -342,7 +344,7 @@ export function CourseFilesPage({
         )}
         {tree.length === 0 && (
           <li className="empty">
-            {isSearching ? `No files match "${query}".` : 'No files downloaded yet for this course.'}
+            {isSearching ? t.courseFiles.noMatches(query) : t.courseFiles.noFiles}
           </li>
         )}
       </ul>

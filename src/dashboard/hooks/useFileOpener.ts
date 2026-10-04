@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { recentOpenStore, versionStore } from '../../lib/db';
+import { deleteVersion as deleteStoredVersion, recentOpenStore, versionStore } from '../../lib/db';
+import { downloadNameFor } from '../../lib/downloadNameSettings';
 import { openVersionInBrowser } from '../../lib/openFile';
 import type { FileRecord, VersionRecord } from '../../types';
 
@@ -17,8 +18,27 @@ export function useFileOpener(file: FileRecord, onOpened?: () => void) {
     void versionStore.byFile(file.id).then(setVersions);
   }, [file.id]);
 
+  /** Re-reads the versions, e.g. after one was deleted somewhere else. */
+  function reload(): void {
+    void versionStore.byFile(file.id).then(setVersions);
+  }
+
+  /** Deletes an older version (never the latest — see db.deleteVersion). */
+  async function deleteVersion(version: VersionRecord): Promise<void> {
+    await deleteStoredVersion(version);
+    const remaining = await versionStore.byFile(file.id);
+    setVersions(remaining);
+    // With a single version left a click opens it directly, so there's nothing to pick.
+    if (remaining.length <= 1) setShowPicker(false);
+  }
+
   async function open(version: VersionRecord): Promise<void> {
-    await openVersionInBrowser(version.content, file.filename, version.id);
+    await openVersionInBrowser(
+      version.content,
+      file.filename,
+      version.id,
+      await downloadNameFor(file.courseId, file.filename)
+    );
     await recentOpenStore.recordOpen({
       id: `${file.courseId}::${file.id}`,
       courseId: file.courseId,
@@ -50,6 +70,8 @@ export function useFileOpener(file: FileRecord, onOpened?: () => void) {
     handleClick,
     showPicker,
     closePicker: () => setShowPicker(false),
-    selectVersion
+    selectVersion,
+    deleteVersion,
+    reload
   };
 }

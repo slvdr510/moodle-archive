@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Moodle Archive"
+  },
+  "extDescription": {
+    "message": "Moodle कोर्स डाउनलोड करता है और फ़ाइलों का संस्करण इतिहास सहेजता है, सब कुछ ब्राउज़र में।"
+  }
+}

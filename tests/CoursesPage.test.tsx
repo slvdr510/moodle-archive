@@ -324,13 +324,13 @@ describe('CoursesPage hiding courses', () => {
     expect(tabsCreateMock).toHaveBeenCalledWith({ url: 'https://moodle.example/course/view.php?id=2' });
   });
 
-  it('"Show hidden courses" lists hidden courses in a modal, and "Unhide" restores one', async () => {
+  it('"Hidden courses" lists hidden courses in a modal, and "Unhide" restores one', async () => {
     const hiddenCourse = makeCourse({ id: 'a', name: 'Hidden Course', hidden: true });
     allMock.mockResolvedValue([hiddenCourse]);
     renderCoursesPage();
 
     await userEvent.click(await screen.findByTitle('More options'));
-    await userEvent.click(screen.getByText('Show hidden courses'));
+    await userEvent.click(screen.getByText('Hidden courses'));
 
     expect(screen.getByText('Hidden Course')).toBeInTheDocument();
 
@@ -339,14 +339,14 @@ describe('CoursesPage hiding courses', () => {
     expect(putMock).toHaveBeenCalledWith(expect.objectContaining({ id: 'a', hidden: false }));
   });
 
-  it('"Show hidden courses" says so when nothing is hidden', async () => {
+  it('"Hidden courses" says so when nothing is hidden', async () => {
     allMock.mockResolvedValue([makeCourse({ id: 'a', name: 'Course A' })]);
     renderCoursesPage();
     await screen.findByText('Course A');
 
     // The toolbar's "More options" is first; "Course A"'s own row menu is second.
     await userEvent.click(screen.getAllByTitle('More options')[0]);
-    await userEvent.click(screen.getByText('Show hidden courses'));
+    await userEvent.click(screen.getByText('Hidden courses'));
 
     expect(screen.getByText('No courses are hidden.')).toBeInTheDocument();
   });

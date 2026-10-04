@@ -3,11 +3,13 @@ import type { FileRecord } from '../../types';
 import { deleteFiles } from '../../lib/db';
 import { collectFolderFiles, collectFolderStatuses, type FolderTreeNode } from '../../lib/fileTree';
 import { buildFolderZip } from '../../lib/folderZip';
+import { downloadNameFor } from '../../lib/downloadNameSettings';
 import { downloadVersion } from '../../lib/openFile';
 import { ConfirmModal } from './ConfirmModal';
 import { FileRow } from './FileRow';
 import { StatusBadges } from './StatusBadge';
 import { TreeGuides, rowPaddingLeft } from './TreeGuides';
+import { useT } from '../hooks/useTranslation';
 
 export function FolderRow({
   node,
@@ -38,6 +40,7 @@ export function FolderRow({
   /** Start expanded instead of collapsed — used to reveal search-result matches immediately. */
   defaultExpanded?: boolean;
 }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [zipping, setZipping] = useState(false);
@@ -51,10 +54,11 @@ export function FolderRow({
     setZipping(true);
     try {
       const zip = await buildFolderZip(node.name, node.path, folderFiles);
-      await downloadVersion(zip, `${node.name}.zip`);
+      const zipName = `${node.name}.zip`;
+      await downloadVersion(zip, folderFiles[0] ? await downloadNameFor(folderFiles[0].courseId, zipName) : zipName);
     } catch (err) {
       console.error('Could not download the folder:', err);
-      window.alert(`Could not download "${node.name}": ${String(err)}`);
+      window.alert(t.folderRow.couldNotDownload(node.name, String(err)));
     } finally {
       setZipping(false);
     }
@@ -70,12 +74,14 @@ export function FolderRow({
           onClick={() => setExpanded((e) => !e)}
         >
           <span className="folder-toggle">{expanded ? '▾' : '▸'}</span>
-          <span className="folder-name">{node.name}</span>
+          <span className="folder-name" title={node.name}>
+            {node.name}
+          </span>
           <StatusBadges statuses={statuses} />
           {onFolderDeleted && (
             <button
               className="icon-button row-action-button delete-button"
-              title="Delete this folder from your history"
+              title={t.folderRow.deleteTitle}
               onClick={(e) => {
                 e.stopPropagation();
                 setConfirmingDelete(true);
@@ -89,7 +95,7 @@ export function FolderRow({
           {canDownload && (
             <button
               className="icon-button row-action-button"
-              title="Download this folder as a zip"
+              title={t.folderRow.downloadTitle}
               disabled={zipping}
               onClick={(e) => {
                 e.stopPropagation();
@@ -105,9 +111,9 @@ export function FolderRow({
 
         {confirmingDelete && (
           <ConfirmModal
-            title={`Delete "${node.name}"?`}
-            message={`This removes the folder, its ${folderFiles.length} file${folderFiles.length === 1 ? '' : 's'} and all of their saved versions from your history. Anything that is still in Moodle will be added back as new the next time you download this course.`}
-            confirmLabel="Delete"
+            title={t.folderRow.deleteConfirmTitle(node.name)}
+            message={t.folderRow.deleteConfirmMessage(folderFiles.length)}
+            confirmLabel={t.common.delete}
             danger
             onCancel={() => setConfirmingDelete(false)}
             onConfirm={() => {

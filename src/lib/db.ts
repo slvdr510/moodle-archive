@@ -26,7 +26,6 @@ const DB_NAME = 'moodle-archive';
 // written to again.
 const LEGACY_DB_NAME = 'moodle-history';
 const DB_VERSION = 4;
-const RECENT_OPENS_LIMIT = 5;
 
 let dbPromise: Promise<IDBPDatabase<MoodleHistoryDB>> | undefined;
 
@@ -181,6 +180,9 @@ export const versionStore = {
   async put(version: VersionRecord): Promise<void> {
     await (await getDb()).put('versions', version);
   },
+  async remove(id: string): Promise<void> {
+    await (await getDb()).delete('versions', id);
+  },
   async removeByFile(fileId: string): Promise<void> {
     const db = await getDb();
     const tx = db.transaction('versions', 'readwrite');
@@ -193,22 +195,16 @@ export const recentOpenStore = {
   async all(): Promise<RecentOpenRecord[]> {
     return (await getDb()).getAll('recentOpens');
   },
-  /** Most recently opened files for a course, newest first. */
+  /** Every recently opened file for a course, newest first. How many of them are
+   *  shown is a display setting (see recentSettings.ts), so nothing is trimmed here. */
   async byCourse(courseId: string): Promise<RecentOpenRecord[]> {
     const all = await (await getDb()).getAllFromIndex('recentOpens', 'by-course', courseId);
-    return all.sort((a, b) => b.openedAt - a.openedAt).slice(0, RECENT_OPENS_LIMIT);
+    return all.sort((a, b) => b.openedAt - a.openedAt);
   },
-  /** Records that a file was just opened, keeping only the most recent entries per course. */
+  /** Records that a file was just opened. Entries are keyed per file, so a course
+   *  never holds more of them than it has files. */
   async recordOpen(record: RecentOpenRecord): Promise<void> {
-    const db = await getDb();
-    await db.put('recentOpens', record);
-
-    const all = await db.getAllFromIndex('recentOpens', 'by-course', record.courseId);
-    const stale = all.sort((a, b) => b.openedAt - a.openedAt).slice(RECENT_OPENS_LIMIT);
-    if (stale.length > 0) {
-      const tx = db.transaction('recentOpens', 'readwrite');
-      await Promise.all([...stale.map((r) => tx.store.delete(r.id)), tx.done]);
-    }
+    await (await getDb()).put('recentOpens', record);
   },
   async remove(id: string): Promise<void> {
     await (await getDb()).delete('recentOpens', id);
@@ -224,6 +220,17 @@ export async function deleteFile(file: FileRecord): Promise<void> {
   await versionStore.removeByFile(file.id);
   await recentOpenStore.remove(`${file.courseId}::${file.id}`);
   await fileStore.remove(file.id);
+}
+
+/**
+ * Deletes one of a file's older versions. The latest one can't be: it's what the next
+ * download compares against (see processCourse), so without it an unchanged file would
+ * be stored again as a new version.
+ */
+export async function deleteVersion(version: VersionRecord): Promise<void> {
+  const versions = await versionStore.byFile(version.fileId);
+  if (versions.at(-1)?.id === version.id) throw new Error('The latest version of a file cannot be deleted.');
+  await versionStore.remove(version.id);
 }
 
 /** Deletes several files (e.g. everything inside a folder) — see `deleteFile`. */

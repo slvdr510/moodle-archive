@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Moodle Archive"
+  },
+  "extDescription": {
+    "message": "Moodle のコースをダウンロードし、ファイルのバージョン履歴をブラウザ内で保存します。"
+  }
+}

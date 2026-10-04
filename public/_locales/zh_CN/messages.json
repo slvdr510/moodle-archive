@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Moodle Archive"
+  },
+  "extDescription": {
+    "message": "下载 Moodle 课程并保存文件的版本历史，全部在浏览器中完成。"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Moodle Archive"
+  },
+  "extDescription": {
+    "message": "Transfere cursos do Moodle e guarda o histórico de versões dos ficheiros, tudo no navegador."
+  }
+}

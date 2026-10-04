@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { diffMetadataOnly, diffText, isProbablyText } from '../../lib/textDiff';
 import type { Change } from 'diff';
 import type { VersionRecord } from '../../types';
+import { useT } from '../hooks/useTranslation';
 
 type State =
   | { kind: 'loading' }
@@ -16,6 +17,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function DiffView({ oldVersion, newVersion }: { oldVersion: VersionRecord; newVersion: VersionRecord }) {
+  const t = useT();
   const [state, setState] = useState<State>({ kind: 'loading' });
 
   useEffect(() => {
@@ -39,18 +41,20 @@ export function DiffView({ oldVersion, newVersion }: { oldVersion: VersionRecord
     })();
   }, [oldVersion.content, newVersion.content]);
 
-  if (state.kind === 'loading') return <p className="diff-status">Loading diff…</p>;
+  if (state.kind === 'loading') return <p className="diff-status">{t.versions.loadingDiff}</p>;
   if (state.kind === 'error') return <p className="diff-status error">{state.message}</p>;
 
   if (state.kind === 'binary') {
     const delta = state.newSize - state.oldSize;
     return (
       <div className="diff-binary">
-        <p>Binary file — content changed.</p>
+        <p>{t.versions.binaryChanged}</p>
         <p>
-          Size: {formatBytes(state.oldSize)} → {formatBytes(state.newSize)} (
-          {delta >= 0 ? '+' : ''}
-          {formatBytes(Math.abs(delta))})
+          {t.versions.size(
+            formatBytes(state.oldSize),
+            formatBytes(state.newSize),
+            `${delta >= 0 ? '+' : '-'}${formatBytes(Math.abs(delta))}`
+          )}
         </p>
       </div>
     );

@@ -1,14 +1,9 @@
 import type { FileStatus } from '../../types';
-
-export const STATUS_LABEL: Record<FileStatus, string> = {
-  new: 'New',
-  modified: 'Modified',
-  deleted: 'Deleted',
-  unchanged: 'Unchanged'
-};
+import { useT } from '../hooks/useTranslation';
 
 export function StatusBadge({ status }: { status: FileStatus }) {
-  return <span className={`status-badge status-${status}`}>{STATUS_LABEL[status]}</span>;
+  const t = useT();
+  return <span className={`status-badge status-${status}`}>{t.status[status]}</span>;
 }
 
 export function StatusBadges({ statuses }: { statuses: FileStatus[] }) {

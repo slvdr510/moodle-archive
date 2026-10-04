@@ -1,11 +1,25 @@
 import { base64ToBytes } from '../lib/base64';
 import { courseStore } from '../lib/db';
+import { migrateLegacyCourseTags } from '../lib/courseTagMigration';
 import { humanizeCourseTitle, matchCourseForResource } from '../lib/courseMatcher';
-import { INITIAL_DOWNLOAD_STATE, readDownloadState, writeDownloadState, type DownloadState } from '../lib/downloadState';
+import {
+  downloadKey,
+  finishCurrent,
+  readDownloadState,
+  removeFromQueue,
+  requestDownload,
+  startNext,
+  tabGone,
+  writeDownloadState,
+  type DownloadRequestMessage,
+  type DownloadState,
+  type RequestDownloadResponse
+} from '../lib/downloadState';
 import { sha256 } from '../lib/hash';
-import type { Status } from '../content/main';
 import { markDeletedForCourse, processEntryBatchForCourse, type ProcessCourseResult } from '../lib/repository';
 import type { Course, ExtractedEntry } from '../types';
+import { installDownloadNaming } from '../lib/blobDownloadNames';
+import { loadMessages } from '../lib/i18n';
 
 interface CourseSnapshotChunkPayload {
   courseUrl: string;
@@ -32,10 +46,15 @@ function isCourseSnapshotChunkMessage(message: unknown): message is CourseSnapsh
 
 async function findOrCreateCourse(courseUrl: string, courseTitle: string): Promise<Course> {
   const courses = await courseStore.all();
+  const autoName = humanizeCourseTitle(courseTitle);
   const existing = matchCourseForResource(courseUrl, courseTitle, courses);
   if (existing) {
-    if (existing.matchedUrls.includes(courseUrl)) return existing;
-    const updated: Course = { ...existing, matchedUrls: [...existing.matchedUrls, courseUrl] };
+    if (existing.matchedUrls.includes(courseUrl) && existing.autoName === autoName) return existing;
+    const updated: Course = {
+      ...existing,
+      matchedUrls: existing.matchedUrls.includes(courseUrl) ? existing.matchedUrls : [...existing.matchedUrls, courseUrl],
+      autoName
+    };
     await courseStore.put(updated);
     return updated;
   }
@@ -43,7 +62,8 @@ async function findOrCreateCourse(courseUrl: string, courseTitle: string): Promi
   const now = Date.now();
   const course: Course = {
     id: crypto.randomUUID(),
-    name: humanizeCourseTitle(courseTitle),
+    name: autoName,
+    autoName,
     url: courseUrl,
     matchedUrls: [courseUrl],
     createdAt: now,
@@ -104,56 +124,155 @@ async function handleCourseSnapshotChunk(
   return { courseId: course.id, courseName: course.name, result };
 }
 
-// Updates are chained so two messages arriving back to back can't both read the
-// same stored state and have the later write clobber the earlier one.
-let stateUpdate: Promise<void> = Promise.resolve();
+// Every read-modify-write of the download state runs one after another, so two
+// messages arriving back to back can't both read the same stored state and have
+// the later write clobber the earlier one.
+let stateTasks: Promise<unknown> = Promise.resolve();
 
-function updateDownloadState(update: (state: DownloadState) => DownloadState): void {
-  stateUpdate = stateUpdate
-    .then(async () => writeDownloadState(update(await readDownloadState())))
-    .catch((error: unknown) => console.error('Could not persist download state:', error));
+function serialized<T>(task: () => Promise<T>): Promise<T> {
+  const run = stateTasks.then(task);
+  stateTasks = run.catch((error: unknown) => console.error('Could not update the download state:', error));
+  return run;
 }
 
+async function updateDownloadState(update: (state: DownloadState) => DownloadState): Promise<DownloadState> {
+  const state = update(await readDownloadState());
+  await writeDownloadState(state);
+  return state;
+}
+
+/** Runs the downloader in a tab. Chrome only allows it while the extension has
+ *  access to the tab — granted by opening the popup on it, lost if it navigates. */
+async function injectDownloader(tabId: number): Promise<boolean> {
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: ['content/main.js'] });
+    return true;
+  } catch (error) {
+    console.error('Could not run the downloader on this tab:', error);
+    return false;
+  }
+}
+
+/** Starts queued downloads until one actually starts or none are left. Call from
+ *  inside `serialized`. */
+async function startQueuedDownloads(): Promise<void> {
+  for (;;) {
+    const next = startNext(await readDownloadState());
+    if (!next) return;
+    await writeDownloadState(next.state);
+    if (await injectDownloader(next.download.tabId)) return;
+    const t = await loadMessages();
+    await updateDownloadState((s) => finishCurrent(s, t.download.couldNotStart(next.download.title)));
+  }
+}
+
+/** The popup asks for a tab's course: started now, or queued behind the running one. */
+function handleDownloadRequest(tabId: number): Promise<RequestDownloadResponse> {
+  return serialized(async () => {
+    const tab = await chrome.tabs.get(tabId);
+    const download = { tabId, key: downloadKey(tab.url ?? ''), title: tab.title || tab.url || '' };
+    const before = await readDownloadState();
+    const { outcome, state } = requestDownload(before, download);
+    if (outcome === 'duplicate') return { ok: true, outcome };
+    await writeDownloadState(state);
+    if (outcome === 'queued') return { ok: true, outcome };
+    if (await injectDownloader(tabId)) return { ok: true, outcome };
+    // E.g. a chrome:// page, the Web Store, or a PDF viewer tab, none of which can
+    // ever host a Moodle course. Nothing was running, so there's no queue to go on with.
+    await writeDownloadState(before);
+    return { ok: false };
+  });
+}
+
+function isFromCurrentDownload(state: DownloadState, sender: chrome.runtime.MessageSender): boolean {
+  return state.status === 'processing' && state.current !== undefined && state.current.tabId === sender.tab?.id;
+}
+
+/** Mirrors the running download's progress messages into the stored state. Messages
+ *  from any other tab are ignored — only one download runs at a time. */
 function trackDownloadState(message: unknown, sender: chrome.runtime.MessageSender): void {
   if (typeof message !== 'object' || message === null) return;
   const { topic, payload } = message as { topic?: string; payload?: unknown };
 
+  const whenCurrent = (update: (state: DownloadState) => DownloadState) =>
+    void serialized(() => updateDownloadState((s) => (isFromCurrentDownload(s, sender) ? update(s) : s)));
+
   switch (topic) {
     case 'status':
       if (payload === 'processing') {
-        updateDownloadState(() => ({ ...INITIAL_DOWNLOAD_STATE, status: 'processing', tabId: sender.tab?.id }));
-      } else {
-        updateDownloadState((s) => ({ ...s, status: payload as Status, tabId: undefined }));
+        whenCurrent((s) => ({ ...s, statusLog: undefined, downloadCount: 0, progress: undefined }));
+      } else if (payload === 'finished') {
+        void serialized(async () => {
+          await updateDownloadState((s) => (isFromCurrentDownload(s, sender) ? finishCurrent(s) : s));
+          await startQueuedDownloads();
+        });
       }
       break;
     case 'status-log':
-      updateDownloadState((s) => ({ ...s, statusLog: payload as string }));
+      whenCurrent((s) => ({ ...s, statusLog: payload as string }));
       break;
     case 'downloaded':
-      updateDownloadState((s) => ({ ...s, downloadCount: s.downloadCount + 1 }));
+      whenCurrent((s) => ({ ...s, downloadCount: s.downloadCount + 1 }));
       break;
     case 'download-progress':
-      updateDownloadState((s) => ({ ...s, progress: payload as DownloadState['progress'] }));
+      whenCurrent((s) => ({ ...s, progress: payload as DownloadState['progress'] }));
       break;
   }
 }
 
 // The content script dies with its tab or on navigation, without ever reporting
-// 'finished' — which would leave the popup showing "processing" forever.
-function interruptIfDownloadTab(tabId: number): void {
-  updateDownloadState((s) =>
-    s.status === 'processing' && s.tabId === tabId
-      ? { ...s, status: 'finished', statusLog: 'Download interrupted: the tab was closed or navigated away.', tabId: undefined }
-      : s
-  );
+// 'finished' — which would leave the popup showing "processing" forever, and the
+// queue stuck behind it. A queued tab that goes away can't be downloaded either.
+function handleTabGone(tabId: number): void {
+  void serialized(async () => {
+    const t = await loadMessages();
+    await updateDownloadState((s) => tabGone(s, tabId, t.download.interrupted));
+    await startQueuedDownloads();
+  });
 }
 
-chrome.tabs.onRemoved.addListener(interruptIfDownloadTab);
+function isDownloadRequestMessage(message: unknown): message is DownloadRequestMessage {
+  const topic = typeof message === 'object' && message !== null ? (message as { topic?: unknown }).topic : undefined;
+  return topic === 'request-download' || topic === 'remove-queued-download' || topic === 'download-result-seen';
+}
+
+/** Handles the popup's requests; returns true when `sendResponse` will be called. */
+function handleDownloadRequestMessage(message: DownloadRequestMessage, sendResponse: (response: unknown) => void): boolean {
+  switch (message.topic) {
+    case 'request-download':
+      handleDownloadRequest(message.payload.tabId)
+        .then(sendResponse)
+        .catch((error: unknown) => {
+          console.error('Could not start the download:', error);
+          sendResponse({ ok: false } satisfies RequestDownloadResponse);
+        });
+      return true;
+    case 'remove-queued-download':
+      void serialized(() => updateDownloadState((s) => removeFromQueue(s, message.payload.tabId)));
+      return false;
+    case 'download-result-seen':
+      void serialized(() => updateDownloadState((s) => (s.status === 'finished' ? { ...s, finishedSeen: true } : s)));
+      return false;
+  }
+}
+
+installDownloadNaming();
+
+// Courses tagged before tags were tracked get their tag recognized right after the
+// extension updates (or on the next browser start, if that run didn't finish).
+function runCourseTagMigration(): void {
+  migrateLegacyCourseTags().catch((error: unknown) => console.error('Could not migrate course tags:', error));
+}
+chrome.runtime.onInstalled.addListener(runCourseTagMigration);
+chrome.runtime.onStartup.addListener(runCourseTagMigration);
+
+chrome.tabs.onRemoved.addListener(handleTabGone);
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (changeInfo.status === 'loading') interruptIfDownloadTab(tabId);
+  if (changeInfo.status === 'loading') handleTabGone(tabId);
 });
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  if (isDownloadRequestMessage(message)) return handleDownloadRequestMessage(message, sendResponse);
   trackDownloadState(message, sender);
 
   if (!isCourseSnapshotChunkMessage(message)) {

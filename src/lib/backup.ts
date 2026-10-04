@@ -1,6 +1,8 @@
 import JSZip from 'jszip';
+import { downloadBlobUrl } from './blobDownloadNames';
 import { courseStore, fileStore, recentOpenStore, versionStore } from './db';
 import { guessMimeType } from './fileKind';
+import { getMessages } from './i18n';
 import { processEntryBatchForCourse } from './repository';
 import type { Course, ExtractedEntry, FileRecord, RecentOpenRecord, VersionRecord } from '../types';
 
@@ -57,11 +59,7 @@ async function buildBackupZip(
 }
 
 async function downloadZip(blob: Blob, filename: string): Promise<void> {
-  const url = URL.createObjectURL(blob);
-  await chrome.downloads.download({ url, filename });
-  // chrome.downloads.download reads the blob asynchronously in the background;
-  // give it plenty of time to finish before freeing the underlying data.
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  await downloadBlobUrl(URL.createObjectURL(blob), filename);
 }
 
 function safeFilenamePart(name: string): string {
@@ -100,7 +98,7 @@ export async function exportAllData(): Promise<void> {
 export async function exportCourse(courseId: string): Promise<void> {
   const course = await courseStore.get(courseId);
   if (!course) {
-    throw new Error('Course not found.');
+    throw new Error(getMessages().backup.courseNotFound);
   }
 
   const files = await fileStore.byCourse(courseId);
@@ -118,7 +116,7 @@ export async function exportCourse(courseId: string): Promise<void> {
 /** The file given to `importAllData` isn't a zip in the format `exportAllData`/`exportCourse` produce. */
 export class InvalidBackupError extends Error {
   constructor(reason: string) {
-    super(`Not a valid Moodle Archive backup (${reason}).`);
+    super(getMessages().backup.invalid(reason));
     this.name = 'InvalidBackupError';
   }
 }
@@ -133,17 +131,17 @@ async function readManifest(file: File | Blob): Promise<{ zip: JSZip; manifest: 
   try {
     zip = await JSZip.loadAsync(file);
   } catch {
-    throw new InvalidBackupError('not a zip file');
+    throw new InvalidBackupError(getMessages().backup.notZip);
   }
 
   const manifestEntry = zip.file(MANIFEST_NAME);
-  if (!manifestEntry) throw new InvalidBackupError('missing data.json');
+  if (!manifestEntry) throw new InvalidBackupError(getMessages().backup.missingManifest);
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(await manifestEntry.async('string'));
   } catch {
-    throw new InvalidBackupError('data.json is not valid JSON');
+    throw new InvalidBackupError(getMessages().backup.invalidJson);
   }
 
   const manifest = parsed as Partial<BackupManifest> | null;
@@ -156,7 +154,7 @@ async function readManifest(file: File | Blob): Promise<{ zip: JSZip; manifest: 
     !isList(manifest.versions) ||
     !manifest.courses.every((c) => typeof (c as Course)?.id === 'string')
   ) {
-    throw new InvalidBackupError('data.json does not describe courses');
+    throw new InvalidBackupError(getMessages().backup.noCourses);
   }
 
   return { zip, manifest: { ...manifest, recentOpens: isList(manifest.recentOpens) ? manifest.recentOpens : [] } as BackupManifest };

@@ -58,9 +58,14 @@ body {
 }
 
 .app {
-  max-width: 980px;
+  /* The width is set inline from the side-margin setting (see contentWidth in
+     sideMargin.ts): fixed against the screen, so neither zoom nor a narrower window
+     shrinks it — up to taking the whole window. */
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 28px 56px;
+  /* A constant gutter, not a share of the window: one that grew with the window
+     would make the rows inside narrower as the window widened past the content. */
+  padding: 0 16px 56px;
 }
 
 .app-header {
@@ -74,6 +79,10 @@ body {
   display: flex;
   align-items: baseline;
   gap: 10px;
+  /* Always one line: when space runs short, the credit is cut off with "…"
+     rather than the title wrapping or the controls dropping to a second row. */
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .app-logo {
@@ -82,12 +91,13 @@ body {
 }
 
 .app-header h1 {
+  flex-shrink: 0;
   cursor: pointer;
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
   /* Equal top/bottom (same total as before) so the title's text sits at the
-     true vertical center of the header row, matching the date/theme/"⋮"
+     true vertical center of the header row, matching the language/theme/"⋮"
      buttons on the right (which .app-header centers as a whole row). The
      previous 26/22 split left the text a couple pixels off-center. */
   padding: 24px 0;
@@ -95,6 +105,9 @@ body {
 }
 
 .app-credit {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 12.5px;
   color: var(--muted);
   text-decoration: none;
@@ -109,13 +122,14 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
-.date-format-picker {
+.header-picker {
   position: relative;
 }
 
-.date-format-trigger {
+.header-picker-trigger {
   background: none;
   border: none;
   border-radius: 8px;
@@ -129,27 +143,31 @@ body {
   transition: background 0.12s ease, color 0.12s ease;
 }
 
-.date-format-trigger:hover {
+.header-picker-trigger:hover {
   background: color-mix(in srgb, var(--fg) 6%, transparent);
   color: var(--fg);
 }
 
-.date-format-menu {
+.header-picker-menu {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  /* Centered under the button. */
+  left: 50%;
+  translate: -50% 0;
   z-index: 20;
   list-style: none;
   margin: 0;
   padding: 4px;
   min-width: 140px;
+  max-height: min(70vh, 420px);
+  overflow-y: auto;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
 }
 
-.date-format-menu-item {
+.header-picker-item {
   display: block;
   width: 100%;
   padding: 8px 10px;
@@ -160,15 +178,15 @@ body {
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
-.date-format-menu-item:hover {
+.header-picker-item:hover {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
-.date-format-menu-item.active {
+.header-picker-item.active {
   background: var(--accent);
   color: white;
 }
@@ -288,7 +306,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .toolbar-menu-button {
@@ -342,6 +360,9 @@ body {
 .recent-file-item {
   position: relative;
   display: flex;
+  /* A long name is cut off (see .file-name) rather than overflowing the page. */
+  max-width: 100%;
+  min-width: 0;
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -359,6 +380,9 @@ body {
 }
 
 .recent-file-open {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
   appearance: none;
   -webkit-appearance: none;
   background: none;
@@ -390,7 +414,7 @@ body {
   -webkit-appearance: none;
   position: absolute;
   top: 50%;
-  right: 5px;
+  inset-inline-end: 5px;
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
@@ -662,7 +686,7 @@ button.course-open-url {
   border: none;
   border-bottom: 1px solid var(--border);
   color: var(--fg);
-  text-align: left;
+  text-align: start;
   padding: 9px 14px;
   font-size: 13.5px;
   font-weight: 500;
@@ -679,7 +703,8 @@ button.course-open-url {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
-.dropdown-menu button.danger-item {
+/* Destructive items look like the rest until hovered, so the menu doesn't shout. */
+.dropdown-menu button.danger-item:hover {
   color: var(--deleted);
 }
 
@@ -799,6 +824,18 @@ button.course-open-url {
   font-weight: 700;
 }
 
+.confirm-modal-title {
+  /* Titles quote filenames like "Simulador_de_modelos_avanzados_de_gestion.zip",
+     which have no spaces to break on: break anywhere so they stay inside the
+     modal, and cut them off after three lines (the full title is in the tooltip). */
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -843,6 +880,18 @@ button.course-open-url {
   font-size: 14px;
 }
 
+.modal input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dims the label text along with its disabled input, so it's obvious the field
+   doesn't apply right now (e.g. a maximum while "No limit" is checked). */
+.modal label:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -884,7 +933,8 @@ button.course-open-url {
   }
 }
 
-.file-row {
+.file-row,
+.folder-row {
   border-bottom: 1px solid var(--border);
 }
 
@@ -908,7 +958,7 @@ button.course-open-url {
   position: absolute;
   top: 0;
   bottom: -1px;
-  left: 16px;
+  inset-inline-start: 16px;
   display: flex;
   pointer-events: none;
 }
@@ -924,7 +974,7 @@ button.course-open-url {
 .tree-guide.elbow::before {
   content: '';
   position: absolute;
-  left: 7px;
+  inset-inline-start: 7px;
   top: 0;
   bottom: 0;
   width: 1px;
@@ -935,7 +985,7 @@ button.course-open-url {
 .tree-guide.elbow::after {
   content: '';
   position: absolute;
-  left: 7px;
+  inset-inline-start: 7px;
   top: calc(var(--row-mid) - 1px);
   width: 11px;
   height: 1px;
@@ -948,7 +998,7 @@ button.course-open-url {
   width: 11px;
   height: var(--row-mid);
   background: none;
-  border-left: 1px solid var(--guide);
+  border-inline-start: 1px solid var(--guide);
   border-bottom: 1px solid var(--guide);
   border-bottom-left-radius: 7px;
 }
@@ -970,53 +1020,95 @@ button.course-open-url {
   background: var(--surface);
 }
 
-.file-path {
-  /* Takes whatever room the meta column leaves and truncates with "…" instead of
-     wrapping or pushing the meta column, so it stays put on every row. */
+/* Takes whatever room the meta column leaves; the name inside truncates (see
+   .file-name) instead of wrapping or pushing the meta column, so that stays put. */
+.file-path-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+}
+
+.file-path {
+  /* Only as wide as the name, so the version count follows it right away. */
+  flex: 0 1 auto;
   font-size: 14.5px;
 }
 
+.file-path-group .version-count {
+  flex-shrink: 0;
+}
+
+/* See FileName.tsx: the name is cut off with "…" just before its extension, which
+   never shrinks, so the extension stays visible however narrow the row gets. */
+.file-name {
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.file-name-base {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-name-ext {
+  flex-shrink: 0;
+}
+
 .file-row-meta {
+  /* The visible space between neighbours on a file row: filename (with its version
+     count), badge, date and the first action button's icon are all this far apart. */
+  --meta-gap: 16px;
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 8px;
-  margin-left: 16px;
+  gap: var(--meta-gap);
+  margin-inline-start: var(--meta-gap);
+}
+
+/* The two action buttons stay closer together than the columns are. */
+.file-row-meta .row-action-button + .row-action-button {
+  margin-inline-start: calc(8px - var(--meta-gap));
 }
 
 .file-date {
-  /* Fixed width + right-aligned so the relative-time labels ("just now", "3d ago",
-     "11mo ago") end at the same x on every row. */
-  width: 64px;
-  text-align: right;
-  margin-right: 4px;
+  /* One width on every row so the columns to its left line up: that of the widest
+     label in the list (see useDateColumnWidth), or before it's measured, enough for
+     the longest one there can be ("hace 11 meses"). */
+  width: var(--file-date-width, 92px);
+  text-align: start;
+  /* Pulls the next button in by its padding around the icon (26px button, 16px icon),
+     so the gap to the icon itself is --meta-gap like everywhere else. */
+  margin-inline-end: -5px;
   white-space: nowrap;
   color: var(--muted);
+  /* The filename's size, so this box is exactly as tall as the filename's and, both
+     being centered in the row, has its baseline at the same height. The smaller label
+     inside then sits on that baseline, in line with the filename's text. */
+  font-size: 14.5px;
+}
+
+.file-date-text {
   font-size: 12.5px;
 }
 
-.file-meta-slot {
+.file-status-slot {
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-shrink: 0;
 }
 
-.file-version-slot {
-  width: 32px;
-}
-
-.file-status-slot {
-  /* Wide enough for the longest badge ("Deleted"), which is centered in it. */
-  width: 72px;
+.file-status-slot:empty {
+  display: none;
 }
 
 .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   padding: 2px 4px;
@@ -1027,6 +1119,12 @@ button.course-open-url {
   opacity: 0.75;
   border-radius: 6px;
   transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+/* Inline SVGs sit on the text baseline, a few pixels off their button's middle. */
+.icon-button svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .icon-button:hover {
@@ -1073,6 +1171,7 @@ button.course-open-url {
 }
 
 .version-count {
+  line-height: 1;
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
@@ -1110,6 +1209,10 @@ button.course-open-url {
 
 .folder-name {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 14.5px;
 }
 
@@ -1141,12 +1244,42 @@ button.course-open-url {
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 500;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
-.version-picker-list li:last-child .version-picker-item {
+.version-picker-list li:last-child .version-picker-item,
+.version-picker-list li:last-child.version-picker-row {
   border-bottom: none;
+}
+
+/* The item button and, for older versions, a delete button beside it. */
+.version-picker-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.version-picker-row .version-picker-item {
+  flex: 1;
+  min-width: 0;
+  border-bottom: none;
+}
+
+.version-picker-row .version-delete-button {
+  margin-inline-end: 8px;
+}
+
+.version-delete-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.version-delete-button:hover {
+  color: var(--deleted);
 }
 
 .version-picker-item:hover {
@@ -1201,9 +1334,16 @@ button.course-open-url {
 }
 
 .status-badge {
+  /* A fixed-height flex box, so the text sits in its exact middle rather than
+     wherever the font's line height puts it. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  line-height: 1;
   font-size: 11.5px;
   font-weight: 600;
-  padding: 3px 9px;
+  padding: 0 9px;
   border-radius: 999px;
   color: white;
   white-space: nowrap;
@@ -1300,7 +1440,7 @@ button.course-open-url {
 }
 
 .folder-row-header .row-action-button {
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 .drop-overlay {
@@ -1352,7 +1492,7 @@ button.course-open-url {
 
 .upload-options select,
 .upload-options > input[type='text'] {
-  margin-left: 24px;
+  margin-inline-start: 24px;
   padding: 9px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1363,7 +1503,7 @@ button.course-open-url {
 }
 
 .upload-hint {
-  margin-left: 24px;
+  margin-inline-start: 24px;
   font-size: 12px;
   color: var(--muted);
 }
@@ -1383,6 +1523,75 @@ button.course-open-url {
   width: fit-content;
   min-width: 360px;
   max-width: min(640px, calc(100vw - 32px));
+}
+
+.recent-settings-modal {
+  /* Grows so the "Maximum…" label fits on one line (see .upload-modal), never
+     wider than the window. */
+  width: fit-content;
+  min-width: 360px;
+  max-width: calc(100vw - 32px);
+}
+
+.side-margin-modal {
+  /* Its width is set inline to the content's (see SideMarginModal); this only keeps
+     it off the window's edges when the content takes the whole window. */
+  max-width: calc(100vw - 32px);
+}
+
+.side-margin-slider {
+  white-space: nowrap;
+}
+
+/* The current label and an invisible copy of the longest one share one grid cell, so
+   the cell is always the longest one's width. */
+.side-margin-value {
+  display: inline-grid;
+}
+
+.side-margin-value > span {
+  grid-area: 1 / 1;
+}
+
+.side-margin-value-sizer {
+  visibility: hidden;
+}
+
+.side-margin-slider input[type='range'] {
+  margin: 0;
+  padding: 0;
+  border: none;
+  accent-color: var(--accent);
+}
+
+/* The thumb's center travels from half a thumb (16px) in from one end of the input
+   to half a thumb in from the other, so the labels are spread over that same span. */
+.side-margin-ticks {
+  position: relative;
+  height: 14px;
+  margin: 4px 8px 0;
+  font-size: 11px;
+}
+
+/* A zero-width anchor at the step's point, with its label centered over it (a flex
+   container centers an overflowing child on both sides, in either direction). */
+.side-margin-tick {
+  position: absolute;
+  top: 0;
+  width: 0;
+  display: flex;
+  justify-content: center;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.side-margin-tick.active {
+  color: var(--fg);
+  opacity: 1;
+}
+
+.recent-settings-max {
+  white-space: nowrap;
 }
 
 .upload-modal h2 {

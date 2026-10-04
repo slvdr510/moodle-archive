@@ -5,10 +5,14 @@ import { courseStore, deleteCourse, resetTrackedData } from '../../lib/db';
 import type { Course } from '../../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CourseRow } from '../components/CourseRow';
+import { DownloadNameSettingsModal } from '../components/DownloadNameSettingsModal';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { HiddenCoursesModal } from '../components/HiddenCoursesModal';
+import { RecentSettingsModal } from '../components/RecentSettingsModal';
+import { SideMarginModal } from '../components/SideMarginModal';
 import { Spinner } from '../components/Spinner';
 import { useFileDrop } from '../hooks/useFileDrop';
+import { useT } from '../hooks/useTranslation';
 
 type TransientMessage = { kind: 'info' | 'error'; text: string };
 type PendingExport = { kind: 'all' } | { kind: 'course'; course: Course };
@@ -26,6 +30,7 @@ export function CoursesPage({
   /** DOM node in the app header to portal the "⋮" overflow menu into. */
   headerMenuSlot: HTMLDivElement | null;
 }) {
+  const t = useT();
   const [courses, setCourses] = useState<Course[]>([]);
   // Distinguishes "genuinely no courses" from "haven't loaded yet" — without
   // it, navigating back to this view remounts it with courses briefly empty,
@@ -38,6 +43,9 @@ export function CoursesPage({
   const [pendingExport, setPendingExport] = useState<PendingExport | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [showHiddenModal, setShowHiddenModal] = useState(false);
+  const [showRecentSettings, setShowRecentSettings] = useState(false);
+  const [showDownloadNameSettings, setShowDownloadNameSettings] = useState(false);
+  const [showSideMargin, setShowSideMargin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function reload() {
@@ -63,7 +71,7 @@ export function CoursesPage({
   }, []);
 
   async function handleRenameCourse(course: Course, name: string) {
-    await courseStore.put({ ...course, name });
+    await courseStore.put({ ...course, name, tagged: true });
     await reload();
   }
 
@@ -116,9 +124,9 @@ export function CoursesPage({
     setBusy('export');
     try {
       await exportAllData();
-      setMessage({ kind: 'info', text: 'Backup saved to your Downloads folder.' });
+      setMessage({ kind: 'info', text: t.courses.backupSaved });
     } catch (err) {
-      setMessage({ kind: 'error', text: `Could not export: ${String(err)}` });
+      setMessage({ kind: 'error', text: t.courses.couldNotExportAll(String(err)) });
     } finally {
       setBusy(null);
     }
@@ -129,9 +137,9 @@ export function CoursesPage({
     setBusy('export');
     try {
       await exportCourse(course.id);
-      setMessage({ kind: 'info', text: `"${course.name}" saved to your Downloads folder.` });
+      setMessage({ kind: 'info', text: t.common.savedToDownloads(course.name) });
     } catch (err) {
-      setMessage({ kind: 'error', text: `Could not export "${course.name}": ${String(err)}` });
+      setMessage({ kind: 'error', text: t.common.couldNotExport(course.name, String(err)) });
     } finally {
       setBusy(null);
     }
@@ -148,7 +156,7 @@ export function CoursesPage({
       .map(courseUrlOf)
       .filter((url): url is string => Boolean(url));
     if (urls.length === 0) {
-      setMessage({ kind: 'error', text: 'No course URLs to open.' });
+      setMessage({ kind: 'error', text: t.courses.noUrlsToOpen });
       return;
     }
     setMessage(null);
@@ -193,12 +201,12 @@ export function CoursesPage({
 
     const parts: string[] = [];
     if (importedCount > 0) {
-      parts.push(`Imported ${total.courses} course(s), ${total.files} file(s), ${total.versions} version(s).`);
+      parts.push(t.courses.imported(total.courses, total.files, total.versions));
     }
     for (const name of invalid) {
-      parts.push(`"${name}" is not a zip file in the course format used by this extension.`);
+      parts.push(t.courses.notABackup(name));
     }
-    if (failures.length > 0) parts.push(`Could not import ${failures.join('; ')}`);
+    if (failures.length > 0) parts.push(t.courses.couldNotImport(failures.join('; ')));
     setMessage({ kind: invalid.length > 0 || failures.length > 0 ? 'error' : 'info', text: parts.join(' ') });
   }
 
@@ -212,7 +220,7 @@ export function CoursesPage({
   // a file that isn't one. Ignored while something is already running or a dialog is open.
   const draggingFiles = useFileDrop(
     (dropped) => void importBackups(dropped),
-    busy !== null || pendingExport !== null || pendingDelete !== null || showHiddenModal
+    busy !== null || pendingExport !== null || pendingDelete !== null || showHiddenModal || showRecentSettings || showDownloadNameSettings || showSideMargin
   );
 
   const visibleCourses = courses.filter((c) => !c.hidden);
@@ -223,15 +231,18 @@ export function CoursesPage({
       {headerMenuSlot &&
         createPortal(
           <DropdownMenu
-            title="More options"
+            title={t.common.moreOptions}
             buttonClassName="secondary toolbar-menu-button"
             disabled={busy !== null}
             items={[
-              { label: 'Export all courses', onClick: () => setPendingExport({ kind: 'all' }) },
-              { label: 'Import course(s)', onClick: handleImportClick },
-              { label: 'Open all course URLs', onClick: handleOpenAllCourseUrls },
-              { label: 'Show hidden courses', onClick: () => setShowHiddenModal(true) },
-              { label: 'Delete all courses', onClick: () => setPendingDelete({ kind: 'all' }), danger: true }
+              { label: t.courses.openAllUrls, onClick: handleOpenAllCourseUrls },
+              { label: t.courses.exportAll, onClick: () => setPendingExport({ kind: 'all' }) },
+              { label: t.courses.importCourses, onClick: handleImportClick },
+              { label: t.courses.recentSettings, onClick: () => setShowRecentSettings(true) },
+              { label: t.courses.downloadNameSettings, onClick: () => setShowDownloadNameSettings(true) },
+              { label: t.courses.sideMargin, onClick: () => setShowSideMargin(true) },
+              { label: t.courses.hiddenCourses, onClick: () => setShowHiddenModal(true) },
+              { label: t.courses.deleteAll, onClick: () => setPendingDelete({ kind: 'all' }), danger: true }
             ]}
           />,
           headerMenuSlot
@@ -247,7 +258,7 @@ export function CoursesPage({
 
       {busy && (
         <div className="busy-notice">
-          <Spinner label={busy === 'export' ? 'Exporting…' : 'Importing…'} />
+          <Spinner label={busy === 'export' ? t.common.exporting : t.common.importing} />
         </div>
       )}
 
@@ -255,19 +266,19 @@ export function CoursesPage({
 
       {draggingFiles && (
         <div className="drop-overlay" aria-hidden="true">
-          <div className="drop-overlay-message">Drop .zip backups to import their courses</div>
+          <div className="drop-overlay-message">{t.courses.dropBackups}</div>
         </div>
       )}
 
       {pendingExport && (
         <ConfirmModal
-          title={pendingExport.kind === 'all' ? 'Export all courses?' : `Export "${pendingExport.course.name}"?`}
+          title={pendingExport.kind === 'all' ? t.courses.exportAllTitle : t.courses.exportCourseTitle(pendingExport.course.name)}
           message={
             pendingExport.kind === 'all'
-              ? 'Every tracked course, file, and version will be saved to a single zip in your Downloads folder.'
-              : 'The course, its files, and every version will be saved to a zip in your Downloads folder.'
+              ? t.courses.exportAllMessage
+              : t.courses.exportCourseMessage
           }
-          confirmLabel="Export"
+          confirmLabel={t.common.export}
           onCancel={() => setPendingExport(null)}
           onConfirm={() => {
             const target = pendingExport;
@@ -280,15 +291,13 @@ export function CoursesPage({
 
       {pendingDelete && (
         <ConfirmModal
-          title={pendingDelete.kind === 'all' ? 'Delete all courses?' : `Delete "${pendingDelete.course.name}"?`}
+          title={pendingDelete.kind === 'all' ? t.courses.deleteAllTitle : t.courses.deleteCourseTitle(pendingDelete.course.name)}
           message={
             pendingDelete.kind === 'all'
-              ? 'This clears every course, file, and version history tracked by the extension. ' +
-                'Download a course again afterwards to start rebuilding its history.'
-              : 'This removes it and its tracked file/version history. If you download this course ' +
-                'again later, it will just be re-created from scratch.'
+              ? t.courses.deleteAllMessage
+              : t.courses.deleteCourseMessage
           }
-          confirmLabel="Delete"
+          confirmLabel={t.common.delete}
           danger
           onCancel={() => setPendingDelete(null)}
           onConfirm={() => {
@@ -307,6 +316,12 @@ export function CoursesPage({
           onClose={() => setShowHiddenModal(false)}
         />
       )}
+
+      {showRecentSettings && <RecentSettingsModal onClose={() => setShowRecentSettings(false)} />}
+
+      {showDownloadNameSettings && <DownloadNameSettingsModal onClose={() => setShowDownloadNameSettings(false)} />}
+
+      {showSideMargin && <SideMarginModal onClose={() => setShowSideMargin(false)} />}
 
       <ul className="course-list">
         {visibleCourses.map((course) => (
@@ -341,21 +356,25 @@ export function CoursesPage({
                     <path d="M3 7h18v3H3zM5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9M10 14h4" />
                   </svg>
                 </div>
-                <h2 className="empty-title">No courses yet</h2>
-                <p className="empty-subtitle">Courses are created automatically the first time you download one.</p>
+                <h2 className="empty-title">{t.courses.emptyTitle}</h2>
+                <p className="empty-subtitle">{t.courses.emptySubtitle}</p>
                 <ol className="empty-steps">
-                  <li>Open a course in Moodle</li>
-                  <li>Click the extension icon</li>
+                  <li>{t.courses.emptyStep1}</li>
+                  <li>{t.courses.emptyStep2}</li>
                   <li>
-                    Press <strong>Download</strong>
+                    {t.courses.emptyStep3Before}
+                    <strong>{t.popup.download}</strong>
+                    {t.courses.emptyStep3After}
                   </li>
                 </ol>
                 <p className="empty-hint">
-                  Already have a backup? Drop its <strong>.zip</strong> anywhere on this page to import it.
+                  {t.courses.emptyHintBefore}
+                  <strong>.zip</strong>
+                  {t.courses.emptyHintAfter}
                 </p>
               </>
             ) : (
-              'All your courses are hidden. Use "Show hidden courses" in the ⋮ menu to bring one back.'
+              t.courses.allHidden
             )}
           </li>
         )}

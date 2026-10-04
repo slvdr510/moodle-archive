@@ -2,15 +2,21 @@
 // JSZip packaging + save-to-disk step replaced by handing the crawled entries straight
 // back to the background worker (see main.ts) for in-IndexedDB versioning.
 import { bytesToBase64 } from '../lib/base64';
+import { en, type Messages } from '../lib/locales/en';
+import { MOODLE_URL_PATTERNS, type MoodleResourceType } from '../lib/moodleUrl';
 import { message } from './message';
 import { randStr, stableSuffix } from './util';
 
-type ResourceType = 'courseView' | 'courseResources' | 'modFolderView' | 'modResourceView' | 'pluginfile';
+type ResourceType = MoodleResourceType;
 interface Resource {
   name: string;
   type: ResourceType;
   url: string;
 }
+
+/** Thrown when a file can't be downloaded, which cancels the course's download.
+ *  Its message is the one to show the user. */
+export class DownloadCancelledError extends Error {}
 
 interface PartialMoodleFile {
   resourceName: string;
@@ -58,12 +64,7 @@ export interface CrawlResult {
   entries: CrawledEntry[];
 }
 
-const filters = new Map<ResourceType, RegExp>();
-filters.set('courseView', /(.*\/course\/view\.php\?id=[0-9]+).*/);
-filters.set('courseResources', /(.*\/course\/resources\.php\?id=[0-9]+).*/);
-filters.set('modResourceView', /(.*\/resource\/view\.php\?id=[0-9]+).*/);
-filters.set('modFolderView', /(.*\/folder\/view\.php\?id=[0-9]+).*/);
-filters.set('pluginfile', /(.*\/pluginfile\.php.*)/);
+const filters = new Map<ResourceType, RegExp>(MOODLE_URL_PATTERNS);
 
 export function convertUrlToResource(url: HTMLAnchorElement | string): Resource | undefined {
   if (url instanceof HTMLAnchorElement) {
@@ -122,6 +123,8 @@ function getUrlWithoutHashtag(url: string): string {
 }
 
 const crawlingQueue: [Resource, string][] = [];
+// The progress lines' language, set for each crawl by crawlCourse.
+let t: Messages = en;
 const resourceUrlsFound = new Set<string>();
 
 async function getMoodleFiles(
@@ -151,7 +154,7 @@ async function getMoodleFiles(
         ''
       ]);
     } else if (['courseResources', 'modFolderView'].includes(type)) {
-      message<string>('status-log', `Processing ${url}`);
+      message<string>('status-log', t.download.processing(url));
 
       const response = await fetchWithStallGuard(url);
       const domParser = new DOMParser();
@@ -192,7 +195,7 @@ async function getMoodleFiles(
         }
       }
     } else if (['modResourceView', 'pluginfile'].includes(type)) {
-      message<string>('status-log', `Processing ${url}`);
+      message<string>('status-log', t.download.processing(url));
       const partialMoodleFile: PartialMoodleFile = {
         resourceName: name,
         sourceUrl: url,
@@ -218,7 +221,7 @@ const STALL_TIMEOUT_MS = 20_000;
 /** Aborts `fetch(url)` if the server never even responds with headers in time. */
 function fetchWithStallGuard(url: string): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new DOMException('Timed out waiting for a response', 'TimeoutError')), STALL_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(new DOMException(t.download.noResponse, 'TimeoutError')), STALL_TIMEOUT_MS);
   return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
@@ -226,7 +229,7 @@ function fetchWithStallGuard(url: string): Promise<Response> {
  *  connection that goes quiet mid-download (rather than never starting) is caught too. */
 function withStallTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new DOMException('Stalled: no data received in time', 'TimeoutError')), ms);
+    const timer = setTimeout(() => reject(new DOMException(t.download.stalled, 'TimeoutError')), ms);
     promise.then(
       (value) => {
         clearTimeout(timer);
@@ -325,7 +328,7 @@ async function downloadMoodleFiles(partialMoodleFiles: PartialMoodleFile[]): Pro
   // throughput without a jarring hard-zero flash on every file.
   let totalBytesSoFar = 0;
   for (const [idx, partialMoodleFile] of partialMoodleFiles.entries()) {
-    message<string>('status-log', `Downloading ${partialMoodleFile.resourceName}`);
+    message<string>('status-log', t.download.downloadingFile(partialMoodleFile.resourceName));
 
     let response: Response;
     let bytes: Uint8Array;
@@ -335,10 +338,10 @@ async function downloadMoodleFiles(partialMoodleFiles: PartialMoodleFile[]): Pro
         message<FileDownloadProgress>('download-bytes', { current: totalBytesSoFar + current });
       });
     } catch (err) {
-      const reason = err instanceof Error ? err.message : 'download failed';
-      message<string>('status-log', `Skipped "${partialMoodleFile.resourceName}" (${reason})`);
-      message('download-progress', { current: idx + 1, total: partialMoodleFiles.length });
-      continue;
+      // One file failing (e.g. the connection dropping) cancels the whole course: saved
+      // without it, the file would look deleted from Moodle when it's still there.
+      const reason = err instanceof Error ? err.message : t.download.downloadFailed;
+      throw new DownloadCancelledError(t.download.cancelled(partialMoodleFile.resourceName, reason));
     }
     totalBytesSoFar += bytes.byteLength;
 
@@ -404,22 +407,23 @@ function init(): void {
 }
 
 /** Crawls and downloads every resource reachable from `url`, without touching disk. */
-export async function crawlCourse(url: string): Promise<CrawlResult | undefined> {
+export async function crawlCourse(url: string, messages: Messages = en): Promise<CrawlResult | undefined> {
+  t = messages;
   init();
   const initialResource = convertUrlToResource(url);
   if (!initialResource) {
-    message<string>('status-log', `Unsupported url: ${url}.`);
+    message<string>('status-log', t.download.unsupportedUrl(url));
     return undefined;
   }
 
-  message<string>('status-log', 'Processing links...');
+  message<string>('status-log', t.download.processingLinks);
   const { moodleFiles: partialMoodleFiles, courseTitle } = await getMoodleFiles(initialResource);
 
-  message<string>('status-log', 'Downloading files...');
+  message<string>('status-log', t.download.downloadingFiles);
   const moodleFiles = await downloadMoodleFiles(partialMoodleFiles);
 
   if (moodleFiles.length === 0) {
-    message<string>('status-log', 'No file found.');
+    message<string>('status-log', t.download.noFileFound);
     return { courseTitle, courseUrl: initialResource.url, entries: [] };
   }
 

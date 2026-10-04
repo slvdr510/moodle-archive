@@ -113,7 +113,7 @@ describe('CourseFilesPage manual upload into a new folder', () => {
     await userEvent.upload(container.querySelector('input[type=file]') as HTMLInputElement, new File(['hello'], 'mio.pdf', { type: 'application/pdf' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Add' }));
 
-    expect(await screen.findByText('mio.pdf')).toBeInTheDocument();
+    expect(await screen.findByTitle('mio.pdf')).toBeInTheDocument();
     expect(screen.getAllByText('Manual')).toHaveLength(1);
   });
 });

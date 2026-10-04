@@ -2,6 +2,7 @@ import { useState, type DragEvent } from 'react';
 import { formatRelativeTime } from '../../lib/relativeTime';
 import type { Course } from '../../types';
 import { DropdownMenu } from './DropdownMenu';
+import { useT } from '../hooks/useTranslation';
 
 export function CourseRow({
   course,
@@ -30,6 +31,7 @@ export function CourseRow({
   isDragging: boolean;
   isDragOver: boolean;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(course.name);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -37,7 +39,7 @@ export function CourseRow({
   function commit() {
     setEditing(false);
     const trimmed = draft.trim();
-    if (trimmed && trimmed !== course.name) {
+    if (trimmed && (trimmed !== course.name || !course.tagged)) {
       onRename(trimmed);
     } else {
       setDraft(course.name);
@@ -80,14 +82,14 @@ export function CourseRow({
       )}
 
       <div className="course-row-right">
-        <span className="course-last-synced" title="Last downloaded">
-          {formatRelativeTime(course.lastSyncedAt)}
+        <span className="course-last-synced" title={t.courseRow.lastDownloaded}>
+          {formatRelativeTime(course.lastSyncedAt, Date.now(), t)}
         </span>
 
         {courseUrl && (
           <button
             className="icon-button course-open-url"
-            title="Open the course in Moodle"
+            title={t.courseRow.openInMoodle}
             onClick={(e) => {
               e.stopPropagation();
               void chrome.tabs.create({ url: courseUrl });
@@ -104,15 +106,15 @@ export function CourseRow({
           onOpenChange={setMenuOpen}
           items={[
             {
-              label: 'Set tag name',
+              label: t.courseRow.setTagName,
               onClick: () => {
                 setDraft(course.name);
                 setEditing(true);
               }
             },
-            { label: 'Export', onClick: onExport },
-            { label: 'Hide course', onClick: onHide },
-            { label: 'Delete course', onClick: onDelete, danger: true }
+            { label: t.common.export, onClick: onExport },
+            { label: t.courseRow.hideCourse, onClick: onHide },
+            { label: t.courseRow.deleteCourse, onClick: onDelete, danger: true }
           ]}
         />
       </div>

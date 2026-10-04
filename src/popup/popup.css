@@ -59,6 +59,83 @@
   white-space: normal;
 }
 
+/* The course the status is about — the tab's title, which can be long. */
+.popup-course {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popup-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popup-queue-title {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.popup-queue ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.popup-queue li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 6px;
+  padding-inline: 10px 6px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.popup-queue li:last-child {
+  border-bottom: none;
+}
+
+.popup-queue-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popup-queue-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.popup-queue-remove:hover {
+  color: var(--deleted);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
 .popup-progress {
   width: 100%;
   height: 6px;
@@ -84,7 +161,7 @@
 .popup-speed {
   flex-shrink: 0;
   min-width: 7ch;
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }
 

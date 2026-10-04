@@ -16,8 +16,16 @@ export interface Course {
   /** Hidden courses are left out of the main list and out of "Open all course
    *  URLs" — but still tracked normally otherwise (still shows up on the next
    *  download, still exportable, etc). Toggled from the course's own menu; see
-   *  the "Show hidden courses" entry in the toolbar menu to unhide one. */
+   *  the "Hidden courses" entry in the toolbar menu to unhide one. */
   hidden: boolean;
+  /** True once the user has set the name themselves ("Set tag name") — only then is
+   *  `name` a tag the user chose, which downloads can be prefixed with (see
+   *  downloadNameSettings.ts), rather than the automatic, Moodle-derived name. */
+  tagged?: boolean;
+  /** The name this course gets automatically, from its Moodle title — recorded on
+   *  every download. A `name` different from it is one the user set, i.e. a tag,
+   *  which also covers courses renamed before `tagged` existed. */
+  autoName?: string;
 }
 
 export type FileStatus = 'new' | 'modified' | 'deleted' | 'unchanged';

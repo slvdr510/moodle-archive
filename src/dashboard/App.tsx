@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { DateFormatSelector } from './components/DateFormatSelector';
+import { LanguageSelector } from './components/LanguageSelector';
 import { ThemeSelector } from './components/ThemeSelector';
 import { CoursesPage } from './pages/CoursesPage';
 import { CourseFilesPage } from './pages/CourseFilesPage';
+import { useT } from './hooks/useTranslation';
+import { useContentWidth } from './hooks/useSideMargin';
 
 type View =
   | { name: 'courses' }
@@ -17,6 +19,8 @@ function viewFromHistoryState(state: unknown): View {
 }
 
 export function App() {
+  const t = useT();
+  const contentWidth = useContentWidth();
   const [view, setView] = useState<View>(() => viewFromHistoryState(history.state));
   // The courses list's "⋮" overflow menu is rendered here, in the header, so
   // it sits next to the theme selector — but CoursesPage owns the state those
@@ -55,24 +59,24 @@ export function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" style={{ width: contentWidth }}>
       <header className="app-header">
         <div className="app-header-title">
           <span className="app-logo" aria-hidden="true">
             🎓
           </span>
-          <h1 onClick={backToCourses}>Moodle Archive</h1>
+          <h1 onClick={backToCourses}>{t.common.appName}</h1>
           <a
             className="app-credit"
             href="https://github.com/slvdr510/moodle-archive"
             target="_blank"
             rel="noopener noreferrer"
           >
-            by slvdr510
+            {t.common.byAuthor}
           </a>
         </div>
         <div className="app-header-actions">
-          <DateFormatSelector />
+          <LanguageSelector />
           <ThemeSelector />
           {view.name === 'courses' && <div ref={setHeaderMenuSlot} />}
         </div>

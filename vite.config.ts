@@ -5,6 +5,13 @@ import manifest from './manifest.config';
 
 export default defineConfig({
   plugins: [react(), crx({ manifest })],
+  // Extension pages aren't served from the dev server's own origin, so Vite's HMR
+  // client can't infer the port and tries `ws://localhost:undefined` — pin it.
+  server: {
+    port: 5173,
+    strictPort: true,
+    hmr: { port: 5173 }
+  },
   build: {
     rollupOptions: {
       input: {
