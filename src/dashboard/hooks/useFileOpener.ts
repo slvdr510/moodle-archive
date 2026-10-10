@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { deleteVersion as deleteStoredVersion, recentOpenStore, versionStore } from '../../lib/db';
 import { downloadNameFor } from '../../lib/downloadNameSettings';
 import { openVersionInBrowser } from '../../lib/openFile';
 import type { FileRecord, VersionRecord } from '../../types';
+
+/** Versions already read for a page's files, by file id — so each row shows its
+ *  date and version count from its very first paint instead of popping them in once
+ *  its own read comes back (see CourseFilesPage). */
+export const PreloadedVersionsContext = createContext<Map<string, VersionRecord[]> | null>(null);
 
 /**
  * Loads a file's versions and exposes the "click to open" behavior shared by
@@ -11,7 +16,8 @@ import type { FileRecord, VersionRecord } from '../../types';
  * is recorded to the course's recent-opens list.
  */
 export function useFileOpener(file: FileRecord, onOpened?: () => void) {
-  const [versions, setVersions] = useState<VersionRecord[] | null>(null);
+  const preloaded = useContext(PreloadedVersionsContext)?.get(file.id);
+  const [versions, setVersions] = useState<VersionRecord[] | null>(preloaded ?? null);
   const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {

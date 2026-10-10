@@ -20,7 +20,7 @@ export function DownloadNameSettingsModal({ onClose }: { onClose: () => void }) 
         <p>{t.downloadNames.description}</p>
         <div className="upload-options">
           <label className="upload-option">
-            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.currentTarget.checked)} />
             {t.downloadNames.prefixCourseTag}
           </label>
         </div>

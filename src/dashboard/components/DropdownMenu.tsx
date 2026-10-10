@@ -9,7 +9,7 @@ export interface DropdownMenuItem {
 }
 
 /** A "⋮" button that opens a small floating menu of actions — shared by
- *  CourseRow's per-course menu and the courses toolbar's overflow menu. */
+ *  CourseCard's per-course menu and the courses toolbar's overflow menu. */
 export function DropdownMenu({
   items,
   title,
@@ -20,20 +20,21 @@ export function DropdownMenu({
   items: DropdownMenuItem[];
   title?: string;
   disabled?: boolean;
-  /** Row-level menus (e.g. CourseRow) want the small, subtle icon-button look
+  /** Row- and card-level menus (e.g. CourseCard) want the small, subtle icon-button look
    *  (the default); a toolbar's overflow menu wants to read as a real button. */
   buttonClassName?: string;
-  /** Lets a container (e.g. CourseRow) know the menu is open, so it can keep
+  /** Lets a container (e.g. CourseCard) know the menu is open, so it can keep
    *  itself styled as if hovered — otherwise its hover-revealed buttons fade
    *  out the moment the mouse leaves for the portaled menu below it. */
   onOpenChange?: (open: boolean) => void;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  // Where the menu hangs from: its top edge, and the x its middle lines up with.
-  const [anchor, setAnchor] = useState({ top: 0, centerX: 0 });
-  // The menu's left edge, once it's been measured — see the layout effect below.
-  const [left, setLeft] = useState<number | null>(null);
+  // The button the menu hangs from: its top and bottom edges, and the x the menu's
+  // middle lines up with.
+  const [anchor, setAnchor] = useState({ top: 0, bottom: 0, centerX: 0 });
+  // Where the menu goes, once it's been measured — see the layout effect below.
+  const [position, setPosition] = useState<{ left: number; top: number; maxHeight?: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -71,22 +72,37 @@ export function DropdownMenu({
     }
     const rect = buttonRef.current?.getBoundingClientRect();
     if (rect) {
-      setAnchor({ top: rect.bottom + 4, centerX: rect.left + rect.width / 2 });
+      setAnchor({ top: rect.top, bottom: rect.bottom, centerX: rect.left + rect.width / 2 });
     }
-    setLeft(null);
+    setPosition(null);
     setOpen(true);
   }
 
-  // Centered under the button. The menu sizes itself to its longest item, so it's only
-  // placed once its width is known (before it's painted); near a window edge it's
-  // shifted just enough to stay inside the window.
+  // Centered under the button. The menu sizes itself to its items, so it's only placed
+  // once its size is known (before it's painted), always inside the window: near a
+  // side it's shifted just enough; without room below the button it opens above it
+  // instead; and with room on neither side, it goes where there's more, as tall as
+  // that room, scrolling.
   useLayoutEffect(() => {
-    if (!open || left !== null || !dropdownRef.current) return;
-    const width = dropdownRef.current.offsetWidth;
+    if (!open || position !== null || !dropdownRef.current) return;
+    const { offsetWidth: width, offsetHeight: height } = dropdownRef.current;
     const edge = 12;
+    const gap = 4;
     const centered = anchor.centerX - width / 2;
-    setLeft(Math.max(edge, Math.min(centered, window.innerWidth - edge - width)));
-  }, [open, left, anchor]);
+    const left = Math.max(edge, Math.min(centered, window.innerWidth - edge - width));
+
+    const roomBelow = window.innerHeight - edge - (anchor.bottom + gap);
+    const roomAbove = anchor.top - gap - edge;
+    if (height <= roomBelow) {
+      setPosition({ left, top: anchor.bottom + gap });
+    } else if (height <= roomAbove) {
+      setPosition({ left, top: anchor.top - gap - height });
+    } else if (roomBelow >= roomAbove) {
+      setPosition({ left, top: anchor.bottom + gap, maxHeight: roomBelow });
+    } else {
+      setPosition({ left, top: edge, maxHeight: roomAbove });
+    }
+  }, [open, position, anchor]);
 
   return (
     <>
@@ -112,7 +128,13 @@ export function DropdownMenu({
           <div
             ref={dropdownRef}
             className="dropdown-menu"
-            style={{ top: anchor.top, left: left ?? 0, visibility: left === null ? 'hidden' : undefined }}
+            style={{
+              top: position?.top ?? 0,
+              left: position?.left ?? 0,
+              maxHeight: position?.maxHeight,
+              overflowY: position?.maxHeight !== undefined ? 'auto' : undefined,
+              visibility: position === null ? 'hidden' : undefined
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {items.map((item) => (

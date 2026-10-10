@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { InvalidBackupError, exportAllData, exportCourse, importAllData } from '../src/lib/backup';
+import { InvalidBackupError, exportAllData, exportCourse, importAllData, mergeImportedCourse } from '../src/lib/backup';
 import { courseStore, fileStore, recentOpenStore, resetTrackedData, versionStore } from '../src/lib/db';
 import type { Course, FileRecord, VersionRecord } from '../src/types';
 
@@ -536,5 +536,70 @@ describe('importAllData merges an id-matched course instead of overwriting it wh
     const course = await courseStore.get('course-b');
     expect(course?.firstSyncCompleted).toBe(true);
     expect(course?.name).toBe('Brand New Course'); // no local record to preserve a tag from
+  });
+});
+
+describe('mergeImportedCourse', () => {
+  const base: Course = {
+    id: 'c1',
+    name: 'Sistemas Operativos',
+    autoName: 'Sistemas Operativos',
+    url: 'https://moodle.example/course/view.php?id=1',
+    matchedUrls: ['https://moodle.example/course/view.php?id=1'],
+    createdAt: 0,
+    lastSyncedAt: 100,
+    order: 3,
+    firstSyncCompleted: true,
+    hidden: true
+  };
+
+  it('fills in what the local course lacks from the import', () => {
+    const imported: Course = {
+      ...base,
+      name: 'SO',
+      tagged: true,
+      fullName: 'Sistemas Operativos II',
+      institution: 'UHU',
+      color: '#123456',
+      ignoredPaths: ['Tema_1/'],
+      hidden: false,
+      order: 9
+    };
+    const merged = mergeImportedCourse(base, imported);
+    expect(merged).toMatchObject({
+      name: 'SO',
+      tagged: true,
+      fullName: 'Sistemas Operativos II',
+      institution: 'UHU',
+      color: '#123456',
+      ignoredPaths: ['Tema_1/'],
+      hidden: true, // local
+      order: 3 // local
+    });
+  });
+
+  it('never overwrites what is set locally, and joins the ignored files of both', () => {
+    const local: Course = {
+      ...base,
+      name: 'SSOO',
+      tagged: true,
+      fullName: 'Mi nombre',
+      institution: 'US',
+      color: '#abcdef',
+      ignoredPaths: ['a.pdf', 'Tema 1/']
+    };
+    const imported: Course = {
+      ...base,
+      name: 'SO',
+      tagged: true,
+      fullName: 'Otro nombre',
+      institution: 'UHU',
+      color: '#123456',
+      ignoredPaths: ['tema_1/', 'b.pdf'],
+      lastSyncedAt: 500
+    };
+    const merged = mergeImportedCourse(local, imported);
+    expect(merged).toMatchObject({ name: 'SSOO', fullName: 'Mi nombre', institution: 'US', color: '#abcdef', lastSyncedAt: 500 });
+    expect(merged.ignoredPaths).toEqual(['a.pdf', 'Tema 1/', 'b.pdf']);
   });
 });

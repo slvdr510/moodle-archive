@@ -50,6 +50,8 @@ export const pt: Messages = {
     recentSettings: 'Configurações de abertos recentemente',
     downloadNameSettings: 'Configurações de nomes de download',
     sideMargin: 'Margens laterais',
+    courseListStyle: 'Estilo da lista de cursos',
+    setInstitution: 'Definir instituição de cursos',
     hiddenCourses: 'Cursos ocultos',
     deleteAll: 'Excluir todos os cursos',
     backupSaved: 'Backup salvo na sua pasta Downloads.',
@@ -86,7 +88,14 @@ export const pt: Messages = {
   courseRow: {
     lastDownloaded: 'Último download',
     openInMoodle: 'Abrir o curso no Moodle',
-    setTagName: 'Definir etiqueta',
+    setTagName: 'Definir etiqueta (sigla)',
+    setFullName: 'Definir nome completo',
+    tagPlaceholder: 'Sigla, ex.: SO',
+    fullNamePlaceholder: 'Nome completo (vazio: o do Moodle)',
+    setInstitution: 'Definir instituição (sigla)',
+    institutionPlaceholder: 'Sigla da instituição, ex.: UHU',
+    institution: 'Instituição',
+    changeColor: 'Mudar cor',
     hideCourse: 'Ocultar curso',
     deleteCourse: 'Excluir curso'
   },
@@ -100,6 +109,7 @@ export const pt: Messages = {
   courseFiles: {
     backToCourses: 'Voltar aos cursos',
     addFile: 'Adicionar arquivo…',
+    ignoredFiles: 'Arquivos ignorados',
     couldNotRead: (fileCount, firstName, error) =>
       `Não foi possível ler ${fileCount === 1 ? `"${firstName}"` : 'os arquivos soltos'}: o arquivo pode ter sido movido ` +
       `ou excluído, ou ainda está sendo baixado. Tente novamente a partir de um local estável. (${error})`,
@@ -118,6 +128,11 @@ export const pt: Messages = {
     lastSaved: (date) => `Salvo pela última vez: ${date}`,
     manual: 'Manual',
     manualTitle: 'Adicionado manualmente, não baixado do Moodle',
+    ignored: 'Ignorado',
+    ignoredTitle: 'Os downloads deixam este arquivo como está',
+    ignoreTitle: 'Ignorar as alterações deste arquivo',
+    unignoreTitle: 'Deixar de ignorar este arquivo',
+    ignoredWithFolderTitle: 'Ignorado junto com a pasta',
     deleteTitle: 'Excluir este arquivo do seu histórico',
     downloadTitle: 'Baixar para a sua pasta Downloads',
     deleteConfirmTitle: (name) => `Excluir "${name}"?`,
@@ -127,6 +142,9 @@ export const pt: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Ignorar esta pasta e todo o conteúdo',
+    unignoreTitle: 'Deixar de ignorar esta pasta',
+    ignoredTitle: 'Os downloads deixam esta pasta e todo o conteúdo como estão',
     deleteTitle: 'Excluir esta pasta do seu histórico',
     downloadTitle: 'Baixar esta pasta como zip',
     couldNotDownload: (name, error) => `Não foi possível baixar "${name}": ${error}`,
@@ -139,7 +157,8 @@ export const pt: Messages = {
 
   recentlyOpened: {
     title: 'Abertos recentemente',
-    remove: 'Remover de abertos recentemente'
+    remove: 'Remover de abertos recentemente',
+    showAll: 'Ver todos os abertos recentemente'
   },
 
   recentSettings: {
@@ -162,6 +181,53 @@ export const pt: Messages = {
       'Espaço vazio de cada lado do conteúdo com a janela maximizada, como fração da tela. Em uma janela menor, ' +
       'o conteúdo mantém essa largura, usando primeiro as margens e depois a janela inteira.',
     label: (percent) => `${percent}% de cada lado`
+  },
+
+  courseListStyle: {
+    title: 'Estilo da lista de cursos',
+    description: 'Como os cursos são mostrados nesta página.',
+    cards: 'Cartões',
+    rows: 'Linhas'
+  },
+
+  courseColor: {
+    title: (name) => `Cor de "${name}"`,
+    palette: 'Paleta',
+    custom: 'Cor personalizada',
+    automatic: 'Usar cor automática'
+  },
+
+  setInstitution: {
+    title: 'Definir instituição',
+    description: 'Escolha os cursos que recebem esta instituição. Deixe vazio para removê-la deles.',
+    courses: (count) => (count === 0 ? 'Cursos' : `Cursos (${count} selecionados)`),
+    selectAll: 'Selecionar todos',
+    selectNone: 'Nenhum',
+    hidden: 'Oculto',
+    apply: (count) => (count === 1 ? 'Aplicar a 1 curso' : `Aplicar a ${count} cursos`),
+    remove: (count) => (count === 1 ? 'Remover de 1 curso' : `Remover de ${count} cursos`)
+  },
+
+  ignoredFiles: {
+    title: 'Arquivos ignorados',
+    description:
+      'Os downloads deixam estes arquivos como estão: sem novas versões, nunca marcados como excluídos e não adicionados se ainda não forem acompanhados.',
+    pathLabel: 'Caminho do arquivo',
+    placeholder: 'Pasta/arquivo.pdf',
+    hint:
+      'Inclua a extensão e as pastas onde ele está: um arquivo na raiz do curso é só o nome dele. Arquivos com o mesmo nome em pastas diferentes são arquivos diferentes. Termine um caminho com / para ignorar uma pasta inteira com todo o conteúdo.',
+    add: 'Adicionar',
+    folder: 'Pasta',
+    remove: (path) => `Deixar de ignorar ${path}`,
+    empty: 'Nenhum arquivo ignorado.',
+    duplicate: 'Esse arquivo já está na lista.',
+    notFound: 'Ainda não está neste curso',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" agora está ignorado` : `${count} arquivos agora estão ignorados`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Os downloads vão deixá-lo como está. Quer também excluí-lo deste curso, com todas as versões salvas? Enquanto estiver ignorado, os próximos downloads não vão adicioná-lo de novo.'
+        : 'Os downloads vão deixá-los como estão. Quer também excluí-los deste curso, com todas as versões salvas? Enquanto estiverem ignorados, os próximos downloads não vão adicioná-los de novo.',
+    keep: (count) => (count === 1 ? 'Manter' : 'Manter')
   },
 
   upload: {
@@ -214,7 +280,11 @@ export const pt: Messages = {
   viewer: {
     notFoundTitle: 'Arquivo não encontrado',
     notFoundText: 'Este arquivo não está mais no seu histórico do Moodle Archive; ele pode ter sido excluído.',
-    cannotPreview: 'Este tipo de arquivo não pode ser visualizado no navegador.'
+    cannotPreview: 'Este tipo de arquivo não pode ser visualizado no navegador.',
+    zoomOut: 'Diminuir zoom',
+    zoomIn: 'Aumentar zoom',
+    fitVertically: 'Ajustar na vertical',
+    fitHorizontally: 'Ajustar na horizontal'
   },
 
   popup: {

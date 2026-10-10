@@ -59,6 +59,19 @@
   white-space: normal;
 }
 
+/* Why this tab's download didn't start or queue: apart from any running download's
+   status, which stays as it was. */
+.popup-error {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--deleted) 10%, transparent);
+  color: var(--deleted);
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 /* The course the status is about — the tab's title, which can be long. */
 .popup-course {
   margin: 0;

@@ -50,6 +50,8 @@ export const es: Messages = {
     recentSettings: 'Ajustes de abiertos recientemente',
     downloadNameSettings: 'Ajustes de nombres de descarga',
     sideMargin: 'Márgenes laterales',
+    courseListStyle: 'Estilo de la lista de cursos',
+    setInstitution: 'Poner institución a varios cursos',
     hiddenCourses: 'Cursos ocultos',
     deleteAll: 'Eliminar todos los cursos',
     backupSaved: 'Copia de seguridad guardada en tu carpeta de Descargas.',
@@ -86,7 +88,14 @@ export const es: Messages = {
   courseRow: {
     lastDownloaded: 'Última descarga',
     openInMoodle: 'Abrir el curso en Moodle',
-    setTagName: 'Poner etiqueta',
+    setTagName: 'Poner etiqueta (siglas)',
+    setFullName: 'Poner nombre completo',
+    tagPlaceholder: 'Siglas, p. ej. SO',
+    fullNamePlaceholder: 'Nombre completo (vacío: el de Moodle)',
+    setInstitution: 'Poner institución (siglas)',
+    institutionPlaceholder: 'Siglas de la institución, p. ej. UHU',
+    institution: 'Institución',
+    changeColor: 'Cambiar color',
     hideCourse: 'Ocultar curso',
     deleteCourse: 'Eliminar curso'
   },
@@ -100,6 +109,7 @@ export const es: Messages = {
   courseFiles: {
     backToCourses: 'Volver a los cursos',
     addFile: 'Añadir archivo…',
+    ignoredFiles: 'Archivos ignorados',
     couldNotRead: (fileCount, firstName, error) =>
       `No se pudo leer ${fileCount === 1 ? `"${firstName}"` : 'los archivos soltados'}: puede que se haya movido o ` +
       `eliminado, o que aún se esté descargando. Inténtalo de nuevo desde una ubicación estable. (${error})`,
@@ -116,6 +126,11 @@ export const es: Messages = {
     lastSaved: (date) => `Guardado por última vez: ${date}`,
     manual: 'Manual',
     manualTitle: 'Añadido a mano, no descargado de Moodle',
+    ignored: 'Ignorado',
+    ignoredTitle: 'Las descargas dejan este archivo tal como está',
+    ignoreTitle: 'Ignorar los cambios de este archivo',
+    unignoreTitle: 'Dejar de ignorar este archivo',
+    ignoredWithFolderTitle: 'Ignorado junto con su carpeta',
     deleteTitle: 'Eliminar este archivo de tu historial',
     downloadTitle: 'Descargar en tu carpeta de Descargas',
     deleteConfirmTitle: (name) => `¿Eliminar "${name}"?`,
@@ -125,6 +140,9 @@ export const es: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Ignorar esta carpeta y todo su contenido',
+    unignoreTitle: 'Dejar de ignorar esta carpeta',
+    ignoredTitle: 'Las descargas dejan esta carpeta y todo su contenido tal como están',
     deleteTitle: 'Eliminar esta carpeta de tu historial',
     downloadTitle: 'Descargar esta carpeta como zip',
     couldNotDownload: (name, error) => `No se pudo descargar "${name}": ${error}`,
@@ -136,7 +154,8 @@ export const es: Messages = {
 
   recentlyOpened: {
     title: 'Abiertos recientemente',
-    remove: 'Quitar de abiertos recientemente'
+    remove: 'Quitar de abiertos recientemente',
+    showAll: 'Ver todos los abiertos recientemente'
   },
 
   recentSettings: {
@@ -160,6 +179,53 @@ export const es: Messages = {
       'En una ventana más pequeña el contenido mantiene ese ancho: primero se reducen los márgenes y después ' +
       'ocupa toda la ventana.',
     label: (percent) => `${percent}% a cada lado`
+  },
+
+  courseListStyle: {
+    title: 'Estilo de la lista de cursos',
+    description: 'Cómo se muestran los cursos en esta página.',
+    cards: 'Tarjetas',
+    rows: 'Filas'
+  },
+
+  courseColor: {
+    title: (name) => `Color de "${name}"`,
+    palette: 'Paleta',
+    custom: 'Color personalizado',
+    automatic: 'Usar color automático'
+  },
+
+  setInstitution: {
+    title: 'Poner institución',
+    description: 'Elige los cursos a los que darle esta institución. Déjala vacía para quitársela.',
+    courses: (count) => (count === 0 ? 'Cursos' : `Cursos (${count} seleccionados)`),
+    selectAll: 'Seleccionar todos',
+    selectNone: 'Ninguno',
+    hidden: 'Oculto',
+    apply: (count) => (count === 1 ? 'Aplicar a 1 curso' : `Aplicar a ${count} cursos`),
+    remove: (count) => (count === 1 ? 'Quitar de 1 curso' : `Quitar de ${count} cursos`)
+  },
+
+  ignoredFiles: {
+    title: 'Archivos ignorados',
+    description:
+      'Las descargas dejan estos archivos tal como están: sin versiones nuevas, nunca marcados como eliminados y sin añadirlos si aún no se siguen.',
+    pathLabel: 'Ruta del archivo',
+    placeholder: 'Carpeta/archivo.pdf',
+    hint:
+      'Incluye la extensión y las carpetas donde está: un archivo en la raíz del curso es solo su nombre. Archivos con el mismo nombre en carpetas distintas son archivos distintos. Termina la ruta en / para ignorar una carpeta entera con todo su contenido.',
+    add: 'Añadir',
+    folder: 'Carpeta',
+    remove: (path) => `Dejar de ignorar ${path}`,
+    empty: 'No hay archivos ignorados.',
+    duplicate: 'Ese archivo ya está en la lista.',
+    notFound: 'Aún no está en este curso',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" ahora está ignorado` : `${count} archivos ahora están ignorados`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Las descargas lo dejarán tal como está. ¿Quieres también eliminarlo de este curso, con todas sus versiones guardadas? Mientras esté ignorado, las próximas descargas no lo volverán a añadir.'
+        : 'Las descargas los dejarán tal como están. ¿Quieres también eliminarlos de este curso, con todas sus versiones guardadas? Mientras estén ignorados, las próximas descargas no los volverán a añadir.',
+    keep: (count) => (count === 1 ? 'Conservarlo' : 'Conservarlos')
   },
 
   upload: {
@@ -212,7 +278,11 @@ export const es: Messages = {
   viewer: {
     notFoundTitle: 'Archivo no encontrado',
     notFoundText: 'Este archivo ya no está en tu historial de Moodle Archive; puede que se haya eliminado.',
-    cannotPreview: 'Este tipo de archivo no se puede previsualizar en el navegador.'
+    cannotPreview: 'Este tipo de archivo no se puede previsualizar en el navegador.',
+    zoomOut: 'Alejar',
+    zoomIn: 'Acercar',
+    fitVertically: 'Ajustar verticalmente',
+    fitHorizontally: 'Ajustar horizontalmente'
   },
 
   popup: {

@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { SideMarginModal } from '../src/dashboard/components/SideMarginModal';
 import { DEFAULT_SIDE_MARGIN, contentWidth, getSideMargin, setSideMargin } from '../src/lib/sideMargin';
 
 afterEach(() => {
-  cleanup();
+  act(() => cleanup());
   localStorage.clear();
 });
 

@@ -1,24 +1,4 @@
-import { ar } from './locales/ar';
-import { arz } from './locales/arz';
-import { bn } from './locales/bn';
-import { de } from './locales/de';
 import { en, type Messages } from './locales/en';
-import { es } from './locales/es';
-import { fr } from './locales/fr';
-import { ha } from './locales/ha';
-import { hi } from './locales/hi';
-import { id } from './locales/id';
-import { it } from './locales/it';
-import { ja } from './locales/ja';
-import { mr } from './locales/mr';
-import { pcm } from './locales/pcm';
-import { pt } from './locales/pt';
-import { ru } from './locales/ru';
-import { sw } from './locales/sw';
-import { te } from './locales/te';
-import { ur } from './locales/ur';
-import { vi } from './locales/vi';
-import { zh } from './locales/zh';
 
 export type { Messages };
 
@@ -52,20 +32,33 @@ export type Locale = keyof typeof LOCALE_NAMES;
 /** 'auto' follows the browser's language, falling back to English. */
 export type LanguagePref = 'auto' | Locale;
 
-export const LOCALES: Record<Locale, Messages> = {
-  en, es, zh, hi, ar, arz, fr, it, bn, pt, id, ur, ru, de, ja, pcm, mr, vi, te, sw, ha
-};
+/** Every other language is its own chunk, fetched only when it's the one in use, so a
+ *  page doesn't download and parse all of them just to show one (the popup has to open
+ *  fast). The background and the content script use ./locales/index.ts instead. */
+const LOCALE_LOADERS = import.meta.glob<Record<string, Messages>>([
+  './locales/*.ts',
+  '!./locales/en.ts',
+  '!./locales/index.ts'
+]);
+
+const loaded = new Map<Locale, Messages>([['en', en]]);
+
+async function loadLocale(locale: Locale): Promise<void> {
+  if (loaded.has(locale)) return;
+  const module = await LOCALE_LOADERS[`./locales/${locale}.ts`]();
+  loaded.set(locale, module[locale]);
+}
 
 /** Locales written right to left; the pages flip their layout for these. */
 const RTL_LOCALES: ReadonlySet<Locale> = new Set<Locale>(['ar', 'arz', 'ur']);
 
-const STORAGE_KEY = 'moodle-archive-language';
+export const STORAGE_KEY = 'moodle-archive-language';
 
 function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && Object.hasOwn(LOCALE_NAMES, value);
 }
 
-function isLanguagePref(value: unknown): value is LanguagePref {
+export function isLanguagePref(value: unknown): value is LanguagePref {
   return value === 'auto' || isLocale(value);
 }
 
@@ -92,7 +85,9 @@ export function getStoredLanguage(): LanguagePref {
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
-export function setStoredLanguage(pref: LanguagePref): void {
+/** Resolves once the new language's messages are loaded and everything subscribed to
+ *  the language has been told about it. */
+export async function setStoredLanguage(pref: LanguagePref): Promise<void> {
   localStorage.setItem(STORAGE_KEY, pref);
   // Mirrored to chrome.storage, the only place the content script (which runs with the
   // Moodle page's localStorage) and the background can read it from.
@@ -102,6 +97,7 @@ export function setStoredLanguage(pref: LanguagePref): void {
     // Not running as an extension (e.g. tests) — nothing else needs it then.
   }
   applyDocumentLanguage();
+  await loadLocale(resolveLocale(pref));
   listeners.forEach((listener) => listener());
 }
 
@@ -111,19 +107,16 @@ export function subscribeLanguage(listener: Listener): () => void {
   return () => listeners.delete(listener);
 }
 
-/** The messages for the current language, for code that runs in an extension page. */
-export function getMessages(): Messages {
-  return LOCALES[resolveLocale(getStoredLanguage())];
+/** Loads the current language's messages; an extension page awaits this once before
+ *  it first renders, so getMessages() has them from then on. */
+export function ensureMessages(): Promise<void> {
+  return loadLocale(resolveLocale(getStoredLanguage()));
 }
 
-/** The messages for the current language, for the content script and the background. */
-export async function loadMessages(): Promise<Messages> {
-  try {
-    const stored = (await chrome.storage.local.get(STORAGE_KEY))[STORAGE_KEY];
-    return LOCALES[resolveLocale(isLanguagePref(stored) ? stored : 'auto')];
-  } catch {
-    return LOCALES[resolveLocale('auto')];
-  }
+/** The messages for the current language, for code that runs in an extension page.
+ *  English until ensureMessages() has loaded the language in use. */
+export function getMessages(): Messages {
+  return loaded.get(resolveLocale(getStoredLanguage())) ?? en;
 }
 
 /** Keeps `<html lang>` in step, so spellcheck, hyphenation and screen readers match,

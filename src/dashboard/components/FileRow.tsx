@@ -7,9 +7,11 @@ import { formatRelativeTime } from '../../lib/relativeTime';
 import type { FileRecord } from '../../types';
 import { useDateFormat } from '../hooks/useDateFormat';
 import { useFileOpener } from '../hooks/useFileOpener';
+import { useIgnoredFiles } from '../hooks/useIgnoredFiles';
 import { useT } from '../hooks/useTranslation';
 import { ConfirmModal } from './ConfirmModal';
 import { FileName } from './FileName';
+import { IgnoreButton } from './IgnoreButton';
 import { StatusBadge } from './StatusBadge';
 import { TreeGuides, rowPaddingLeft } from './TreeGuides';
 import { VersionPickerModal } from './VersionPickerModal';
@@ -38,6 +40,9 @@ export function FileRow({
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [dateFormatPref] = useDateFormat();
+  const ignoredFiles = useIgnoredFiles();
+  const ignoreState = ignoredFiles?.fileState(file) ?? 'none';
+  const ignored = ignoreState !== 'none';
   // Bumped when a version is deleted from the picker, so an open history re-reads them.
   const [versionsChanged, setVersionsChanged] = useState(0);
 
@@ -74,7 +79,16 @@ export function FileRow({
             useDateColumnWidth), so tags and dates line up whichever a row has. */}
         <div className="file-row-meta">
           <span className="file-status-slot">
-            {file.currentStatus === 'new' || file.currentStatus === 'deleted' ? (
+            {/* Ignored first: an ignored file's other status never changes again, so
+                that's the one thing worth knowing about it. */}
+            {ignored ? (
+              <span
+                className="status-badge status-ignored"
+                title={ignoreState === 'folder' ? t.fileRow.ignoredWithFolderTitle : t.fileRow.ignoredTitle}
+              >
+                {t.fileRow.ignored}
+              </span>
+            ) : file.currentStatus === 'new' || file.currentStatus === 'deleted' ? (
               <StatusBadge status={file.currentStatus} />
             ) : (
               file.manual && <span className="status-badge status-manual" title={t.fileRow.manualTitle}>{t.fileRow.manual}</span>
@@ -88,6 +102,15 @@ export function FileRow({
               <span className="file-date-text">{formatRelativeTime(latestVersion.timestamp, Date.now(), t)}</span>
             )}
           </span>
+          {/* Not for a file added by hand: downloads never touch those anyway. Nor for
+              one in an ignored folder: the folder decides, so the folder has the toggle. */}
+          {ignoredFiles && !file.manual && ignoreState !== 'folder' && (
+            <IgnoreButton
+              ignored={ignored}
+              title={ignored ? t.fileRow.unignoreTitle : t.fileRow.ignoreTitle}
+              onToggle={() => ignoredFiles.toggleFile(file)}
+            />
+          )}
           <button
             className="icon-button row-action-button delete-button"
             title={t.fileRow.deleteTitle}

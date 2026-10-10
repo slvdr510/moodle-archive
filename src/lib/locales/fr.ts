@@ -50,6 +50,8 @@ export const fr: Messages = {
     recentSettings: 'Paramètres des fichiers récents',
     downloadNameSettings: 'Paramètres des noms de téléchargement',
     sideMargin: 'Marges latérales',
+    courseListStyle: 'Style de la liste des cours',
+    setInstitution: 'Définir l’établissement de cours',
     hiddenCourses: 'Cours masqués',
     deleteAll: 'Supprimer tous les cours',
     backupSaved: 'Sauvegarde enregistrée dans votre dossier Téléchargements.',
@@ -88,7 +90,14 @@ export const fr: Messages = {
   courseRow: {
     lastDownloaded: 'Dernier téléchargement',
     openInMoodle: 'Ouvrir le cours dans Moodle',
-    setTagName: 'Définir l’étiquette',
+    setTagName: 'Définir l’étiquette (sigle)',
+    setFullName: 'Définir le nom complet',
+    tagPlaceholder: 'Sigle, p. ex. SE',
+    fullNamePlaceholder: 'Nom complet (vide : celui de Moodle)',
+    setInstitution: 'Définir l’établissement (sigle)',
+    institutionPlaceholder: 'Sigle de l’établissement, p. ex. UHU',
+    institution: 'Établissement',
+    changeColor: 'Changer la couleur',
     hideCourse: 'Masquer le cours',
     deleteCourse: 'Supprimer le cours'
   },
@@ -102,6 +111,7 @@ export const fr: Messages = {
   courseFiles: {
     backToCourses: 'Retour aux cours',
     addFile: 'Ajouter un fichier…',
+    ignoredFiles: 'Fichiers ignorés',
     couldNotRead: (fileCount, firstName, error) =>
       `Impossible de lire ${fileCount === 1 ? `« ${firstName} »` : 'les fichiers déposés'} : le fichier a peut-être été ` +
       `déplacé ou supprimé, ou il est encore en cours de téléchargement. Réessayez depuis un emplacement stable. (${error})`,
@@ -118,6 +128,11 @@ export const fr: Messages = {
     lastSaved: (date) => `Dernier enregistrement : ${date}`,
     manual: 'Manuel',
     manualTitle: 'Ajouté à la main, pas téléchargé depuis Moodle',
+    ignored: 'Ignoré',
+    ignoredTitle: 'Les téléchargements laissent ce fichier tel quel',
+    ignoreTitle: 'Ignorer les modifications de ce fichier',
+    unignoreTitle: 'Ne plus ignorer ce fichier',
+    ignoredWithFolderTitle: 'Ignoré avec son dossier',
     deleteTitle: 'Supprimer ce fichier de votre historique',
     downloadTitle: 'Télécharger dans votre dossier Téléchargements',
     deleteConfirmTitle: (name) => `Supprimer « ${name} » ?`,
@@ -127,6 +142,9 @@ export const fr: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Ignorer ce dossier et tout son contenu',
+    unignoreTitle: 'Ne plus ignorer ce dossier',
+    ignoredTitle: 'Les téléchargements laissent ce dossier et tout son contenu tels quels',
     deleteTitle: 'Supprimer ce dossier de votre historique',
     downloadTitle: 'Télécharger ce dossier au format zip',
     couldNotDownload: (name, error) => `Impossible de télécharger « ${name} » : ${error}`,
@@ -139,7 +157,8 @@ export const fr: Messages = {
 
   recentlyOpened: {
     title: 'Ouverts récemment',
-    remove: 'Retirer des fichiers ouverts récemment'
+    remove: 'Retirer des fichiers ouverts récemment',
+    showAll: 'Afficher tous les fichiers récents'
   },
 
   recentSettings: {
@@ -163,6 +182,53 @@ export const fr: Messages = {
       'Espace vide de chaque côté du contenu dans une fenêtre agrandie, en proportion de l’écran. Dans une fenêtre ' +
       'plus petite, le contenu garde cette largeur en réduisant d’abord les marges, puis en occupant toute la fenêtre.',
     label: (percent) => `${percent} % de chaque côté`
+  },
+
+  courseListStyle: {
+    title: 'Style de la liste des cours',
+    description: 'Comment les cours sont affichés sur cette page.',
+    cards: 'Cartes',
+    rows: 'Lignes'
+  },
+
+  courseColor: {
+    title: (name) => `Couleur de « ${name} »`,
+    palette: 'Palette',
+    custom: 'Couleur personnalisée',
+    automatic: 'Utiliser la couleur automatique'
+  },
+
+  setInstitution: {
+    title: 'Définir l’établissement',
+    description: 'Choisissez les cours auxquels donner cet établissement. Laissez-le vide pour le leur retirer.',
+    courses: (count) => (count === 0 ? 'Cours' : `Cours (${count} sélectionnés)`),
+    selectAll: 'Tout sélectionner',
+    selectNone: 'Aucun',
+    hidden: 'Masqué',
+    apply: (count) => (count === 1 ? 'Appliquer à 1 cours' : `Appliquer à ${count} cours`),
+    remove: (count) => (count === 1 ? 'Retirer de 1 cours' : `Retirer de ${count} cours`)
+  },
+
+  ignoredFiles: {
+    title: 'Fichiers ignorés',
+    description:
+      'Les téléchargements laissent ces fichiers tels quels : pas de nouvelles versions, jamais marqués comme supprimés, et pas ajoutés s’ils ne sont pas encore suivis.',
+    pathLabel: 'Chemin du fichier',
+    placeholder: 'Dossier/fichier.pdf',
+    hint:
+      'Indiquez l’extension et les dossiers qui le contiennent : un fichier à la racine du cours, c’est juste son nom. Deux fichiers du même nom dans des dossiers différents sont des fichiers différents. Terminez un chemin par / pour ignorer tout un dossier avec son contenu.',
+    add: 'Ajouter',
+    folder: 'Dossier',
+    remove: (path) => `Ne plus ignorer ${path}`,
+    empty: 'Aucun fichier ignoré.',
+    duplicate: 'Ce fichier est déjà dans la liste.',
+    notFound: 'Pas encore dans ce cours',
+    askDeleteTitle: (count, name) => (count === 1 ? `« ${name} » est maintenant ignoré` : `${count} fichiers sont maintenant ignorés`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Les téléchargements le laisseront tel quel. Voulez-vous aussi le supprimer de ce cours, avec toutes ses versions enregistrées ? Tant qu’il est ignoré, les prochains téléchargements ne le rajouteront pas.'
+        : 'Les téléchargements les laisseront tels quels. Voulez-vous aussi les supprimer de ce cours, avec toutes leurs versions enregistrées ? Tant qu’ils sont ignorés, les prochains téléchargements ne les rajouteront pas.',
+    keep: (count) => (count === 1 ? 'Le garder' : 'Les garder')
   },
 
   upload: {
@@ -215,7 +281,11 @@ export const fr: Messages = {
   viewer: {
     notFoundTitle: 'Fichier introuvable',
     notFoundText: 'Ce fichier n’est plus dans votre historique Moodle Archive ; il a peut-être été supprimé.',
-    cannotPreview: 'Ce type de fichier ne peut pas être prévisualisé dans le navigateur.'
+    cannotPreview: 'Ce type de fichier ne peut pas être prévisualisé dans le navigateur.',
+    zoomOut: 'Zoom arrière',
+    zoomIn: 'Zoom avant',
+    fitVertically: 'Ajuster verticalement',
+    fitHorizontally: 'Ajuster horizontalement'
   },
 
   popup: {

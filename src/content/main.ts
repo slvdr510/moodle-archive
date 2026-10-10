@@ -1,6 +1,7 @@
 import { DownloadCancelledError, crawlCourse, type CrawledEntry } from './moodleCrawler';
 import { message } from './message';
-import { loadMessages, type Messages } from '../lib/i18n';
+import type { Messages } from '../lib/i18n';
+import { loadMessages } from '../lib/locales';
 
 export type Status = 'initialized' | 'processing' | 'finished';
 

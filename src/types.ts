@@ -26,6 +26,18 @@ export interface Course {
    *  every download. A `name` different from it is one the user set, i.e. a tag,
    *  which also covers courses renamed before `tagged` existed. */
   autoName?: string;
+  /** A full name the user set ("Set full name"), shown in place of — or, with a tag,
+   *  beneath — the Moodle-derived one. Unset means the Moodle name; see courseNames.ts. */
+  fullName?: string;
+  /** A card color the user picked (a "#rrggbb" hex), in place of the automatic one
+   *  — see courseColors.ts. */
+  color?: string;
+  /** The institution's abbreviation ("UHU"), set by the user — shown on the course's card. */
+  institution?: string;
+  /** Files downloads leave as they are — no new versions, never marked deleted, never
+   *  added if not tracked yet — as paths relative to the course root the file tree
+   *  shows (see ignoredFiles.ts). */
+  ignoredPaths?: string[];
 }
 
 export type FileStatus = 'new' | 'modified' | 'deleted' | 'unchanged';

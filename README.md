@@ -32,12 +32,11 @@ everything else is deduplicated by content hash.
   folder or file row in the dashboard.
 - **Recently opened** — quick access back to the last files you opened in a
   course.
-- **Backup / restore** — export everything (courses, files, every version's
-  content) to a single `.zip` in your Downloads folder, and import it back
-  later or on another machine — by dropping one or several `.zip` files
-  anywhere on the course list, or from the menu's **Import course(s)**. A file
-  that isn't a zip in this extension's course format is left alone and reported
-  with a notice; nothing is imported from it.
+- **Backup / restore** — export one course or all of them (with their settings,
+  files and every version's content) to a single `.zip` in your Downloads
+  folder, and import it back later or on another machine. Importing a course
+  you already have merges it in without overwriting anything — see
+  [Exporting and importing courses](#exporting-and-importing-courses).
 - **Drag-and-drop course ordering, light/dark/system theme, configurable date
   format** — small dashboard touches that don't need their own section.
 
@@ -126,13 +125,75 @@ the page (or choose **Add file…** from the course's menu), then pick its
 folder. Same name in the same folder = a new version of that file; a new name =
 a new file tagged **Manual**.
 
-To move courses between browsers, use **Export** (a single course's menu, or
-**Export all courses** in the ⋮ menu) and then drop the resulting `.zip` onto
-the course list on the other browser — or use **Import course(s)**, which
-accepts several files at once. A course that already exists there (same id) is
-merged rather than duplicated: its name stays as you have it, and only content
-it doesn't already have is added. Files that aren't a Moodle Archive backup
-are skipped with a notice, and the rest of the batch still imports.
+To back up your courses or move them to another browser, see
+[Exporting and importing courses](#exporting-and-importing-courses).
+
+## Exporting and importing courses
+
+A backup is a single `.zip` file with everything Moodle Archive knows about the
+courses in it, saved to your Downloads folder. Importing it — in the same
+browser or in another one — brings it all back.
+
+### What a backup contains
+
+- **The courses**, with everything you set on them: tag (abbreviation), full
+  name, institution, color, and ignored files and folders.
+- **Every file** of those courses, including the ones you added yourself.
+- **Every version** of every file, with its content — not just the latest.
+- **The recently opened** files of those courses.
+
+Not included: whether a course is hidden (a backup always saves it as shown),
+and settings that belong to your browser rather than to any course — theme,
+language, card or row view, side margins, date format, download names and the
+recently opened settings.
+
+### Exporting
+
+- **One course:** open the course's ⋮ menu (on its card or row, or inside the
+  course) and choose **Export**. The file is named
+  `moodle-archive-course_<course>_<date>.zip`.
+- **Every course:** in the course list's ⋮ menu, choose **Export all courses**.
+  The file is named `moodle-archive-backup_<date>.zip`.
+
+Either way you're asked to confirm first, and the `.zip` lands in your
+Downloads folder.
+
+### Importing
+
+Drop one or several backup `.zip` files anywhere on the course list, or choose
+**Import course(s)** in the course list's ⋮ menu (it accepts several files at
+once). A message then tells you how many courses, files and versions were
+imported. A file that isn't a Moodle Archive backup is skipped with a notice,
+without importing anything from it — and the other files still import.
+
+What happens to each course in the backup depends on whether this browser
+already has it:
+
+- **A course it doesn't have** is added exactly as it was exported — tag, full
+  name, institution, color, ignored files, every file and every version. It
+  shows in the list (even if it was hidden when exported), and its files start
+  out as the baseline, with no **New** badges.
+- **A course it already has** is merged into the one you have, never duplicated:
+  - Its files are compared by content. A file you don't have yet is added
+    (marked **New**); one whose content you don't have yet gets it as a new
+    version. Every older version from the backup is added
+    too, and nothing you already have is stored twice.
+  - **Nothing is ever deleted or overwritten.** Files you have that aren't in
+    the backup stay as they are.
+  - **What you set here wins:** the tag, full name, institution and color you
+    gave the course in this browser stay as they are, and so do its position in
+    the list and whether it's hidden. Whatever isn't set here is filled in from
+    the backup — so a full name or a color set on another computer reaches this
+    one too.
+  - **Ignored files and folders** from both are kept, each one once.
+
+How a course is recognized as one this browser already has: by an internal
+identifier it gets the first time it's downloaded, which a backup carries with
+it — not by its name, so renaming a course on either side doesn't matter. A
+consequence: if the same Moodle course was downloaded separately in two
+browsers, each has its own identifier, and importing one into the other adds
+it as a second course. To keep a single copy across browsers, download the
+course in one of them and import it into the others.
 
 ## Development
 

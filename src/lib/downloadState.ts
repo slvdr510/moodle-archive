@@ -31,6 +31,12 @@ export const INITIAL_DOWNLOAD_STATE: DownloadState = { status: 'initialized', do
  * What a download downloads: two tabs on the same course (even on different sections
  * of it) would download the same thing, so they count as one download.
  */
+/** Whether `url` is a Moodle page the downloader understands (a course, a folder, a
+ *  resource or a file) — the same patterns the crawler itself starts from. */
+export function isDownloadableUrl(url: string): boolean {
+  return canonicalMoodleUrl(url) !== undefined;
+}
+
 export function downloadKey(url: string): string {
   return canonicalMoodleUrl(url) ?? url.split('#')[0];
 }

@@ -1,17 +1,18 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LanguageSelector } from '../src/dashboard/components/LanguageSelector';
 import { RecentSettingsModal } from '../src/dashboard/components/RecentSettingsModal';
-import { LOCALES, getMessages, getStoredLanguage, loadMessages, resolveLocale, setStoredLanguage } from '../src/lib/i18n';
+import { getMessages, getStoredLanguage, resolveLocale, setStoredLanguage } from '../src/lib/i18n';
+import { LOCALES, loadMessages } from '../src/lib/locales';
 import { en } from '../src/lib/locales/en';
 import { es } from '../src/lib/locales/es';
 import { formatRelativeTime } from '../src/lib/relativeTime';
 
 afterEach(() => {
-  cleanup();
+  act(() => cleanup());
   localStorage.clear();
   vi.unstubAllGlobals();
 });
@@ -49,9 +50,9 @@ describe('i18n', () => {
     expect(document.documentElement.lang).toBe('zh-Hans');
   });
 
-  it('an explicit choice overrides the browser language', () => {
+  it('an explicit choice overrides the browser language', async () => {
     expect(resolveLocale('en', 'es-ES')).toBe('en');
-    setStoredLanguage('es');
+    await setStoredLanguage('es');
     expect(getStoredLanguage()).toBe('es');
     expect(getMessages()).toBe(es);
     expect(document.documentElement.lang).toBe('es');
@@ -72,8 +73,7 @@ describe('i18n', () => {
         }
       }
     });
-    setStoredLanguage('es');
-    await Promise.resolve();
+    await setStoredLanguage('es');
     expect(await loadMessages()).toBe(es);
   });
 
@@ -101,7 +101,7 @@ describe('i18n', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Language' }));
     await userEvent.click(screen.getByRole('option', { name: 'Español' }));
 
-    expect(screen.getByText('Se aplica a todos los cursos.')).toBeInTheDocument();
+    expect(await screen.findByText('Se aplica a todos los cursos.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Guardar' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Idioma' })).toHaveTextContent('ES');
   });

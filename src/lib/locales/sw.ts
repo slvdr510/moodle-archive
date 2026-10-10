@@ -50,6 +50,8 @@ export const sw: Messages = {
     recentSettings: 'Mipangilio ya zilizofunguliwa hivi karibuni',
     downloadNameSettings: 'Mipangilio ya majina ya vipakuliwa',
     sideMargin: 'Pambizo za pembeni',
+    courseListStyle: 'Mtindo wa orodha ya kozi',
+    setInstitution: 'Weka taasisi kwa kozi',
     hiddenCourses: 'Kozi zilizofichwa',
     deleteAll: 'Futa kozi zote',
     backupSaved: 'Nakala rudufu imehifadhiwa kwenye folda yako ya Vipakuliwa.',
@@ -86,7 +88,14 @@ export const sw: Messages = {
   courseRow: {
     lastDownloaded: 'Ilipakuliwa mwisho',
     openInMoodle: 'Fungua kozi kwenye Moodle',
-    setTagName: 'Weka jina la lebo',
+    setTagName: 'Weka lebo (kifupisho)',
+    setFullName: 'Weka jina kamili',
+    tagPlaceholder: 'Kifupisho, k.m. OS',
+    fullNamePlaceholder: 'Jina kamili (tupu: la Moodle)',
+    setInstitution: 'Weka taasisi (kifupisho)',
+    institutionPlaceholder: 'Kifupisho cha taasisi, k.m. UHU',
+    institution: 'Taasisi',
+    changeColor: 'Badilisha rangi',
     hideCourse: 'Ficha kozi',
     deleteCourse: 'Futa kozi'
   },
@@ -100,6 +109,7 @@ export const sw: Messages = {
   courseFiles: {
     backToCourses: 'Rudi kwenye kozi',
     addFile: 'Ongeza faili…',
+    ignoredFiles: 'Faili zinazopuuzwa',
     couldNotRead: (fileCount, firstName, error) =>
       `Imeshindwa kusoma ${fileCount === 1 ? `"${firstName}"` : 'faili zilizodondoshwa'} — huenda faili limehamishwa ` +
       `au kufutwa, au bado linapakuliwa. Jaribu tena kutoka mahali thabiti. (${error})`,
@@ -116,6 +126,11 @@ export const sw: Messages = {
     lastSaved: (date) => `Ilihifadhiwa mwisho: ${date}`,
     manual: 'Kwa mkono',
     manualTitle: 'Imeongezwa kwa mkono, haikupakuliwa kutoka Moodle',
+    ignored: 'Inapuuzwa',
+    ignoredTitle: 'Upakuaji huiacha faili hii kama ilivyo',
+    ignoreTitle: 'Puuza mabadiliko ya faili hii',
+    unignoreTitle: 'Acha kupuuza faili hii',
+    ignoredWithFolderTitle: 'Inapuuzwa pamoja na folda yake',
     deleteTitle: 'Futa faili hili kwenye historia yako',
     downloadTitle: 'Pakua kwenye folda yako ya Vipakuliwa',
     deleteConfirmTitle: (name) => `Futa "${name}"?`,
@@ -125,6 +140,9 @@ export const sw: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Puuza folda hii na kila kitu kilichomo',
+    unignoreTitle: 'Acha kupuuza folda hii',
+    ignoredTitle: 'Upakuaji huiacha folda hii na kila kitu kilichomo kama kilivyo',
     deleteTitle: 'Futa folda hii kwenye historia yako',
     downloadTitle: 'Pakua folda hii kama zip',
     couldNotDownload: (name, error) => `Imeshindwa kupakua "${name}": ${error}`,
@@ -136,7 +154,8 @@ export const sw: Messages = {
 
   recentlyOpened: {
     title: 'Zilizofunguliwa hivi karibuni',
-    remove: 'Ondoa kwenye zilizofunguliwa hivi karibuni'
+    remove: 'Ondoa kwenye zilizofunguliwa hivi karibuni',
+    showAll: 'Onyesha zote zilizofunguliwa hivi karibuni'
   },
 
   recentSettings: {
@@ -159,6 +178,53 @@ export const sw: Messages = {
       'Nafasi tupu kila upande wa maudhui kwenye dirisha lililopanuliwa, kama sehemu ya skrini. Kwenye dirisha ' +
       'dogo zaidi, maudhui hubaki na upana huo, yakitumia pambizo kwanza na kisha dirisha zima.',
     label: (percent) => `${percent}% kila upande`
+  },
+
+  courseListStyle: {
+    title: 'Mtindo wa orodha ya kozi',
+    description: 'Jinsi kozi zinavyoonyeshwa kwenye ukurasa huu.',
+    cards: 'Kadi',
+    rows: 'Mistari'
+  },
+
+  courseColor: {
+    title: (name) => `Rangi ya "${name}"`,
+    palette: 'Rangi zilizopo',
+    custom: 'Rangi maalum',
+    automatic: 'Tumia rangi ya kiotomatiki'
+  },
+
+  setInstitution: {
+    title: 'Weka taasisi',
+    description: 'Chagua kozi za kupewa taasisi hii. Iache tupu ili kuiondoa kwenye kozi hizo.',
+    courses: (count) => (count === 0 ? 'Kozi' : `Kozi (${count} zimechaguliwa)`),
+    selectAll: 'Chagua zote',
+    selectNone: 'Hakuna',
+    hidden: 'Imefichwa',
+    apply: (count) => (count === 1 ? 'Tumia kwa kozi 1' : `Tumia kwa kozi ${count}`),
+    remove: (count) => (count === 1 ? 'Ondoa kwenye kozi 1' : `Ondoa kwenye kozi ${count}`)
+  },
+
+  ignoredFiles: {
+    title: 'Faili zinazopuuzwa',
+    description:
+      'Upakuaji huziacha faili hizi kama zilivyo: hakuna matoleo mapya, hazitiwi alama kuwa zimefutwa, na haziongezwi ikiwa bado hazifuatiliwi.',
+    pathLabel: 'Njia ya faili',
+    placeholder: 'Folda/faili.pdf',
+    hint:
+      'Weka kiendelezi na folda ilimo: faili iliyo kwenye mzizi wa kozi ni jina lake tu. Faili zenye jina moja katika folda tofauti ni faili tofauti. Maliza njia kwa / ili kupuuza folda nzima na kila kitu kilichomo.',
+    add: 'Ongeza',
+    folder: 'Folda',
+    remove: (path) => `Acha kupuuza ${path}`,
+    empty: 'Hakuna faili zinazopuuzwa.',
+    duplicate: 'Faili hiyo tayari iko kwenye orodha.',
+    notFound: 'Bado haipo kwenye kozi hii',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" sasa inapuuzwa` : `Faili ${count} sasa zinapuuzwa`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Upakuaji utaiacha kama ilivyo. Je, ungependa pia kuifuta kwenye kozi hii, pamoja na matoleo yake yote yaliyohifadhiwa? Ikiwa bado inapuuzwa, upakuaji ujao hautaiongeza tena.'
+        : 'Upakuaji utaziacha kama zilivyo. Je, ungependa pia kuzifuta kwenye kozi hii, pamoja na matoleo yake yote yaliyohifadhiwa? Zikiwa bado zinapuuzwa, upakuaji ujao hautaziongeza tena.',
+    keep: (count) => (count === 1 ? 'Ibaki' : 'Zibaki')
   },
 
   upload: {
@@ -211,7 +277,11 @@ export const sw: Messages = {
   viewer: {
     notFoundTitle: 'Faili halikupatikana',
     notFoundText: 'Faili hili halipo tena kwenye historia yako ya Moodle Archive — huenda limefutwa.',
-    cannotPreview: 'Aina hii ya faili haiwezi kuonyeshwa kwenye kivinjari.'
+    cannotPreview: 'Aina hii ya faili haiwezi kuonyeshwa kwenye kivinjari.',
+    zoomOut: 'Punguza ukubwa',
+    zoomIn: 'Ongeza ukubwa',
+    fitVertically: 'Linganisha wima',
+    fitHorizontally: 'Linganisha mlalo'
   },
 
   popup: {

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { LanguageSelector } from './components/LanguageSelector';
 import { ThemeSelector } from './components/ThemeSelector';
 import { CoursesPage } from './pages/CoursesPage';
 import { CourseFilesPage } from './pages/CourseFilesPage';
 import { useT } from './hooks/useTranslation';
 import { useContentWidth } from './hooks/useSideMargin';
+import { useElementHeight } from './hooks/useElementWidth';
 
 type View =
   | { name: 'courses' }
@@ -21,6 +22,10 @@ function viewFromHistoryState(state: unknown): View {
 export function App() {
   const t = useT();
   const contentWidth = useContentWidth();
+  // For pages that center their content in the whole window, header included (see
+  // .courses-page.centered).
+  const headerRef = useRef<HTMLElement>(null);
+  const headerHeight = useElementHeight(headerRef);
   const [view, setView] = useState<View>(() => viewFromHistoryState(history.state));
   // The courses list's "⋮" overflow menu is rendered here, in the header, so
   // it sits next to the theme selector — but CoursesPage owns the state those
@@ -59,8 +64,8 @@ export function App() {
   }
 
   return (
-    <div className="app" style={{ width: contentWidth }}>
-      <header className="app-header">
+    <div className="app" style={{ width: contentWidth, '--app-header-height': `${headerHeight}px` } as CSSProperties}>
+      <header className="app-header" ref={headerRef}>
         <div className="app-header-title">
           <span className="app-logo" aria-hidden="true">
             🎓

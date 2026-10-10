@@ -1,7 +1,9 @@
 import { fileStore, versionStore } from './db';
+import { getRootFolderPath } from './fileTree';
+import { isIgnoredPath } from './ignoredFiles';
 import { sha256 } from './hash';
 import { guessMimeType } from './fileKind';
-import type { ExtractedEntry, FileRecord, FileStatus, VersionRecord } from '../types';
+import type { Course, ExtractedEntry, FileRecord, FileStatus, VersionRecord } from '../types';
 
 export interface ProcessCourseResult {
   created: number;
@@ -149,4 +151,24 @@ export async function addManualFiles(
       if (stored) await fileStore.put({ ...stored, currentStatus: 'unchanged', deletedAt: undefined, manual: true });
     }
   }
+}
+
+/**
+ * What a download needs to leave a course's ignored files alone (see
+ * Course.ignoredPaths): which crawled paths to drop before storing anything, and the
+ * ignored files already tracked, which count as present when deletions are checked —
+ * so one that's gone from Moodle isn't marked as deleted either.
+ */
+export async function ignoredFilesFor(
+  course: Course
+): Promise<{ isIgnored: (relativePath: string) => boolean; trackedPaths: string[] }> {
+  const ignoredPaths = course.ignoredPaths ?? [];
+  if (ignoredPaths.length === 0) return { isIgnored: () => false, trackedPaths: [] };
+
+  const files = await fileStore.byCourse(course.id);
+  // Ignored paths are kept relative to the root the file tree shows, so they're
+  // matched the same way here.
+  const rootPath = getRootFolderPath(files);
+  const isIgnored = (relativePath: string) => isIgnoredPath(relativePath, rootPath, ignoredPaths);
+  return { isIgnored, trackedPaths: files.filter((f) => isIgnored(f.relativePath)).map((f) => f.relativePath) };
 }

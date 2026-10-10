@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   INITIAL_DOWNLOAD_STATE,
   downloadKey,
+  isDownloadableUrl,
   findDownload,
   finishCurrent,
   removeFromQueue,
@@ -81,5 +82,21 @@ describe('download queue', () => {
     let state = requestDownload(INITIAL_DOWNLOAD_STATE, course(1, 10)).state;
     state = requestDownload(state, course(2, 20)).state;
     expect(removeFromQueue(state, 2).queue).toEqual([]);
+  });
+});
+
+describe('isDownloadableUrl', () => {
+  it('accepts the Moodle pages the downloader understands', () => {
+    expect(isDownloadableUrl('https://moodle.example/course/view.php?id=7&section=2')).toBe(true);
+    expect(isDownloadableUrl('https://moodle.example/mod/folder/view.php?id=3')).toBe(true);
+    expect(isDownloadableUrl('https://moodle.example/mod/resource/view.php?id=3')).toBe(true);
+    expect(isDownloadableUrl('https://moodle.example/pluginfile.php/1/mod_resource/content/1/a.pdf')).toBe(true);
+  });
+
+  it('turns down anything else, so it never goes into the queue', () => {
+    expect(isDownloadableUrl('https://moodle.example/my/')).toBe(false);
+    expect(isDownloadableUrl('https://www.google.com/')).toBe(false);
+    expect(isDownloadableUrl('chrome://extensions/')).toBe(false);
+    expect(isDownloadableUrl('')).toBe(false);
   });
 });

@@ -50,6 +50,8 @@ export const vi: Messages = {
     recentSettings: 'Cài đặt mở gần đây',
     downloadNameSettings: 'Cài đặt tên tệp tải xuống',
     sideMargin: 'Lề hai bên',
+    courseListStyle: 'Kiểu danh sách khóa học',
+    setInstitution: 'Đặt cơ sở cho các khóa học',
     hiddenCourses: 'Khóa học bị ẩn',
     deleteAll: 'Xóa tất cả khóa học',
     backupSaved: 'Đã lưu bản sao lưu vào thư mục Tải xuống.',
@@ -86,7 +88,14 @@ export const vi: Messages = {
   courseRow: {
     lastDownloaded: 'Tải xuống lần cuối',
     openInMoodle: 'Mở khóa học trong Moodle',
-    setTagName: 'Đặt tên thẻ',
+    setTagName: 'Đặt nhãn (viết tắt)',
+    setFullName: 'Đặt tên đầy đủ',
+    tagPlaceholder: 'Viết tắt, vd. HĐH',
+    fullNamePlaceholder: 'Tên đầy đủ (để trống: tên trên Moodle)',
+    setInstitution: 'Đặt cơ sở (viết tắt)',
+    institutionPlaceholder: 'Tên viết tắt của cơ sở, vd. UHU',
+    institution: 'Cơ sở',
+    changeColor: 'Đổi màu',
     hideCourse: 'Ẩn khóa học',
     deleteCourse: 'Xóa khóa học'
   },
@@ -100,6 +109,7 @@ export const vi: Messages = {
   courseFiles: {
     backToCourses: 'Quay lại danh sách khóa học',
     addFile: 'Thêm tệp…',
+    ignoredFiles: 'Tệp bị bỏ qua',
     couldNotRead: (fileCount, firstName, error) =>
       `Không thể đọc ${fileCount === 1 ? `"${firstName}"` : 'các tệp đã thả'} — tệp có thể đã bị di chuyển hoặc xóa, ` +
       `hoặc vẫn đang được tải xuống. Hãy thử lại từ một vị trí ổn định. (${error})`,
@@ -115,6 +125,11 @@ export const vi: Messages = {
     lastSaved: (date) => `Lưu lần cuối: ${date}`,
     manual: 'Thủ công',
     manualTitle: 'Được thêm thủ công, không tải từ Moodle',
+    ignored: 'Bỏ qua',
+    ignoredTitle: 'Lượt tải xuống giữ nguyên tệp này',
+    ignoreTitle: 'Bỏ qua thay đổi của tệp này',
+    unignoreTitle: 'Ngừng bỏ qua tệp này',
+    ignoredWithFolderTitle: 'Bị bỏ qua cùng thư mục chứa nó',
     deleteTitle: 'Xóa tệp này khỏi lịch sử',
     downloadTitle: 'Tải xuống vào thư mục Tải xuống',
     deleteConfirmTitle: (name) => `Xóa "${name}"?`,
@@ -124,6 +139,9 @@ export const vi: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Bỏ qua thư mục này và mọi thứ bên trong',
+    unignoreTitle: 'Ngừng bỏ qua thư mục này',
+    ignoredTitle: 'Lượt tải xuống giữ nguyên thư mục này và mọi thứ bên trong',
     deleteTitle: 'Xóa thư mục này khỏi lịch sử',
     downloadTitle: 'Tải thư mục này xuống dưới dạng zip',
     couldNotDownload: (name, error) => `Không thể tải xuống "${name}": ${error}`,
@@ -135,7 +153,8 @@ export const vi: Messages = {
 
   recentlyOpened: {
     title: 'Mở gần đây',
-    remove: 'Xóa khỏi danh sách mở gần đây'
+    remove: 'Xóa khỏi danh sách mở gần đây',
+    showAll: 'Hiển thị tất cả mục mở gần đây'
   },
 
   recentSettings: {
@@ -158,6 +177,53 @@ export const vi: Messages = {
       'Khoảng trống ở mỗi bên nội dung khi cửa sổ được phóng to, tính theo tỷ lệ màn hình. Ở cửa sổ nhỏ hơn, ' +
       'nội dung giữ nguyên độ rộng đó, dùng hết phần lề trước rồi mới chiếm toàn bộ cửa sổ.',
     label: (percent) => `${percent}% mỗi bên`
+  },
+
+  courseListStyle: {
+    title: 'Kiểu danh sách khóa học',
+    description: 'Cách hiển thị các khóa học trên trang này.',
+    cards: 'Thẻ',
+    rows: 'Hàng'
+  },
+
+  courseColor: {
+    title: (name) => `Màu của "${name}"`,
+    palette: 'Bảng màu',
+    custom: 'Màu tùy chỉnh',
+    automatic: 'Dùng màu tự động'
+  },
+
+  setInstitution: {
+    title: 'Đặt cơ sở',
+    description: 'Chọn các khóa học sẽ được gán cơ sở này. Để trống để gỡ cơ sở khỏi chúng.',
+    courses: (count) => (count === 0 ? 'Khóa học' : `Khóa học (đã chọn ${count})`),
+    selectAll: 'Chọn tất cả',
+    selectNone: 'Bỏ chọn',
+    hidden: 'Đã ẩn',
+    apply: (count) => (count === 1 ? 'Áp dụng cho 1 khóa học' : `Áp dụng cho ${count} khóa học`),
+    remove: (count) => (count === 1 ? 'Gỡ khỏi 1 khóa học' : `Gỡ khỏi ${count} khóa học`)
+  },
+
+  ignoredFiles: {
+    title: 'Tệp bị bỏ qua',
+    description:
+      'Lượt tải xuống giữ nguyên các tệp này: không có phiên bản mới, không bao giờ bị đánh dấu đã xóa, và không được thêm nếu chưa được theo dõi.',
+    pathLabel: 'Đường dẫn tệp',
+    placeholder: 'Thư mục/tệp.pdf',
+    hint:
+      'Ghi cả phần mở rộng và các thư mục chứa tệp: tệp ở thư mục gốc của khóa học chỉ là tên của nó. Các tệp cùng tên ở thư mục khác nhau là các tệp khác nhau. Kết thúc đường dẫn bằng / để bỏ qua cả thư mục cùng mọi thứ bên trong.',
+    add: 'Thêm',
+    folder: 'Thư mục',
+    remove: (path) => `Ngừng bỏ qua ${path}`,
+    empty: 'Không có tệp nào bị bỏ qua.',
+    duplicate: 'Tệp đó đã có trong danh sách.',
+    notFound: 'Chưa có trong khóa học này',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" giờ đã bị bỏ qua` : `${count} tệp giờ đã bị bỏ qua`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Lượt tải xuống sẽ giữ nguyên tệp này. Bạn có muốn xóa luôn tệp khỏi khóa học này, cùng mọi phiên bản đã lưu không? Khi còn bị bỏ qua, các lượt tải sau sẽ không thêm lại tệp.'
+        : 'Lượt tải xuống sẽ giữ nguyên các tệp này. Bạn có muốn xóa luôn chúng khỏi khóa học này, cùng mọi phiên bản đã lưu không? Khi còn bị bỏ qua, các lượt tải sau sẽ không thêm lại chúng.',
+    keep: (count) => (count === 1 ? 'Giữ lại' : 'Giữ lại')
   },
 
   upload: {
@@ -210,7 +276,11 @@ export const vi: Messages = {
   viewer: {
     notFoundTitle: 'Không tìm thấy tệp',
     notFoundText: 'Tệp này không còn trong lịch sử Moodle Archive của bạn — có thể đã bị xóa.',
-    cannotPreview: 'Không thể xem trước loại tệp này trong trình duyệt.'
+    cannotPreview: 'Không thể xem trước loại tệp này trong trình duyệt.',
+    zoomOut: 'Thu nhỏ',
+    zoomIn: 'Phóng to',
+    fitVertically: 'Vừa theo chiều dọc',
+    fitHorizontally: 'Vừa theo chiều ngang'
   },
 
   popup: {

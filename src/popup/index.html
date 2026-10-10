@@ -3,6 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <title>Moodle Archive</title>
+    <!-- Chrome sizes the popup window from the first paint, before the module
+         script (React + the bundled CSS) has run, so reserve the idle popup's
+         footprint inline — otherwise it opens as a tiny box and visibly jumps. -->
+    <style>
+      body {
+        margin: 0;
+        width: 340px;
+        min-height: 170px;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

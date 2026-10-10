@@ -50,6 +50,8 @@ export const it: Messages = {
     recentSettings: 'Impostazioni degli aperti di recente',
     downloadNameSettings: 'Impostazioni dei nomi di download',
     sideMargin: 'Margini laterali',
+    courseListStyle: 'Stile dell’elenco dei corsi',
+    setInstitution: 'Imposta l’istituzione dei corsi',
     hiddenCourses: 'Corsi nascosti',
     deleteAll: 'Elimina tutti i corsi',
     backupSaved: 'Backup salvato nella cartella Download.',
@@ -86,7 +88,14 @@ export const it: Messages = {
   courseRow: {
     lastDownloaded: 'Ultimo download',
     openInMoodle: 'Apri il corso in Moodle',
-    setTagName: 'Imposta etichetta',
+    setTagName: 'Imposta etichetta (sigla)',
+    setFullName: 'Imposta nome completo',
+    tagPlaceholder: 'Sigla, es. SO',
+    fullNamePlaceholder: 'Nome completo (vuoto: quello di Moodle)',
+    setInstitution: 'Imposta istituzione (sigla)',
+    institutionPlaceholder: 'Sigla dell’istituzione, es. UHU',
+    institution: 'Istituzione',
+    changeColor: 'Cambia colore',
     hideCourse: 'Nascondi corso',
     deleteCourse: 'Elimina corso'
   },
@@ -100,6 +109,7 @@ export const it: Messages = {
   courseFiles: {
     backToCourses: 'Torna ai corsi',
     addFile: 'Aggiungi file…',
+    ignoredFiles: 'File ignorati',
     couldNotRead: (fileCount, firstName, error) =>
       `Impossibile leggere ${fileCount === 1 ? `"${firstName}"` : 'i file rilasciati'}: il file potrebbe essere stato ` +
       `spostato o eliminato, oppure è ancora in download. Riprova da una posizione stabile. (${error})`,
@@ -116,6 +126,11 @@ export const it: Messages = {
     lastSaved: (date) => `Ultimo salvataggio: ${date}`,
     manual: 'Manuale',
     manualTitle: 'Aggiunto a mano, non scaricato da Moodle',
+    ignored: 'Ignorato',
+    ignoredTitle: 'I download lasciano questo file così com’è',
+    ignoreTitle: 'Ignora le modifiche a questo file',
+    unignoreTitle: 'Non ignorare più questo file',
+    ignoredWithFolderTitle: 'Ignorato insieme alla sua cartella',
     deleteTitle: 'Elimina questo file dalla cronologia',
     downloadTitle: 'Scarica nella cartella Download',
     deleteConfirmTitle: (name) => `Eliminare "${name}"?`,
@@ -125,6 +140,9 @@ export const it: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Ignora questa cartella e tutto il suo contenuto',
+    unignoreTitle: 'Non ignorare più questa cartella',
+    ignoredTitle: 'I download lasciano questa cartella e tutto il suo contenuto così come sono',
     deleteTitle: 'Elimina questa cartella dalla cronologia',
     downloadTitle: 'Scarica questa cartella come zip',
     couldNotDownload: (name, error) => `Impossibile scaricare "${name}": ${error}`,
@@ -137,7 +155,8 @@ export const it: Messages = {
 
   recentlyOpened: {
     title: 'Aperti di recente',
-    remove: 'Rimuovi dagli aperti di recente'
+    remove: 'Rimuovi dagli aperti di recente',
+    showAll: 'Mostra tutti gli aperti di recente'
   },
 
   recentSettings: {
@@ -160,6 +179,53 @@ export const it: Messages = {
       'Spazio vuoto su ciascun lato del contenuto in una finestra ingrandita, come frazione dello schermo. In una ' +
       'finestra più piccola il contenuto mantiene quella larghezza, usando prima i margini e poi l’intera finestra.',
     label: (percent) => `${percent}% per lato`
+  },
+
+  courseListStyle: {
+    title: 'Stile dell’elenco dei corsi',
+    description: 'Come vengono mostrati i corsi in questa pagina.',
+    cards: 'Schede',
+    rows: 'Righe'
+  },
+
+  courseColor: {
+    title: (name) => `Colore di "${name}"`,
+    palette: 'Tavolozza',
+    custom: 'Colore personalizzato',
+    automatic: 'Usa il colore automatico'
+  },
+
+  setInstitution: {
+    title: 'Imposta istituzione',
+    description: 'Scegli i corsi a cui dare questa istituzione. Lasciala vuota per toglierla.',
+    courses: (count) => (count === 0 ? 'Corsi' : `Corsi (${count} selezionati)`),
+    selectAll: 'Seleziona tutti',
+    selectNone: 'Nessuno',
+    hidden: 'Nascosto',
+    apply: (count) => (count === 1 ? 'Applica a 1 corso' : `Applica a ${count} corsi`),
+    remove: (count) => (count === 1 ? 'Rimuovi da 1 corso' : `Rimuovi da ${count} corsi`)
+  },
+
+  ignoredFiles: {
+    title: 'File ignorati',
+    description:
+      'I download lasciano questi file così come sono: nessuna nuova versione, mai segnati come eliminati e non aggiunti se non sono ancora seguiti.',
+    pathLabel: 'Percorso del file',
+    placeholder: 'Cartella/file.pdf',
+    hint:
+      'Includi l’estensione e le cartelle in cui si trova: un file nella radice del corso è solo il suo nome. File con lo stesso nome in cartelle diverse sono file diversi. Termina un percorso con / per ignorare un’intera cartella con tutto il suo contenuto.',
+    add: 'Aggiungi',
+    folder: 'Cartella',
+    remove: (path) => `Non ignorare più ${path}`,
+    empty: 'Nessun file ignorato.',
+    duplicate: 'Quel file è già nell’elenco.',
+    notFound: 'Non ancora in questo corso',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" ora è ignorato` : `${count} file ora sono ignorati`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'I download lo lasceranno così com’è. Vuoi anche eliminarlo da questo corso, con tutte le sue versioni salvate? Finché è ignorato, i prossimi download non lo aggiungeranno di nuovo.'
+        : 'I download li lasceranno così come sono. Vuoi anche eliminarli da questo corso, con tutte le loro versioni salvate? Finché sono ignorati, i prossimi download non li aggiungeranno di nuovo.',
+    keep: (count) => (count === 1 ? 'Tienilo' : 'Tienili')
   },
 
   upload: {
@@ -212,7 +278,11 @@ export const it: Messages = {
   viewer: {
     notFoundTitle: 'File non trovato',
     notFoundText: 'Questo file non è più nella cronologia di Moodle Archive: potrebbe essere stato eliminato.',
-    cannotPreview: 'Questo tipo di file non può essere visualizzato in anteprima nel browser.'
+    cannotPreview: 'Questo tipo di file non può essere visualizzato in anteprima nel browser.',
+    zoomOut: 'Riduci',
+    zoomIn: 'Ingrandisci',
+    fitVertically: 'Adatta in verticale',
+    fitHorizontally: 'Adatta in orizzontale'
   },
 
   popup: {

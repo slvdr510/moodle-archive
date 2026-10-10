@@ -1,22 +1,72 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type CSSProperties,
+  type RefObject
+} from 'react';
 import { createPortal } from 'react-dom';
 import { InvalidBackupError, exportAllData, exportCourse, importAllData } from '../../lib/backup';
+import { CARD_GAP, fitCardGrid } from '../../lib/cardLayout';
+import { withoutTag } from '../../lib/courseNames';
+import { assignAutoCourseColors, assignCourseColors } from '../../lib/courseColors';
 import { courseStore, deleteCourse, resetTrackedData } from '../../lib/db';
 import type { Course } from '../../types';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { CourseRow } from '../components/CourseRow';
+import { CourseCard } from '../components/CourseCard';
+import { CourseColorModal } from '../components/CourseColorModal';
+import { CourseListStyleModal } from '../components/CourseListStyleModal';
 import { DownloadNameSettingsModal } from '../components/DownloadNameSettingsModal';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { HiddenCoursesModal } from '../components/HiddenCoursesModal';
 import { RecentSettingsModal } from '../components/RecentSettingsModal';
+import { SetInstitutionModal } from '../components/SetInstitutionModal';
 import { SideMarginModal } from '../components/SideMarginModal';
 import { Spinner } from '../components/Spinner';
+import { useCourseListStyle } from '../hooks/useCourseListStyle';
+import { useElementWidth } from '../hooks/useElementWidth';
 import { useFileDrop } from '../hooks/useFileDrop';
 import { useT } from '../hooks/useTranslation';
 
 type TransientMessage = { kind: 'info' | 'error'; text: string };
 type PendingExport = { kind: 'all' } | { kind: 'course'; course: Course };
 type PendingDelete = { kind: 'all' } | { kind: 'course'; course: Course };
+
+/**
+ * The height the card list can take without the page scrolling: the window's, less
+ * the room above the list (the header, down to where this page starts) and as much
+ * again below it — which is what keeps the list centered on the window (see
+ * .courses-page.centered) — plus the last row's own bottom gap, which sits in that
+ * room below. Kept up to date as the window resizes.
+ */
+function useCardListRoom(pageRef: RefObject<HTMLElement | null>): number {
+  const [room, setRoom] = useState(Infinity);
+  useLayoutEffect(() => {
+    function measure() {
+      const page = pageRef.current;
+      if (!page) return;
+      const top = page.getBoundingClientRect().top + window.scrollY;
+      setRoom(window.innerHeight - 2 * top + CARD_GAP);
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [pageRef]);
+  return room;
+}
+
+/** `institution` was briefly stored as `university`: carries over a value set back then. */
+async function migrateUniversityField(course: Course): Promise<Course> {
+  const { university, ...rest } = course as Course & { university?: string };
+  if (university === undefined) return course;
+  const migrated: Course = { ...rest, institution: rest.institution ?? university };
+  await courseStore.put(migrated);
+  return migrated;
+}
 
 function courseUrlOf(course: Course): string | undefined {
   return course.url || course.matchedUrls[0];
@@ -46,10 +96,18 @@ export function CoursesPage({
   const [showRecentSettings, setShowRecentSettings] = useState(false);
   const [showDownloadNameSettings, setShowDownloadNameSettings] = useState(false);
   const [showSideMargin, setShowSideMargin] = useState(false);
+  const [showListStyle, setShowListStyle] = useState(false);
+  const [showSetInstitution, setShowSetInstitution] = useState(false);
+  const [colorTarget, setColorTarget] = useState<Course | null>(null);
+  const [listStyle] = useCourseListStyle();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const courseListRef = useRef<HTMLUListElement>(null);
+  const courseListWidth = useElementWidth(courseListRef);
+  const coursesPageRef = useRef<HTMLDivElement>(null);
+  const courseListHeight = useCardListRoom(coursesPageRef);
 
   async function reload() {
-    const all = await courseStore.all();
+    const all = await Promise.all((await courseStore.all()).map(migrateUniversityField));
     setCourses([...all].sort((a, b) => a.order - b.order));
     setLoaded(true);
   }
@@ -70,8 +128,29 @@ export function CoursesPage({
     return () => chrome.runtime.onMessage.removeListener(onMessage);
   }, []);
 
-  async function handleRenameCourse(course: Course, name: string) {
-    await courseStore.put({ ...course, name, tagged: true });
+  async function handleRenameCourse(course: Course, name: string | undefined) {
+    await courseStore.put(name === undefined ? withoutTag(course) : { ...course, name, tagged: true });
+    await reload();
+  }
+
+  async function handleSetFullName(course: Course, fullName: string | undefined) {
+    await courseStore.put({ ...course, fullName });
+    await reload();
+  }
+
+  async function handleSetColor(course: Course, color: string | undefined) {
+    await courseStore.put({ ...course, color });
+    await reload();
+  }
+
+  async function handleSetInstitution(course: Course, institution: string | undefined) {
+    await courseStore.put({ ...course, institution });
+    await reload();
+  }
+
+  async function handleSetInstitutionFor(courseIds: string[], institution: string | undefined) {
+    const ids = new Set(courseIds);
+    await Promise.all(courses.filter((c) => ids.has(c.id)).map((c) => courseStore.put({ ...c, institution })));
     await reload();
   }
 
@@ -211,8 +290,8 @@ export function CoursesPage({
   }
 
   async function handleImportFileChosen(e: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = ''; // allow re-selecting the same file later
+    const files = Array.from(e.currentTarget.files ?? []);
+    e.currentTarget.value = ''; // allow re-selecting the same file later
     if (files.length > 0) await importBackups(files);
   }
 
@@ -220,14 +299,39 @@ export function CoursesPage({
   // a file that isn't one. Ignored while something is already running or a dialog is open.
   const draggingFiles = useFileDrop(
     (dropped) => void importBackups(dropped),
-    busy !== null || pendingExport !== null || pendingDelete !== null || showHiddenModal || showRecentSettings || showDownloadNameSettings || showSideMargin
+    busy !== null || pendingExport !== null || pendingDelete !== null || showHiddenModal || showRecentSettings || showDownloadNameSettings || showSideMargin || showListStyle || showSetInstitution || colorTarget !== null
   );
 
+  // Every institution already set, hidden courses included, to offer while typing one.
+  const institutionSuggestions = useMemo(
+    () => [...new Set(courses.flatMap((c) => (c.institution ? [c.institution] : [])))].sort(),
+    [courses]
+  );
+  // Over every course, hidden ones included, so unhiding one never repaints the others.
+  const courseColors = useMemo(() => assignCourseColors(courses), [courses]);
+  const autoCourseColors = useMemo(() => assignAutoCourseColors(courses), [courses]);
   const visibleCourses = courses.filter((c) => !c.hidden);
+  // As cards, the courses go in balanced, centered rows (5 → 3 + 2, see cardLayout.ts):
+  // the indexes of the cards each row but the last ends at, a line break after each.
+  // Every card fits on the screen, with no scrolling: as many columns as leaves them
+  // largest, and shrunk only if they have to be (see fitCardGrid).
+  const { rowEnds, cardGrid } = useMemo(() => {
+    const grid = fitCardGrid(visibleCourses.length, courseListWidth, courseListHeight);
+    const ends = new Set<number>();
+    if (listStyle === 'cards') {
+      let index = -1;
+      for (const size of grid.rows.slice(0, -1)) {
+        index += size;
+        ends.add(index);
+      }
+    }
+    return { rowEnds: ends, cardGrid: grid };
+  }, [listStyle, visibleCourses.length, courseListWidth, courseListHeight]);
   const hiddenCourses = courses.filter((c) => c.hidden);
 
   return (
-    <div className="courses-page">
+    // As cards, the list is centered in the window vertically too (see .courses-page.centered).
+    <div ref={coursesPageRef} className={`courses-page${listStyle === 'cards' ? ' centered' : ''}`}>
       {headerMenuSlot &&
         createPortal(
           <DropdownMenu
@@ -238,9 +342,11 @@ export function CoursesPage({
               { label: t.courses.openAllUrls, onClick: handleOpenAllCourseUrls },
               { label: t.courses.exportAll, onClick: () => setPendingExport({ kind: 'all' }) },
               { label: t.courses.importCourses, onClick: handleImportClick },
+              { label: t.courses.setInstitution, onClick: () => setShowSetInstitution(true) },
               { label: t.courses.recentSettings, onClick: () => setShowRecentSettings(true) },
               { label: t.courses.downloadNameSettings, onClick: () => setShowDownloadNameSettings(true) },
               { label: t.courses.sideMargin, onClick: () => setShowSideMargin(true) },
+              { label: t.courses.courseListStyle, onClick: () => setShowListStyle(true) },
               { label: t.courses.hiddenCourses, onClick: () => setShowHiddenModal(true) },
               { label: t.courses.deleteAll, onClick: () => setPendingDelete({ kind: 'all' }), danger: true }
             ]}
@@ -323,29 +429,67 @@ export function CoursesPage({
 
       {showSideMargin && <SideMarginModal onClose={() => setShowSideMargin(false)} />}
 
-      <ul className="course-list">
-        {visibleCourses.map((course) => (
-          <CourseRow
-            key={course.id}
-            course={course}
-            onOpen={() => onOpenCourse(course.id, course.name, courseUrlOf(course))}
-            onRename={(name) => void handleRenameCourse(course, name)}
-            onDelete={() => setPendingDelete({ kind: 'course', course })}
-            onExport={() => setPendingExport({ kind: 'course', course })}
-            onHide={() => void handleHideCourse(course)}
-            onDragStart={() => setDraggedId(course.id)}
-            onDragOver={(e) => {
-              e.preventDefault();
-              if (dragOverId !== course.id) setDragOverId(course.id);
-            }}
-            onDrop={() => void handleDrop(course.id)}
-            onDragEnd={() => {
-              setDraggedId(null);
-              setDragOverId(null);
-            }}
-            isDragging={draggedId === course.id}
-            isDragOver={dragOverId === course.id && draggedId !== course.id}
-          />
+      {showListStyle && <CourseListStyleModal onClose={() => setShowListStyle(false)} />}
+
+      {colorTarget && (
+        <CourseColorModal
+          course={colorTarget}
+          autoColor={autoCourseColors.get(colorTarget.id) ?? '#2563eb'}
+          onSave={(color) => void handleSetColor(colorTarget, color)}
+          onClose={() => setColorTarget(null)}
+        />
+      )}
+
+      {showSetInstitution && (
+        <SetInstitutionModal
+          // Shown ones first, in the list's order, then the hidden ones.
+          courses={[...visibleCourses, ...hiddenCourses]}
+          suggestions={institutionSuggestions}
+          onApply={(courseIds, institution) => void handleSetInstitutionFor(courseIds, institution)}
+          onClose={() => setShowSetInstitution(false)}
+        />
+      )}
+
+      <ul
+        ref={courseListRef}
+        className={`course-list${listStyle === 'rows' ? ' as-rows' : ''}`}
+        style={
+          {
+            '--card-width': `${cardGrid.width}px`,
+            '--card-height': `${cardGrid.height}px`,
+            '--card-gap': `${CARD_GAP}px`
+          } as CSSProperties
+        }
+      >
+        {visibleCourses.map((course, index) => (
+          <Fragment key={course.id}>
+            <CourseCard
+              course={course}
+              color={courseColors.get(course.id)}
+              onOpen={() => onOpenCourse(course.id, course.name, courseUrlOf(course))}
+              onRename={(name) => void handleRenameCourse(course, name)}
+              onSetFullName={(fullName) => void handleSetFullName(course, fullName)}
+              onSetInstitution={(institution) => void handleSetInstitution(course, institution)}
+              onChangeColor={() => setColorTarget(course)}
+              institutionSuggestions={institutionSuggestions}
+              onDelete={() => setPendingDelete({ kind: 'course', course })}
+              onExport={() => setPendingExport({ kind: 'course', course })}
+              onHide={() => void handleHideCourse(course)}
+              onDragStart={() => setDraggedId(course.id)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (dragOverId !== course.id) setDragOverId(course.id);
+              }}
+              onDrop={() => void handleDrop(course.id)}
+              onDragEnd={() => {
+                setDraggedId(null);
+                setDragOverId(null);
+              }}
+              isDragging={draggedId === course.id}
+              isDragOver={dragOverId === course.id && draggedId !== course.id}
+            />
+            {rowEnds.has(index) && <li className="course-list-break" aria-hidden="true" />}
+          </Fragment>
         ))}
         {loaded && visibleCourses.length === 0 && (
           <li className={courses.length === 0 ? 'empty empty-welcome' : 'empty'}>

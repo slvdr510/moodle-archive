@@ -51,6 +51,8 @@ export const arz: Messages = {
     recentSettings: 'إعدادات اللي اتفتح قريب',
     downloadNameSettings: 'إعدادات أسامي التنزيل',
     sideMargin: 'الهوامش اللي على الجناب',
+    courseListStyle: 'شكل قايمة الكورسات',
+    setInstitution: 'حط المؤسسة لكورسات',
     hiddenCourses: 'الكورسات المستخبية',
     deleteAll: 'امسح كل الكورسات',
     backupSaved: 'النسخة الاحتياطية اتحفظت في فولدر التنزيلات.',
@@ -87,7 +89,14 @@ export const arz: Messages = {
   courseRow: {
     lastDownloaded: 'آخر تنزيل',
     openInMoodle: 'افتح الكورس على Moodle',
-    setTagName: 'حط اسم للتاج',
+    setTagName: 'حط تاج (اختصار)',
+    setFullName: 'حط الاسم الكامل',
+    tagPlaceholder: 'اختصار، زي OS',
+    fullNamePlaceholder: 'الاسم الكامل (فاضي: اسم Moodle)',
+    setInstitution: 'حط المؤسسة (اختصار)',
+    institutionPlaceholder: 'اختصار المؤسسة، زي UHU',
+    institution: 'المؤسسة',
+    changeColor: 'غيّر اللون',
     hideCourse: 'خبّي الكورس',
     deleteCourse: 'امسح الكورس'
   },
@@ -101,6 +110,7 @@ export const arz: Messages = {
   courseFiles: {
     backToCourses: 'ارجع للكورسات',
     addFile: 'ضيف ملف…',
+    ignoredFiles: 'الملفات المتجاهلة',
     couldNotRead: (fileCount, firstName, error) =>
       `مقدرناش نقرا ${fileCount === 1 ? `«${firstName}»` : 'الملفات اللي سبتها'} — ممكن الملف يكون اتنقل أو اتمسح، ` +
       `أو لسه بيتنزّل. جرّب تاني من مكان ثابت. (${error})`,
@@ -116,6 +126,11 @@ export const arz: Messages = {
     lastSaved: (date) => `آخر حفظ: ${date}`,
     manual: 'يدوي',
     manualTitle: 'اتضاف باليد، مش متنزّل من Moodle',
+    ignored: 'متجاهل',
+    ignoredTitle: 'التنزيلات بتسيب الملف ده زي ما هو',
+    ignoreTitle: 'اتجاهل التغييرات في الملف ده',
+    unignoreTitle: 'بطّل تتجاهل الملف ده',
+    ignoredWithFolderTitle: 'متجاهل مع الفولدر بتاعه',
     deleteTitle: 'امسح الملف ده من التاريخ بتاعك',
     downloadTitle: 'نزّله في فولدر التنزيلات',
     deleteConfirmTitle: (name) => `تمسح «${name}»؟`,
@@ -125,6 +140,9 @@ export const arz: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'اتجاهل الفولدر ده وكل اللي فيه',
+    unignoreTitle: 'بطّل تتجاهل الفولدر ده',
+    ignoredTitle: 'التنزيلات بتسيب الفولدر ده وكل اللي فيه زي ما هو',
     deleteTitle: 'امسح الفولدر ده من التاريخ بتاعك',
     downloadTitle: 'نزّل الفولدر ده كـzip',
     couldNotDownload: (name, error) => `مقدرناش ننزّل «${name}»: ${error}`,
@@ -136,7 +154,8 @@ export const arz: Messages = {
 
   recentlyOpened: {
     title: 'اتفتح قريب',
-    remove: 'شيله من اللي اتفتح قريب'
+    remove: 'شيله من اللي اتفتح قريب',
+    showAll: 'اعرض كل اللي اتفتح مؤخرًا'
   },
 
   recentSettings: {
@@ -159,6 +178,53 @@ export const arz: Messages = {
       'المساحة الفاضية على كل جنب من المحتوى لما الشباك يكون مكبّر، كنسبة من الشاشة. في شباك أصغر المحتوى ' +
       'بيفضل بنفس العرض، فبياكل من الهوامش الأول وبعدين ياخد الشباك كله.',
     label: (percent) => `${percent}% على كل جنب`
+  },
+
+  courseListStyle: {
+    title: 'شكل قايمة الكورسات',
+    description: 'الكورسات تتعرض إزاي في الصفحة دي.',
+    cards: 'كروت',
+    rows: 'صفوف'
+  },
+
+  courseColor: {
+    title: (name) => `لون "${name}"`,
+    palette: 'الألوان',
+    custom: 'لون على مزاجك',
+    automatic: 'استخدم اللون التلقائي'
+  },
+
+  setInstitution: {
+    title: 'حط المؤسسة',
+    description: 'اختار الكورسات اللي هتاخد المؤسسة دي. سيبها فاضية عشان تشيلها منهم.',
+    courses: (count) => (count === 0 ? 'الكورسات' : `الكورسات (${count} متختارين)`),
+    selectAll: 'اختار الكل',
+    selectNone: 'ولا حاجة',
+    hidden: 'مخفي',
+    apply: (count) => (count === 1 ? 'طبّق على كورس واحد' : `طبّق على ${count} كورسات`),
+    remove: (count) => (count === 1 ? 'شيلها من كورس واحد' : `شيلها من ${count} كورسات`)
+  },
+
+  ignoredFiles: {
+    title: 'الملفات المتجاهلة',
+    description:
+      'التنزيلات بتسيب الملفات دي زي ما هي: مفيش نسخ جديدة، عمرها ما تتعلم إنها اتمسحت، ومش بتتضاف لو لسه مش متتبعة.',
+    pathLabel: 'مسار الملف',
+    placeholder: 'فولدر/ملف.pdf',
+    hint:
+      'اكتب الامتداد والفولدرات اللي هو فيها: الملف اللي في أول الكورس هو اسمه بس. الملفات اللي ليها نفس الاسم في فولدرات مختلفة تعتبر ملفات مختلفة. خلّي المسار يخلص بـ / عشان تتجاهل فولدر كامل بكل اللي فيه.',
+    add: 'ضيف',
+    folder: 'فولدر',
+    remove: (path) => `بطّل تتجاهل ${path}`,
+    empty: 'مفيش ملفات متجاهلة.',
+    duplicate: 'الملف ده موجود في القايمة أصلًا.',
+    notFound: 'لسه مش موجود في الكورس ده',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" بقى متجاهل` : `${count} ملفات بقت متجاهلة`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'التنزيلات هتسيب الملف زي ما هو. عايز كمان تمسحه من الكورس ده بكل نسخه المحفوظة؟ طول ما هو متجاهل، التنزيلات الجاية مش هترجعه.'
+        : 'التنزيلات هتسيب الملفات زي ما هي. عايز كمان تمسحها من الكورس ده بكل نسخها المحفوظة؟ طول ما هي متجاهلة، التنزيلات الجاية مش هترجعها.',
+    keep: (count) => (count === 1 ? 'سيبه' : 'سيبهم')
   },
 
   upload: {
@@ -211,7 +277,11 @@ export const arz: Messages = {
   viewer: {
     notFoundTitle: 'الملف مش موجود',
     notFoundText: 'الملف ده مبقاش موجود في تاريخ Moodle Archive بتاعك — ممكن يكون اتمسح.',
-    cannotPreview: 'النوع ده من الملفات مينفعش يتعرض في المتصفح.'
+    cannotPreview: 'النوع ده من الملفات مينفعش يتعرض في المتصفح.',
+    zoomOut: 'صغّر',
+    zoomIn: 'كبّر',
+    fitVertically: 'على قد الطول',
+    fitHorizontally: 'على قد العرض'
   },
 
   popup: {

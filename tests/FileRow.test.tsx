@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FileRecord, VersionRecord } from '../src/types';
@@ -28,9 +28,16 @@ vi.mock('../src/dashboard/components/VersionTimeline', () => ({
 }));
 
 import { FileRow } from '../src/dashboard/components/FileRow';
+import { PreloadedVersionsContext } from '../src/dashboard/hooks/useFileOpener';
+import { IgnoredFilesContext, type IgnoredFiles } from '../src/dashboard/hooks/useIgnoredFiles';
+import type { IgnoreState } from '../src/lib/ignoredFiles';
+
+function ignoreContext(state: IgnoreState, toggleFile: IgnoredFiles['toggleFile']): IgnoredFiles {
+  return { fileState: () => state, toggleFile, folderState: () => 'none', toggleFolder: vi.fn() };
+}
 
 afterEach(() => {
-  cleanup();
+  act(() => cleanup());
   vi.clearAllMocks();
 });
 
@@ -235,5 +242,67 @@ describe('splitExtension', () => {
     expect(splitExtension('README')).toEqual(['README', '']);
     expect(splitExtension('.bashrc')).toEqual(['.bashrc', '']);
     expect(splitExtension('Tema_1.Introduccion_y_conceptos')).toEqual(['Tema_1.Introduccion_y_conceptos', '']);
+  });
+
+  it('ignores a file from its row, and shows it as ignored', async () => {
+    byFileMock.mockResolvedValue([makeVersion()]);
+    const toggle = vi.fn();
+    const file = makeFile();
+    const { rerender } = render(
+      <IgnoredFilesContext.Provider value={ignoreContext('none', toggle)}>
+        <FileRow file={file} />
+      </IgnoredFilesContext.Provider>
+    );
+
+    await userEvent.click(await screen.findByTitle('Ignore changes to this file'));
+    expect(toggle).toHaveBeenCalledWith(file);
+
+    rerender(
+      <IgnoredFilesContext.Provider value={ignoreContext('self', toggle)}>
+        <FileRow file={file} />
+      </IgnoredFilesContext.Provider>
+    );
+    expect(screen.getByText('Ignored')).toBeInTheDocument();
+    expect(screen.getByTitle('Stop ignoring this file')).toBeInTheDocument();
+  });
+
+  it('offers no ignore button outside a course page, nor for a file added by hand', async () => {
+    byFileMock.mockResolvedValue([makeVersion()]);
+    renderFileRow(makeFile());
+    expect(screen.queryByTitle('Ignore changes to this file')).toBeNull();
+    act(() => cleanup());
+
+    render(
+      <IgnoredFilesContext.Provider value={ignoreContext('none', vi.fn())}>
+        <FileRow file={makeFile({ manual: true })} />
+      </IgnoredFilesContext.Provider>
+    );
+    expect(screen.queryByTitle('Ignore changes to this file')).toBeNull();
+  });
+
+  it('shows a file in an ignored folder as ignored, with no toggle of its own', async () => {
+    byFileMock.mockResolvedValue([makeVersion()]);
+    render(
+      <IgnoredFilesContext.Provider value={ignoreContext('folder', vi.fn())}>
+        <FileRow file={makeFile()} />
+      </IgnoredFilesContext.Provider>
+    );
+    expect(await screen.findByTitle('Ignored along with its folder')).toHaveTextContent('Ignored');
+    expect(screen.queryByTitle('Stop ignoring this file')).toBeNull();
+    expect(screen.queryByTitle('Ignore changes to this file')).toBeNull();
+  });
+
+  it('shows its date from the first render when its versions were preloaded, without waiting for its own read', () => {
+    // Its own read never comes back: anything shown came from the preload.
+    byFileMock.mockReturnValue(new Promise(() => {}));
+    const file = makeFile();
+    render(
+      <PreloadedVersionsContext.Provider value={new Map([[file.id, [makeVersion({ timestamp: Date.now() - 60_000 })]]])}>
+        <ul>
+          <FileRow file={file} />
+        </ul>
+      </PreloadedVersionsContext.Provider>
+    );
+    expect(document.querySelector('.file-date-text')).not.toBeNull();
   });
 });

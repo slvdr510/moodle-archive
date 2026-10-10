@@ -57,7 +57,7 @@ export function SideMarginModal({ onClose }: { onClose: () => void }) {
             step={1}
             value={stepIndex}
             aria-valuetext={t.sideMargin.label(margin)}
-            onChange={(e) => setMargin(SIDE_MARGIN_STEPS[Number(e.target.value)])}
+            onChange={(e) => setMargin(SIDE_MARGIN_STEPS[Number(e.currentTarget.value)])}
           />
         </label>
         <div className="modal-actions">

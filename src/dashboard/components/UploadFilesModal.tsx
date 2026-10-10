@@ -83,7 +83,7 @@ export function UploadFilesModal({
             <span>{t.upload.existingFolder}</span>
           </label>
           {destination === 'existing' && (
-            <select value={folderPath} onChange={(e) => setFolderPath(e.target.value)} aria-label={t.upload.existingFolder}>
+            <select value={folderPath} onChange={(e) => setFolderPath(e.currentTarget.value)} aria-label={t.upload.existingFolder}>
               {folders.map((folder) => (
                 <option key={folder.path} value={folder.path}>
                   {folder.label}
@@ -104,7 +104,7 @@ export function UploadFilesModal({
               placeholder={t.upload.folderNamePlaceholder}
               aria-label={t.upload.newFolderNameLabel}
               // Only ever a folder name: separators can't be typed at all.
-              onChange={(e) => setNewFolder(e.target.value.replace(/[/\\]/g, ''))}
+              onChange={(e) => setNewFolder(e.currentTarget.value.replace(/[/\\]/g, ''))}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && canConfirm) submit();
               }}

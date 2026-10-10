@@ -50,6 +50,8 @@ export const ja: Messages = {
     recentSettings: '最近開いたファイルの設定',
     downloadNameSettings: 'ダウンロード名の設定',
     sideMargin: '左右の余白',
+    courseListStyle: 'コース一覧の表示形式',
+    setInstitution: 'コースに機関を設定',
     hiddenCourses: '非表示のコース',
     deleteAll: 'すべてのコースを削除',
     backupSaved: 'バックアップをダウンロード フォルダに保存しました。',
@@ -86,7 +88,14 @@ export const ja: Messages = {
   courseRow: {
     lastDownloaded: '最終ダウンロード',
     openInMoodle: 'Moodle でコースを開く',
-    setTagName: 'タグ名を設定',
+    setTagName: 'タグ（略称）を設定',
+    setFullName: '正式名称を設定',
+    tagPlaceholder: '略称（例：OS）',
+    fullNamePlaceholder: '正式名称（空欄で Moodle の名前）',
+    setInstitution: '機関（略称）を設定',
+    institutionPlaceholder: '機関の略称（例：UHU）',
+    institution: '機関',
+    changeColor: '色を変更',
     hideCourse: 'コースを非表示',
     deleteCourse: 'コースを削除'
   },
@@ -100,6 +109,7 @@ export const ja: Messages = {
   courseFiles: {
     backToCourses: 'コース一覧に戻る',
     addFile: 'ファイルを追加…',
+    ignoredFiles: '無視するファイル',
     couldNotRead: (fileCount, firstName, error) =>
       `${fileCount === 1 ? `「${firstName}」` : 'ドロップしたファイル'}を読み込めませんでした。ファイルが移動または` +
       `削除されたか、まだダウンロード中の可能性があります。安定した場所からもう一度お試しください。(${error})`,
@@ -115,6 +125,11 @@ export const ja: Messages = {
     lastSaved: (date) => `最終保存: ${date}`,
     manual: '手動',
     manualTitle: 'Moodle からではなく手動で追加',
+    ignored: '無視中',
+    ignoredTitle: 'ダウンロードではこのファイルを変更しません',
+    ignoreTitle: 'このファイルの変更を無視',
+    unignoreTitle: 'このファイルの無視をやめる',
+    ignoredWithFolderTitle: 'フォルダごと無視中',
     deleteTitle: 'このファイルを履歴から削除',
     downloadTitle: 'ダウンロード フォルダにダウンロード',
     deleteConfirmTitle: (name) => `「${name}」を削除しますか？`,
@@ -124,6 +139,9 @@ export const ja: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'このフォルダと中身をすべて無視',
+    unignoreTitle: 'このフォルダの無視をやめる',
+    ignoredTitle: 'ダウンロードではこのフォルダと中身をすべて変更しません',
     deleteTitle: 'このフォルダを履歴から削除',
     downloadTitle: 'このフォルダを zip でダウンロード',
     couldNotDownload: (name, error) => `「${name}」をダウンロードできませんでした: ${error}`,
@@ -135,7 +153,8 @@ export const ja: Messages = {
 
   recentlyOpened: {
     title: '最近開いたファイル',
-    remove: '最近開いたファイルから削除'
+    remove: '最近開いたファイルから削除',
+    showAll: '最近開いたものをすべて表示'
   },
 
   recentSettings: {
@@ -158,6 +177,53 @@ export const ja: Messages = {
       'ウィンドウを最大化したときのコンテンツ左右の空白（画面幅に対する割合）。小さいウィンドウでは、' +
       'コンテンツはその幅を保ち、まず余白を使い、その後ウィンドウ全体に広がります。',
     label: (percent) => `左右それぞれ ${percent}%`
+  },
+
+  courseListStyle: {
+    title: 'コース一覧の表示形式',
+    description: 'このページでのコースの表示方法。',
+    cards: 'カード',
+    rows: '行'
+  },
+
+  courseColor: {
+    title: (name) => `「${name}」の色`,
+    palette: 'パレット',
+    custom: 'カスタムカラー',
+    automatic: '自動の色を使う'
+  },
+
+  setInstitution: {
+    title: '機関を設定',
+    description: 'この機関を設定するコースを選んでください。空欄にすると機関を外します。',
+    courses: (count) => (count === 0 ? 'コース' : `コース（${count} 件選択）`),
+    selectAll: 'すべて選択',
+    selectNone: '選択解除',
+    hidden: '非表示',
+    apply: (count) => (count === 1 ? '1 件のコースに適用' : `${count} 件のコースに適用`),
+    remove: (count) => (count === 1 ? '1 件のコースから外す' : `${count} 件のコースから外す`)
+  },
+
+  ignoredFiles: {
+    title: '無視するファイル',
+    description:
+      'ダウンロードではこれらのファイルを変更しません。新しいバージョンは保存されず、削除済みにもならず、まだ追跡していない場合は追加もされません。',
+    pathLabel: 'ファイルのパス',
+    placeholder: 'フォルダ/ファイル.pdf',
+    hint:
+      '拡張子と、ファイルがあるフォルダも含めてください。コースのルートにあるファイルは名前だけです。別のフォルダにある同じ名前のファイルは別のファイルです。 フォルダ全体と中身をすべて無視するには、パスの最後を / にしてください。',
+    add: '追加',
+    folder: 'フォルダ',
+    remove: (path) => `${path} の無視をやめる`,
+    empty: '無視しているファイルはありません。',
+    duplicate: 'そのファイルはすでにリストにあります。',
+    notFound: 'このコースにはまだありません',
+    askDeleteTitle: (count, name) => (count === 1 ? `「${name}」を無視するようになりました` : `${count} 個のファイルを無視するようになりました`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'ダウンロードではこのファイルを変更しません。保存済みのすべてのバージョンと一緒に、このコースから削除もしますか？無視している間は、今後のダウンロードで再び追加されることはありません。'
+        : 'ダウンロードではこれらのファイルを変更しません。保存済みのすべてのバージョンと一緒に、このコースから削除もしますか？無視している間は、今後のダウンロードで再び追加されることはありません。',
+    keep: (count) => (count === 1 ? '残す' : '残す')
   },
 
   upload: {
@@ -209,7 +275,11 @@ export const ja: Messages = {
   viewer: {
     notFoundTitle: 'ファイルが見つかりません',
     notFoundText: 'このファイルは Moodle Archive の履歴にもうありません。削除された可能性があります。',
-    cannotPreview: 'この種類のファイルはブラウザでプレビューできません。'
+    cannotPreview: 'この種類のファイルはブラウザでプレビューできません。',
+    zoomOut: '縮小',
+    zoomIn: '拡大',
+    fitVertically: '縦に合わせる',
+    fitHorizontally: '横に合わせる'
   },
 
   popup: {

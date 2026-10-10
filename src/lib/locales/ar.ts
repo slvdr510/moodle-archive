@@ -50,6 +50,8 @@ export const ar: Messages = {
     recentSettings: 'إعدادات الملفات المفتوحة مؤخرًا',
     downloadNameSettings: 'إعدادات أسماء التنزيل',
     sideMargin: 'الهوامش الجانبية',
+    courseListStyle: 'نمط قائمة المقررات',
+    setInstitution: 'تعيين المؤسسة لمقررات',
     hiddenCourses: 'المقررات المخفية',
     deleteAll: 'حذف جميع المقررات',
     backupSaved: 'تم حفظ النسخة الاحتياطية في مجلد التنزيلات.',
@@ -86,7 +88,14 @@ export const ar: Messages = {
   courseRow: {
     lastDownloaded: 'آخر تنزيل',
     openInMoodle: 'فتح المقرر في Moodle',
-    setTagName: 'تعيين اسم الوسم',
+    setTagName: 'تعيين الوسم (الاختصار)',
+    setFullName: 'تعيين الاسم الكامل',
+    tagPlaceholder: 'اختصار، مثل OS',
+    fullNamePlaceholder: 'الاسم الكامل (فارغ: الاسم من Moodle)',
+    setInstitution: 'تعيين المؤسسة (الاختصار)',
+    institutionPlaceholder: 'اختصار المؤسسة، مثل UHU',
+    institution: 'المؤسسة',
+    changeColor: 'تغيير اللون',
     hideCourse: 'إخفاء المقرر',
     deleteCourse: 'حذف المقرر'
   },
@@ -100,6 +109,7 @@ export const ar: Messages = {
   courseFiles: {
     backToCourses: 'العودة إلى المقررات',
     addFile: 'إضافة ملف…',
+    ignoredFiles: 'الملفات المتجاهَلة',
     couldNotRead: (fileCount, firstName, error) =>
       `تعذّرت قراءة ${fileCount === 1 ? `«${firstName}»` : 'الملفات المُفلتة'} — ربما نُقل الملف أو حُذف، ` +
       `أو لا يزال قيد التنزيل. أعد المحاولة من موقع ثابت. (${error})`,
@@ -115,6 +125,11 @@ export const ar: Messages = {
     lastSaved: (date) => `آخر حفظ: ${date}`,
     manual: 'يدوي',
     manualTitle: 'أُضيف يدويًا، ولم يُنزَّل من Moodle',
+    ignored: 'متجاهَل',
+    ignoredTitle: 'التنزيلات تترك هذا الملف كما هو',
+    ignoreTitle: 'تجاهل التغييرات على هذا الملف',
+    unignoreTitle: 'إيقاف تجاهل هذا الملف',
+    ignoredWithFolderTitle: 'متجاهَل مع مجلده',
     deleteTitle: 'حذف هذا الملف من السجل',
     downloadTitle: 'تنزيل إلى مجلد التنزيلات',
     deleteConfirmTitle: (name) => `حذف «${name}»؟`,
@@ -124,6 +139,9 @@ export const ar: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'تجاهل هذا المجلد وكل محتواه',
+    unignoreTitle: 'إيقاف تجاهل هذا المجلد',
+    ignoredTitle: 'التنزيلات تترك هذا المجلد وكل محتواه كما هو',
     deleteTitle: 'حذف هذا المجلد من السجل',
     downloadTitle: 'تنزيل هذا المجلد كملف zip',
     couldNotDownload: (name, error) => `تعذّر تنزيل «${name}»: ${error}`,
@@ -135,7 +153,8 @@ export const ar: Messages = {
 
   recentlyOpened: {
     title: 'المفتوحة مؤخرًا',
-    remove: 'إزالة من المفتوحة مؤخرًا'
+    remove: 'إزالة من المفتوحة مؤخرًا',
+    showAll: 'عرض كل ما فُتح مؤخرًا'
   },
 
   recentSettings: {
@@ -158,6 +177,53 @@ export const ar: Messages = {
       'المساحة الفارغة على كل جانب من المحتوى في نافذة مكبّرة، كنسبة من عرض الشاشة. في النافذة الأصغر يحتفظ ' +
       'المحتوى بهذا العرض، فيستهلك الهوامش أولًا ثم النافذة بأكملها.',
     label: (percent) => `${percent}% على كل جانب`
+  },
+
+  courseListStyle: {
+    title: 'نمط قائمة المقررات',
+    description: 'طريقة عرض المقررات في هذه الصفحة.',
+    cards: 'بطاقات',
+    rows: 'صفوف'
+  },
+
+  courseColor: {
+    title: (name) => `لون "${name}"`,
+    palette: 'لوحة الألوان',
+    custom: 'لون مخصص',
+    automatic: 'استخدام اللون التلقائي'
+  },
+
+  setInstitution: {
+    title: 'تعيين المؤسسة',
+    description: 'اختر المقررات التي ستُعيَّن لها هذه المؤسسة. اتركها فارغة لإزالتها منها.',
+    courses: (count) => (count === 0 ? 'المقررات' : `المقررات (${count} محددة)`),
+    selectAll: 'تحديد الكل',
+    selectNone: 'لا شيء',
+    hidden: 'مخفي',
+    apply: (count) => (count === 1 ? 'تطبيق على مقرر واحد' : `تطبيق على ${count} مقررات`),
+    remove: (count) => (count === 1 ? 'إزالة من مقرر واحد' : `إزالة من ${count} مقررات`)
+  },
+
+  ignoredFiles: {
+    title: 'الملفات المتجاهَلة',
+    description:
+      'التنزيلات تترك هذه الملفات كما هي: لا إصدارات جديدة، ولا تُعلَّم أبدًا كمحذوفة، ولا تُضاف إن لم تكن متتبَّعة بعد.',
+    pathLabel: 'مسار الملف',
+    placeholder: 'مجلد/ملف.pdf',
+    hint:
+      'أدرج الامتداد والمجلدات التي يوجد فيها: الملف في جذر المقرر هو اسمه فقط. الملفات التي تحمل الاسم نفسه في مجلدات مختلفة هي ملفات مختلفة. أنهِ المسار بـ / لتجاهل مجلد كامل بكل محتواه.',
+    add: 'إضافة',
+    folder: 'مجلد',
+    remove: (path) => `إيقاف تجاهل ${path}`,
+    empty: 'لا توجد ملفات متجاهَلة.',
+    duplicate: 'هذا الملف موجود بالفعل في القائمة.',
+    notFound: 'غير موجود في هذا المقرر بعد',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" متجاهَل الآن` : `${count} ملفات متجاهَلة الآن`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'ستترك التنزيلات الملف كما هو. هل تريد أيضًا حذفه من هذا المقرر مع كل إصداراته المحفوظة؟ ما دام متجاهَلًا، لن تعيد التنزيلات اللاحقة إضافته.'
+        : 'ستترك التنزيلات الملفات كما هي. هل تريد أيضًا حذفها من هذا المقرر مع كل إصداراتها المحفوظة؟ ما دامت متجاهَلة، لن تعيد التنزيلات اللاحقة إضافتها.',
+    keep: (count) => (count === 1 ? 'الاحتفاظ به' : 'الاحتفاظ بها')
   },
 
   upload: {
@@ -210,7 +276,11 @@ export const ar: Messages = {
   viewer: {
     notFoundTitle: 'لم يتم العثور على الملف',
     notFoundText: 'لم يعد هذا الملف موجودًا في سجل Moodle Archive — ربما حُذف.',
-    cannotPreview: 'لا يمكن معاينة هذا النوع من الملفات في المتصفح.'
+    cannotPreview: 'لا يمكن معاينة هذا النوع من الملفات في المتصفح.',
+    zoomOut: 'تصغير',
+    zoomIn: 'تكبير',
+    fitVertically: 'ملاءمة رأسيًا',
+    fitHorizontally: 'ملاءمة أفقيًا'
   },
 
   popup: {

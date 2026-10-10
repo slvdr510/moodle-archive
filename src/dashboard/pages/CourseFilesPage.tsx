@@ -1,20 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exportCourse } from '../../lib/backup';
-import { courseStore, deleteCourse, fileStore, recentOpenStore } from '../../lib/db';
+import { courseStore, deleteCourse, deleteFiles, fileStore, recentOpenStore, versionStore } from '../../lib/db';
 import { buildFileTree, getRootFolderPath, listFolders } from '../../lib/fileTree';
+import { displayPath, ignoreState, isIgnoredPath, toggleIgnoredPath } from '../../lib/ignoredFiles';
+import { coursePageTitle, withoutTag } from '../../lib/courseNames';
+import { hasCourseTag } from '../../lib/downloadNameSettings';
 import { addManualFiles } from '../../lib/repository';
 import { filterFilesByQuery } from '../../lib/search';
-import type { Course, FileRecord, RecentOpenRecord } from '../../types';
+import type { Course, FileRecord, RecentOpenRecord, VersionRecord } from '../../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { FileRow } from '../components/FileRow';
 import { FolderRow } from '../components/FolderRow';
+import { IgnoredFilesModal } from '../components/IgnoredFilesModal';
 import { RecentlyOpened } from '../components/RecentlyOpened';
 import { Spinner } from '../components/Spinner';
 import { joinPath } from '../../lib/uploadPath';
 import { UploadFilesModal } from '../components/UploadFilesModal';
 import { useDateColumnWidth } from '../hooks/useDateColumnWidth';
+import { PreloadedVersionsContext } from '../hooks/useFileOpener';
 import { useFileDrop } from '../hooks/useFileDrop';
+import { IgnoredFilesContext, type IgnoredFiles } from '../hooks/useIgnoredFiles';
 import { useT } from '../hooks/useTranslation';
 
 /** A file the user picked or dropped, already read into memory. */
@@ -45,11 +51,16 @@ export function CourseFilesPage({
   const [course, setCourse] = useState<Course | null>(null);
   const [name, setName] = useState(courseName);
   const [editing, setEditing] = useState(false);
+  // Set by Escape, so the blur that can follow the input's removal doesn't save anyway.
+  const renameCancelled = useRef(false);
   const [draft, setDraft] = useState(courseName);
   const [pendingExport, setPendingExport] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [showIgnoredFiles, setShowIgnoredFiles] = useState(false);
+  // Files just ignored that are in the course: asked whether to delete them as well.
+  const [justIgnored, setJustIgnored] = useState<FileRecord[] | null>(null);
 
   // Manual upload: files picked or dropped, waiting for the user to choose where they go.
   const [pendingUpload, setPendingUpload] = useState<StagedFile[] | null>(null);
@@ -58,10 +69,30 @@ export function CourseFilesPage({
   const fileListRef = useRef<HTMLUListElement>(null);
   useDateColumnWidth(fileListRef);
 
+  // Everything the page shows is read first — the course, its files, recently opened,
+  // and every file's versions — and the page only shown once it all is, so it
+  // appears whole and in place instead of its parts popping in and shifting it.
+  const [loaded, setLoaded] = useState(false);
+  const [preloadedVersions, setPreloadedVersions] = useState<Map<string, VersionRecord[]> | null>(null);
   useEffect(() => {
-    void fileStore.byCourse(courseId).then(setFiles);
-    void recentOpenStore.byCourse(courseId).then(setRecentOpens);
-    void courseStore.get(courseId).then((c) => c && setCourse(c));
+    let cancelled = false;
+    void (async () => {
+      const [loadedFiles, loadedRecentOpens, loadedCourse] = await Promise.all([
+        fileStore.byCourse(courseId),
+        recentOpenStore.byCourse(courseId),
+        courseStore.get(courseId)
+      ]);
+      const versions = await Promise.all(loadedFiles.map((f) => versionStore.byFile(f.id)));
+      if (cancelled) return;
+      setPreloadedVersions(new Map(loadedFiles.map((f, i) => [f.id, versions[i]])));
+      setFiles(loadedFiles);
+      setRecentOpens(loadedRecentOpens);
+      if (loadedCourse) setCourse(loadedCourse);
+      setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [courseId]);
 
   // The bytes are read the moment a file is picked or dropped, not later when the user
@@ -118,11 +149,23 @@ export function CourseFilesPage({
 
   function commitRename() {
     setEditing(false);
+    if (renameCancelled.current) {
+      renameCancelled.current = false;
+      setDraft(name);
+      return;
+    }
     const trimmed = draft.trim();
     if (course && trimmed && (trimmed !== name || !course.tagged)) {
       const updated = { ...course, name: trimmed, tagged: true };
       setCourse(updated);
       setName(trimmed);
+      void courseStore.put(updated);
+    } else if (course && !trimmed && hasCourseTag(course)) {
+      // Emptied: no tag any more, back to the name from Moodle.
+      const updated = withoutTag(course);
+      setCourse(updated);
+      setName(updated.name);
+      setDraft(updated.name);
       void courseStore.put(updated);
     } else {
       setDraft(name);
@@ -140,6 +183,31 @@ export function CourseFilesPage({
     } finally {
       setBusy(false);
     }
+  }
+
+  // Re-read before writing, so a download that updated the course meanwhile (its
+  // last-synced time, say) isn't overwritten with this page's older copy.
+  async function saveIgnoredPaths(ignoredPaths: string[]) {
+    const fresh = await courseStore.get(courseId);
+    if (!fresh) return;
+    const updated = { ...fresh, ignoredPaths };
+    await courseStore.put(updated);
+    setCourse(updated);
+
+    // Then offer to delete the course's files this ignored — downloads leave them as
+    // they are now, so a copy that's no longer wanted would otherwise stay for good.
+    const newlyIgnored = files.filter(
+      (f) =>
+        !f.manual &&
+        isIgnoredPath(f.relativePath, rootPath, ignoredPaths) &&
+        !isIgnoredPath(f.relativePath, rootPath, fresh.ignoredPaths)
+    );
+    if (newlyIgnored.length > 0) setJustIgnored(newlyIgnored);
+  }
+
+  async function deleteJustIgnored(toDelete: FileRecord[]) {
+    await deleteFiles(toDelete);
+    handleFilesDeleted(toDelete);
   }
 
   async function handleHide() {
@@ -181,173 +249,232 @@ export function CourseFilesPage({
   );
   const existingPaths = useMemo(() => new Set(files.map((f) => f.relativePath)), [files]);
 
+  // Paths as the tree shows them (from the course root), which is how ignored files
+  // are kept — see ignoredFiles.ts.
+  const coursePaths = useMemo(
+    () => files.filter((f) => !f.manual).map((f) => displayPath(f.relativePath, rootPath)),
+    [files, rootPath]
+  );
+  const ignoredFiles = useMemo<IgnoredFiles | null>(
+    () =>
+      course && {
+        fileState: (file) => ignoreState(displayPath(file.relativePath, rootPath), course.ignoredPaths),
+        toggleFile: (file) =>
+          void saveIgnoredPaths(toggleIgnoredPath(course.ignoredPaths, displayPath(file.relativePath, rootPath))),
+        folderState: (folderPath) => ignoreState(displayPath(folderPath, rootPath), course.ignoredPaths, true),
+        // A trailing slash marks a folder: it and everything in it.
+        toggleFolder: (folderPath) =>
+          void saveIgnoredPaths(toggleIgnoredPath(course.ignoredPaths, `${displayPath(folderPath, rootPath)}/`))
+      },
+    // saveIgnoredPaths reads `files` (to offer deleting what got ignored) and courseId,
+    // which `course` already follows.
+    [course, rootPath, files]
+  );
+
   return (
-    <div className="course-files-page">
-      <div className="toolbar course-files-toolbar">
-        <button className="secondary back-button" onClick={onBack} title={t.courseFiles.backToCourses} aria-label={t.courseFiles.backToCourses}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M11 18l-6-6 6-6" />
-          </svg>
-        </button>
-
-        {editing ? (
-          <input
-            className="course-name-input"
-            value={draft}
-            autoFocus
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitRename();
-              if (e.key === 'Escape') {
-                setDraft(name);
-                setEditing(false);
-              }
-            }}
-            onBlur={commitRename}
-          />
-        ) : (
-          <h2>{name}</h2>
-        )}
-
-        <div className="course-files-toolbar-actions">
-          {courseUrl && (
-            <button
-              className="secondary back-button"
-              onClick={() => void chrome.tabs.create({ url: courseUrl })}
-              title={t.courseRow.openInMoodle}
-              aria-label={t.courseRow.openInMoodle}
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <path d="M15 3h6v6M10 14 21 3" />
+    <PreloadedVersionsContext.Provider value={preloadedVersions}>
+      <IgnoredFilesContext.Provider value={ignoredFiles}>
+        {/* Laid out but not shown until everything's loaded (see above) — rendered all
+            along rather than left out, so what measures it (useDateColumnWidth) is set
+            up from the start. */}
+        <div className="course-files-page" style={loaded ? undefined : { visibility: 'hidden' }}>
+          <div className="toolbar course-files-toolbar">
+            <button className="secondary back-button" onClick={onBack} title={t.courseFiles.backToCourses} aria-label={t.courseFiles.backToCourses}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M11 18l-6-6 6-6" />
               </svg>
             </button>
+
+            {editing ? (
+              <input
+                className="course-name-input"
+                value={draft}
+                autoFocus
+                onChange={(e) => setDraft(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') {
+                    renameCancelled.current = true;
+                    setDraft(name);
+                    setEditing(false);
+                  }
+                }}
+                onBlur={commitRename}
+              />
+            ) : (
+              // The name it was opened with, until the full course record has loaded.
+              <h2>{course ? coursePageTitle(course) : name}</h2>
+            )}
+
+            <div className="course-files-toolbar-actions">
+              {courseUrl && (
+                <button
+                  className="secondary back-button"
+                  onClick={() => void chrome.tabs.create({ url: courseUrl })}
+                  title={t.courseRow.openInMoodle}
+                  aria-label={t.courseRow.openInMoodle}
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <path d="M15 3h6v6M10 14 21 3" />
+                  </svg>
+                </button>
+              )}
+              <DropdownMenu
+                title={t.common.moreOptions}
+                buttonClassName="secondary toolbar-menu-button"
+                disabled={!course || busy}
+                items={[
+                  {
+                    label: t.courseRow.setTagName,
+                    onClick: () => {
+                      setDraft(name);
+                      renameCancelled.current = false;
+                      setEditing(true);
+                    }
+                  },
+                  { label: t.courseFiles.addFile, onClick: () => fileInputRef.current?.click() },
+                  { label: t.courseFiles.ignoredFiles, onClick: () => setShowIgnoredFiles(true) },
+                  { label: t.common.export, onClick: () => setPendingExport(true) },
+                  { label: t.courseRow.hideCourse, onClick: () => void handleHide() },
+                  { label: t.courseRow.deleteCourse, onClick: () => setPendingDelete(true), danger: true }
+                ]}
+              />
+            </div>
+          </div>
+
+          {busy && (
+            <div className="busy-notice">
+              <Spinner label={t.common.exporting} />
+            </div>
           )}
-          <DropdownMenu
-            title={t.common.moreOptions}
-            buttonClassName="secondary toolbar-menu-button"
-            disabled={!course || busy}
-            items={[
-              {
-                label: t.courseRow.setTagName,
-                onClick: () => {
-                  setDraft(name);
-                  setEditing(true);
-                }
-              },
-              { label: t.courseFiles.addFile, onClick: () => fileInputRef.current?.click() },
-              { label: t.common.export, onClick: () => setPendingExport(true) },
-              { label: t.courseRow.hideCourse, onClick: () => void handleHide() },
-              { label: t.courseRow.deleteCourse, onClick: () => setPendingDelete(true), danger: true }
-            ]}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            hidden
+            onChange={(e) => {
+              const picked = Array.from(e.currentTarget.files ?? []);
+              e.currentTarget.value = '';
+              if (picked.length > 0) void stageFiles(picked);
+            }}
           />
-        </div>
-      </div>
 
-      {busy && (
-        <div className="busy-notice">
-          <Spinner label={t.common.exporting} />
-        </div>
-      )}
+          {draggingFiles && (
+            <div className="drop-overlay" aria-hidden="true">
+              <div className="drop-overlay-message">{t.courseFiles.dropFiles(name)}</div>
+            </div>
+          )}
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        hidden
-        onChange={(e) => {
-          const picked = Array.from(e.target.files ?? []);
-          e.target.value = '';
-          if (picked.length > 0) void stageFiles(picked);
-        }}
-      />
-
-      {draggingFiles && (
-        <div className="drop-overlay" aria-hidden="true">
-          <div className="drop-overlay-message">{t.courseFiles.dropFiles(name)}</div>
-        </div>
-      )}
-
-      {pendingUpload && (
-        <UploadFilesModal
-          files={pendingUpload}
-          rootPath={rootPath}
-          folders={folderOptions}
-          existingPaths={existingPaths}
-          busy={uploading}
-          onConfirm={(folderPath) => void handleUploadConfirm(folderPath)}
-          onCancel={() => setPendingUpload(null)}
-        />
-      )}
-
-      {pendingExport && (
-        <ConfirmModal
-          title={t.courses.exportCourseTitle(name)}
-          message={t.courses.exportCourseMessage}
-          confirmLabel={t.common.export}
-          onCancel={() => setPendingExport(false)}
-          onConfirm={() => {
-            setPendingExport(false);
-            void handleExport();
-          }}
-        />
-      )}
-
-      {pendingDelete && (
-        <ConfirmModal
-          title={t.courses.deleteCourseTitle(name)}
-          message={t.courses.deleteCourseMessage}
-          confirmLabel={t.common.delete}
-          danger
-          onCancel={() => setPendingDelete(false)}
-          onConfirm={() => {
-            setPendingDelete(false);
-            void handleDelete();
-          }}
-        />
-      )}
-
-      {message && <p className="hint-text">{message}</p>}
-
-      <RecentlyOpened records={recentOpens} filesById={filesById} onChange={refreshRecentOpens} />
-
-      <input
-        className="search-input"
-        type="text"
-        placeholder={t.courseFiles.searchPlaceholder}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-
-      <ul className="file-list" ref={fileListRef}>
-        {tree.map((node) =>
-          node.kind === 'folder' ? (
-            <FolderRow
-              key={`${isSearching}:${node.path}`}
-              node={node}
-              depth={0}
-              onFileOpened={refreshRecentOpens}
-              onFileDeleted={handleFileDeleted}
-              onFolderDeleted={isSearching ? undefined : handleFilesDeleted}
-              canDownload={!isSearching}
-              defaultExpanded={isSearching}
+          {pendingUpload && (
+            <UploadFilesModal
+              files={pendingUpload}
+              rootPath={rootPath}
+              folders={folderOptions}
+              existingPaths={existingPaths}
+              busy={uploading}
+              onConfirm={(folderPath) => void handleUploadConfirm(folderPath)}
+              onCancel={() => setPendingUpload(null)}
             />
-          ) : (
-            <FileRow
-              key={`${isSearching}:${node.file.id}`}
-              file={node.file}
-              depth={0}
-              onFileOpened={refreshRecentOpens}
-              onFileDeleted={handleFileDeleted}
+          )}
+
+          {showIgnoredFiles && course && (
+            <IgnoredFilesModal
+              paths={course.ignoredPaths ?? []}
+              coursePaths={coursePaths}
+              folderPaths={folderOptions.map((folder) => `${folder.label}/`)}
+              onSave={(paths) => void saveIgnoredPaths(paths)}
+              onClose={() => setShowIgnoredFiles(false)}
             />
-          )
-        )}
-        {tree.length === 0 && (
-          <li className="empty">
-            {isSearching ? t.courseFiles.noMatches(query) : t.courseFiles.noFiles}
-          </li>
-        )}
-      </ul>
-    </div>
+          )}
+
+          {justIgnored && (
+            <ConfirmModal
+              title={t.ignoredFiles.askDeleteTitle(justIgnored.length, justIgnored[0].filename)}
+              message={t.ignoredFiles.askDeleteMessage(justIgnored.length)}
+              confirmLabel={t.common.delete}
+              cancelLabel={t.ignoredFiles.keep(justIgnored.length)}
+              danger
+              onCancel={() => setJustIgnored(null)}
+              onConfirm={() => {
+                const toDelete = justIgnored;
+                setJustIgnored(null);
+                void deleteJustIgnored(toDelete);
+              }}
+            />
+          )}
+
+          {pendingExport && (
+            <ConfirmModal
+              title={t.courses.exportCourseTitle(name)}
+              message={t.courses.exportCourseMessage}
+              confirmLabel={t.common.export}
+              onCancel={() => setPendingExport(false)}
+              onConfirm={() => {
+                setPendingExport(false);
+                void handleExport();
+              }}
+            />
+          )}
+
+          {pendingDelete && (
+            <ConfirmModal
+              title={t.courses.deleteCourseTitle(name)}
+              message={t.courses.deleteCourseMessage}
+              confirmLabel={t.common.delete}
+              danger
+              onCancel={() => setPendingDelete(false)}
+              onConfirm={() => {
+                setPendingDelete(false);
+                void handleDelete();
+              }}
+            />
+          )}
+
+          {message && <p className="hint-text">{message}</p>}
+
+          <RecentlyOpened records={recentOpens} filesById={filesById} onChange={refreshRecentOpens} />
+
+          <input
+            className="search-input"
+            type="text"
+            placeholder={t.courseFiles.searchPlaceholder}
+            value={query}
+            onChange={(e) => setQuery(e.currentTarget.value)}
+          />
+
+          <ul className="file-list" ref={fileListRef}>
+            {tree.map((node) =>
+              node.kind === 'folder' ? (
+                <FolderRow
+                  key={`${isSearching}:${node.path}`}
+                  node={node}
+                  depth={0}
+                  onFileOpened={refreshRecentOpens}
+                  onFileDeleted={handleFileDeleted}
+                  onFolderDeleted={isSearching ? undefined : handleFilesDeleted}
+                  canDownload={!isSearching}
+                  defaultExpanded={isSearching}
+                />
+              ) : (
+                <FileRow
+                  key={`${isSearching}:${node.file.id}`}
+                  file={node.file}
+                  depth={0}
+                  onFileOpened={refreshRecentOpens}
+                  onFileDeleted={handleFileDeleted}
+                />
+              )
+            )}
+            {tree.length === 0 && (
+              <li className="empty">
+                {isSearching ? t.courseFiles.noMatches(query) : t.courseFiles.noFiles}
+              </li>
+            )}
+          </ul>
+        </div>
+      </IgnoredFilesContext.Provider>
+    </PreloadedVersionsContext.Provider>
   );
 }

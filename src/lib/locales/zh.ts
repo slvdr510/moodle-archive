@@ -50,6 +50,8 @@ export const zh: Messages = {
     recentSettings: '最近打开设置',
     downloadNameSettings: '下载文件名设置',
     sideMargin: '两侧边距',
+    courseListStyle: '课程列表样式',
+    setInstitution: '为课程设置机构',
     hiddenCourses: '已隐藏的课程',
     deleteAll: '删除所有课程',
     backupSaved: '备份已保存到“下载”文件夹。',
@@ -81,7 +83,14 @@ export const zh: Messages = {
   courseRow: {
     lastDownloaded: '上次下载',
     openInMoodle: '在 Moodle 中打开课程',
-    setTagName: '设置标签名',
+    setTagName: '设置标签（缩写）',
+    setFullName: '设置全称',
+    tagPlaceholder: '缩写，例如 OS',
+    fullNamePlaceholder: '全称（留空则使用 Moodle 中的名称）',
+    setInstitution: '设置机构（缩写）',
+    institutionPlaceholder: '机构缩写，例如 UHU',
+    institution: '机构',
+    changeColor: '更改颜色',
     hideCourse: '隐藏课程',
     deleteCourse: '删除课程'
   },
@@ -95,6 +104,7 @@ export const zh: Messages = {
   courseFiles: {
     backToCourses: '返回课程列表',
     addFile: '添加文件…',
+    ignoredFiles: '忽略的文件',
     couldNotRead: (fileCount, firstName, error) =>
       `无法读取${fileCount === 1 ? `“${firstName}”` : '拖放的文件'}——文件可能已被移动或删除，或仍在下载中。` +
       `请从稳定的位置重试。（${error}）`,
@@ -110,6 +120,11 @@ export const zh: Messages = {
     lastSaved: (date) => `上次保存：${date}`,
     manual: '手动',
     manualTitle: '手动添加，并非从 Moodle 下载',
+    ignored: '已忽略',
+    ignoredTitle: '下载不会更改此文件',
+    ignoreTitle: '忽略此文件的更改',
+    unignoreTitle: '不再忽略此文件',
+    ignoredWithFolderTitle: '随所在文件夹一起忽略',
     deleteTitle: '从历史记录中删除此文件',
     downloadTitle: '下载到“下载”文件夹',
     deleteConfirmTitle: (name) => `删除“${name}”？`,
@@ -117,6 +132,9 @@ export const zh: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: '忽略此文件夹及其全部内容',
+    unignoreTitle: '不再忽略此文件夹',
+    ignoredTitle: '下载不会更改此文件夹及其全部内容',
     deleteTitle: '从历史记录中删除此文件夹',
     downloadTitle: '将此文件夹下载为 zip',
     couldNotDownload: (name, error) => `无法下载“${name}”：${error}`,
@@ -128,7 +146,8 @@ export const zh: Messages = {
 
   recentlyOpened: {
     title: '最近打开',
-    remove: '从最近打开中移除'
+    remove: '从最近打开中移除',
+    showAll: '显示所有最近打开的文件'
   },
 
   recentSettings: {
@@ -149,6 +168,53 @@ export const zh: Messages = {
     title: '两侧边距',
     description: '窗口最大化时内容两侧的留白，以占屏幕宽度的比例表示。窗口较小时，内容保持该宽度，先占用边距，再占满整个窗口。',
     label: (percent) => `每侧 ${percent}%`
+  },
+
+  courseListStyle: {
+    title: '课程列表样式',
+    description: '此页面上课程的显示方式。',
+    cards: '卡片',
+    rows: '行'
+  },
+
+  courseColor: {
+    title: (name) => `“${name}”的颜色`,
+    palette: '调色板',
+    custom: '自定义颜色',
+    automatic: '使用自动颜色'
+  },
+
+  setInstitution: {
+    title: '设置机构',
+    description: '选择要设置此机构的课程。留空则从这些课程中移除机构。',
+    courses: (count) => (count === 0 ? '课程' : `课程（已选 ${count} 个）`),
+    selectAll: '全选',
+    selectNone: '全不选',
+    hidden: '已隐藏',
+    apply: (count) => (count === 1 ? '应用到 1 个课程' : `应用到 ${count} 个课程`),
+    remove: (count) => (count === 1 ? '从 1 个课程移除' : `从 ${count} 个课程移除`)
+  },
+
+  ignoredFiles: {
+    title: '忽略的文件',
+    description:
+      '下载不会更改这些文件：不保存新版本，不会标记为已删除，尚未跟踪的也不会添加。',
+    pathLabel: '文件路径',
+    placeholder: '文件夹/文件.pdf',
+    hint:
+      '请包含扩展名及其所在的文件夹：位于课程根目录的文件只需写文件名。不同文件夹中同名的文件是不同的文件。 路径以 / 结尾即可忽略整个文件夹及其全部内容。',
+    add: '添加',
+    folder: '文件夹',
+    remove: (path) => `不再忽略 ${path}`,
+    empty: '没有忽略的文件。',
+    duplicate: '该文件已在列表中。',
+    notFound: '此课程中尚无此文件',
+    askDeleteTitle: (count, name) => (count === 1 ? `“${name}”现已忽略` : `已忽略 ${count} 个文件`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? '下载不会更改此文件。是否同时将其及所有已保存的版本从此课程中删除？在忽略期间，之后的下载不会再添加它。'
+        : '下载不会更改这些文件。是否同时将它们及所有已保存的版本从此课程中删除？在忽略期间，之后的下载不会再添加它们。',
+    keep: (count) => (count === 1 ? '保留' : '保留')
   },
 
   upload: {
@@ -200,7 +266,11 @@ export const zh: Messages = {
   viewer: {
     notFoundTitle: '找不到文件',
     notFoundText: '此文件已不在你的 Moodle Archive 历史记录中——可能已被删除。',
-    cannotPreview: '无法在浏览器中预览此类文件。'
+    cannotPreview: '无法在浏览器中预览此类文件。',
+    zoomOut: '缩小',
+    zoomIn: '放大',
+    fitVertically: '垂直适应',
+    fitHorizontally: '水平适应'
   },
 
   popup: {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Course } from '../src/types';
@@ -60,7 +60,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  cleanup();
+  act(() => cleanup());
   headerMenuSlot.remove();
   vi.resetAllMocks();
   vi.unstubAllGlobals();
@@ -496,5 +496,22 @@ describe('CoursesPage with no courses yet', () => {
     renderCoursesPage();
 
     expect(await screen.findByText(/Already have a backup\?/)).toHaveTextContent('Drop its .zip anywhere on this page to import it.');
+  });
+});
+
+describe('CoursesPage card layout', () => {
+  it('lays cards out in balanced rows: 5 courses as 3 over 2', async () => {
+    localStorage.removeItem('moodle-archive-course-list-style');
+    allMock.mockResolvedValue(
+      ['A', 'B', 'C', 'D', 'E'].map((letter, order) => makeCourse({ id: letter, name: `Course ${letter}`, order }))
+    );
+
+    const { container } = renderCoursesPage();
+    await screen.findByText('Course A');
+
+    // A row break after the third card, and only there.
+    const items = Array.from(container.querySelectorAll('.course-list > li'));
+    const breaks = items.flatMap((item, i) => (item.classList.contains('course-list-break') ? [i] : []));
+    expect(breaks).toEqual([3]);
   });
 });

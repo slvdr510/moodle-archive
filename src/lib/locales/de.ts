@@ -50,6 +50,8 @@ export const de: Messages = {
     recentSettings: 'Einstellungen für zuletzt geöffnet',
     downloadNameSettings: 'Einstellungen für Download-Namen',
     sideMargin: 'Seitenränder',
+    courseListStyle: 'Stil der Kursliste',
+    setInstitution: 'Einrichtung für Kurse festlegen',
     hiddenCourses: 'Ausgeblendete Kurse',
     deleteAll: 'Alle Kurse löschen',
     backupSaved: 'Sicherung in deinem Downloads-Ordner gespeichert.',
@@ -89,6 +91,13 @@ export const de: Messages = {
     lastDownloaded: 'Zuletzt heruntergeladen',
     openInMoodle: 'Kurs in Moodle öffnen',
     setTagName: 'Kürzel festlegen',
+    setFullName: 'Vollständigen Namen festlegen',
+    tagPlaceholder: 'Kürzel, z. B. BS',
+    fullNamePlaceholder: 'Vollständiger Name (leer: der aus Moodle)',
+    setInstitution: 'Einrichtung festlegen (Kürzel)',
+    institutionPlaceholder: 'Kürzel der Einrichtung, z. B. UHU',
+    institution: 'Einrichtung',
+    changeColor: 'Farbe ändern',
     hideCourse: 'Kurs ausblenden',
     deleteCourse: 'Kurs löschen'
   },
@@ -102,6 +111,7 @@ export const de: Messages = {
   courseFiles: {
     backToCourses: 'Zurück zu den Kursen',
     addFile: 'Datei hinzufügen…',
+    ignoredFiles: 'Ignorierte Dateien',
     couldNotRead: (fileCount, firstName, error) =>
       `${fileCount === 1 ? `„${firstName}“ konnte` : 'Die abgelegten Dateien konnten'} nicht gelesen werden – ` +
       'die Datei wurde eventuell verschoben oder gelöscht oder wird noch heruntergeladen. ' +
@@ -119,6 +129,11 @@ export const de: Messages = {
     lastSaved: (date) => `Zuletzt gespeichert: ${date}`,
     manual: 'Manuell',
     manualTitle: 'Von Hand hinzugefügt, nicht aus Moodle heruntergeladen',
+    ignored: 'Ignoriert',
+    ignoredTitle: 'Downloads lassen diese Datei unverändert',
+    ignoreTitle: 'Änderungen an dieser Datei ignorieren',
+    unignoreTitle: 'Diese Datei nicht mehr ignorieren',
+    ignoredWithFolderTitle: 'Zusammen mit seinem Ordner ignoriert',
     deleteTitle: 'Diese Datei aus deinem Verlauf löschen',
     downloadTitle: 'In deinen Downloads-Ordner herunterladen',
     deleteConfirmTitle: (name) => `„${name}“ löschen?`,
@@ -128,6 +143,9 @@ export const de: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Diesen Ordner mit allem Inhalt ignorieren',
+    unignoreTitle: 'Diesen Ordner nicht mehr ignorieren',
+    ignoredTitle: 'Downloads lassen diesen Ordner mit allem Inhalt unverändert',
     deleteTitle: 'Diesen Ordner aus deinem Verlauf löschen',
     downloadTitle: 'Diesen Ordner als Zip herunterladen',
     couldNotDownload: (name, error) => `„${name}“ konnte nicht heruntergeladen werden: ${error}`,
@@ -140,7 +158,8 @@ export const de: Messages = {
 
   recentlyOpened: {
     title: 'Zuletzt geöffnet',
-    remove: 'Aus „Zuletzt geöffnet“ entfernen'
+    remove: 'Aus „Zuletzt geöffnet“ entfernen',
+    showAll: 'Alle zuletzt geöffneten anzeigen'
   },
 
   recentSettings: {
@@ -163,6 +182,53 @@ export const de: Messages = {
       'Leerer Raum auf jeder Seite des Inhalts in einem maximierten Fenster, als Anteil des Bildschirms. In einem ' +
       'kleineren Fenster behält der Inhalt diese Breite und nutzt zuerst die Ränder und dann das ganze Fenster.',
     label: (percent) => `${percent} % auf jeder Seite`
+  },
+
+  courseListStyle: {
+    title: 'Stil der Kursliste',
+    description: 'Wie die Kurse auf dieser Seite angezeigt werden.',
+    cards: 'Karten',
+    rows: 'Zeilen'
+  },
+
+  courseColor: {
+    title: (name) => `Farbe von „${name}“`,
+    palette: 'Palette',
+    custom: 'Eigene Farbe',
+    automatic: 'Automatische Farbe verwenden'
+  },
+
+  setInstitution: {
+    title: 'Einrichtung festlegen',
+    description: 'Wähle die Kurse, die diese Einrichtung bekommen. Leer lassen, um sie bei ihnen zu entfernen.',
+    courses: (count) => (count === 0 ? 'Kurse' : `Kurse (${count} ausgewählt)`),
+    selectAll: 'Alle auswählen',
+    selectNone: 'Keine',
+    hidden: 'Ausgeblendet',
+    apply: (count) => (count === 1 ? 'Auf 1 Kurs anwenden' : `Auf ${count} Kurse anwenden`),
+    remove: (count) => (count === 1 ? 'Bei 1 Kurs entfernen' : `Bei ${count} Kursen entfernen`)
+  },
+
+  ignoredFiles: {
+    title: 'Ignorierte Dateien',
+    description:
+      'Downloads lassen diese Dateien unverändert: keine neuen Versionen, nie als gelöscht markiert und nicht hinzugefügt, wenn sie noch nicht verfolgt werden.',
+    pathLabel: 'Dateipfad',
+    placeholder: 'Ordner/datei.pdf',
+    hint:
+      'Gib die Endung und die Ordner an, in denen sie liegt: Eine Datei im Stammverzeichnis des Kurses ist nur ihr Name. Gleichnamige Dateien in verschiedenen Ordnern sind verschiedene Dateien. Beende einen Pfad mit /, um einen ganzen Ordner mit allem Inhalt zu ignorieren.',
+    add: 'Hinzufügen',
+    folder: 'Ordner',
+    remove: (path) => `${path} nicht mehr ignorieren`,
+    empty: 'Keine ignorierten Dateien.',
+    duplicate: 'Diese Datei ist bereits in der Liste.',
+    notFound: 'Noch nicht in diesem Kurs',
+    askDeleteTitle: (count, name) => (count === 1 ? `„${name}“ wird jetzt ignoriert` : `${count} Dateien werden jetzt ignoriert`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Downloads lassen sie unverändert. Möchtest du sie auch aus diesem Kurs löschen, mit allen gespeicherten Versionen? Solange sie ignoriert wird, fügen spätere Downloads sie nicht wieder hinzu.'
+        : 'Downloads lassen sie unverändert. Möchtest du sie auch aus diesem Kurs löschen, mit allen gespeicherten Versionen? Solange sie ignoriert werden, fügen spätere Downloads sie nicht wieder hinzu.',
+    keep: (count) => (count === 1 ? 'Behalten' : 'Behalten')
   },
 
   upload: {
@@ -215,7 +281,11 @@ export const de: Messages = {
   viewer: {
     notFoundTitle: 'Datei nicht gefunden',
     notFoundText: 'Diese Datei ist nicht mehr in deinem Moodle-Archive-Verlauf – sie wurde eventuell gelöscht.',
-    cannotPreview: 'Für diesen Dateityp gibt es im Browser keine Vorschau.'
+    cannotPreview: 'Für diesen Dateityp gibt es im Browser keine Vorschau.',
+    zoomOut: 'Verkleinern',
+    zoomIn: 'Vergrößern',
+    fitVertically: 'Vertikal anpassen',
+    fitHorizontally: 'Horizontal anpassen'
   },
 
   popup: {

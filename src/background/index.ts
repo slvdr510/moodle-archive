@@ -4,6 +4,7 @@ import { migrateLegacyCourseTags } from '../lib/courseTagMigration';
 import { humanizeCourseTitle, matchCourseForResource } from '../lib/courseMatcher';
 import {
   downloadKey,
+  isDownloadableUrl,
   finishCurrent,
   readDownloadState,
   removeFromQueue,
@@ -16,10 +17,10 @@ import {
   type RequestDownloadResponse
 } from '../lib/downloadState';
 import { sha256 } from '../lib/hash';
-import { markDeletedForCourse, processEntryBatchForCourse, type ProcessCourseResult } from '../lib/repository';
+import { ignoredFilesFor, markDeletedForCourse, processEntryBatchForCourse, type ProcessCourseResult } from '../lib/repository';
 import type { Course, ExtractedEntry } from '../types';
 import { installDownloadNaming } from '../lib/blobDownloadNames';
-import { loadMessages } from '../lib/i18n';
+import { loadMessages } from '../lib/locales';
 
 interface CourseSnapshotChunkPayload {
   courseUrl: string;
@@ -96,8 +97,11 @@ async function handleCourseSnapshotChunk(
   const course: Course = { ...foundOrCreated, lastSyncedAt: payload.timestampMs };
   await courseStore.put(course);
 
+  // Files the user chose to ignore are left exactly as they are — see ignoredFilesFor.
+  const ignored = await ignoredFilesFor(course);
+
   const entries: ExtractedEntry[] = await Promise.all(
-    payload.entries.map(async (raw) => {
+    payload.entries.filter((raw) => !ignored.isIgnored(raw.relativePath)).map(async (raw) => {
       const content = base64ToBytes(raw.content);
       return {
         relativePath: raw.relativePath,
@@ -112,7 +116,11 @@ async function handleCourseSnapshotChunk(
 
   const isLastChunk = payload.chunkIndex === payload.totalChunks - 1;
   if (isLastChunk) {
-    result.deleted = await markDeletedForCourse(course.id, payload.allRelativePaths, payload.timestampMs);
+    result.deleted = await markDeletedForCourse(
+      course.id,
+      [...payload.allRelativePaths, ...ignored.trackedPaths],
+      payload.timestampMs
+    );
     if (isFirstSync) {
       await courseStore.put({ ...course, firstSyncCompleted: true });
     }
@@ -170,6 +178,10 @@ async function startQueuedDownloads(): Promise<void> {
 function handleDownloadRequest(tabId: number): Promise<RequestDownloadResponse> {
   return serialized(async () => {
     const tab = await chrome.tabs.get(tabId);
+    // Checked up front, not left to the crawler: a download added to the queue only
+    // runs later, and a page that isn't a Moodle course would only fail then — after
+    // sitting in the queue as if it were one.
+    if (!isDownloadableUrl(tab.url ?? '')) return { ok: false };
     const download = { tabId, key: downloadKey(tab.url ?? ''), title: tab.title || tab.url || '' };
     const before = await readDownloadState();
     const { outcome, state } = requestDownload(before, download);

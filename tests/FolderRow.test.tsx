@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FolderRow } from '../src/dashboard/components/FolderRow';
@@ -88,7 +88,8 @@ describe('FolderRow', () => {
     };
 
     function guidesOf(name: string): string[] {
-      const row = screen.getByText(name).closest('li')!;
+      // A folder's own guides are in its header — its row also holds its contents'.
+      const row = screen.getByText(name).closest('.folder-row-header, li')!;
       return Array.from(row.querySelectorAll('.tree-guide')).map((cell) => cell.className.replace('tree-guide', '').trim());
     }
 
@@ -120,5 +121,26 @@ describe('FolderRow', () => {
       // A1 hangs from A, and A still has a sibling (B) below it, so A's line passes through A1.
       expect(guidesOf('A1')).toEqual(['through', 'elbow last']);
     });
+  });
+
+  it("nests an open folder's contents inside its own row, so its header can stick over them", () => {
+    render(
+      <ul>
+        <FolderRow
+          node={{
+            kind: 'folder',
+            name: 'Parent',
+            path: 'Parent',
+            children: [{ kind: 'folder', name: 'Child', path: 'Parent/Child', children: [] }]
+          }}
+          depth={0}
+          defaultExpanded
+        />
+      </ul>
+    );
+    const parentRow = screen.getByText('Parent').closest('li')!;
+    const childHeader = screen.getByText('Child').closest('.folder-row-header') as HTMLElement;
+    expect(parentRow.contains(childHeader)).toBe(true);
+    expect(childHeader.style.getPropertyValue('--depth')).toBe('1');
   });
 });

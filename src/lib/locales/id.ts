@@ -50,6 +50,8 @@ export const id: Messages = {
     recentSettings: 'Pengaturan baru dibuka',
     downloadNameSettings: 'Pengaturan nama unduhan',
     sideMargin: 'Margin samping',
+    courseListStyle: 'Gaya daftar kursus',
+    setInstitution: 'Atur institusi untuk kursus',
     hiddenCourses: 'Kursus tersembunyi',
     deleteAll: 'Hapus semua kursus',
     backupSaved: 'Cadangan disimpan ke folder Unduhan Anda.',
@@ -86,7 +88,14 @@ export const id: Messages = {
   courseRow: {
     lastDownloaded: 'Terakhir diunduh',
     openInMoodle: 'Buka kursus di Moodle',
-    setTagName: 'Atur nama tag',
+    setTagName: 'Atur tag (singkatan)',
+    setFullName: 'Atur nama lengkap',
+    tagPlaceholder: 'Singkatan, mis. SO',
+    fullNamePlaceholder: 'Nama lengkap (kosong: dari Moodle)',
+    setInstitution: 'Atur institusi (singkatan)',
+    institutionPlaceholder: 'Singkatan institusi, mis. UHU',
+    institution: 'Institusi',
+    changeColor: 'Ubah warna',
     hideCourse: 'Sembunyikan kursus',
     deleteCourse: 'Hapus kursus'
   },
@@ -100,6 +109,7 @@ export const id: Messages = {
   courseFiles: {
     backToCourses: 'Kembali ke kursus',
     addFile: 'Tambah file…',
+    ignoredFiles: 'File yang diabaikan',
     couldNotRead: (fileCount, firstName, error) =>
       `Tidak dapat membaca ${fileCount === 1 ? `"${firstName}"` : 'file yang diletakkan'} — file mungkin telah ` +
       `dipindahkan atau dihapus, atau masih diunduh. Coba lagi dari lokasi yang stabil. (${error})`,
@@ -115,6 +125,11 @@ export const id: Messages = {
     lastSaved: (date) => `Terakhir disimpan: ${date}`,
     manual: 'Manual',
     manualTitle: 'Ditambahkan secara manual, tidak diunduh dari Moodle',
+    ignored: 'Diabaikan',
+    ignoredTitle: 'Unduhan membiarkan file ini apa adanya',
+    ignoreTitle: 'Abaikan perubahan pada file ini',
+    unignoreTitle: 'Berhenti mengabaikan file ini',
+    ignoredWithFolderTitle: 'Diabaikan bersama foldernya',
     deleteTitle: 'Hapus file ini dari riwayat Anda',
     downloadTitle: 'Unduh ke folder Unduhan Anda',
     deleteConfirmTitle: (name) => `Hapus "${name}"?`,
@@ -124,6 +139,9 @@ export const id: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Abaikan folder ini dan semua isinya',
+    unignoreTitle: 'Berhenti mengabaikan folder ini',
+    ignoredTitle: 'Unduhan membiarkan folder ini dan semua isinya apa adanya',
     deleteTitle: 'Hapus folder ini dari riwayat Anda',
     downloadTitle: 'Unduh folder ini sebagai zip',
     couldNotDownload: (name, error) => `Tidak dapat mengunduh "${name}": ${error}`,
@@ -135,7 +153,8 @@ export const id: Messages = {
 
   recentlyOpened: {
     title: 'Baru dibuka',
-    remove: 'Hapus dari daftar baru dibuka'
+    remove: 'Hapus dari daftar baru dibuka',
+    showAll: 'Tampilkan semua yang baru dibuka'
   },
 
   recentSettings: {
@@ -158,6 +177,53 @@ export const id: Messages = {
       'Ruang kosong di setiap sisi konten pada jendela yang dimaksimalkan, sebagai bagian dari layar. Pada jendela ' +
       'yang lebih kecil, konten mempertahankan lebar itu dengan memakai margin terlebih dahulu, lalu seluruh jendela.',
     label: (percent) => `${percent}% di setiap sisi`
+  },
+
+  courseListStyle: {
+    title: 'Gaya daftar kursus',
+    description: 'Cara kursus ditampilkan di halaman ini.',
+    cards: 'Kartu',
+    rows: 'Baris'
+  },
+
+  courseColor: {
+    title: (name) => `Warna "${name}"`,
+    palette: 'Palet',
+    custom: 'Warna kustom',
+    automatic: 'Gunakan warna otomatis'
+  },
+
+  setInstitution: {
+    title: 'Atur institusi',
+    description: 'Pilih kursus yang diberi institusi ini. Biarkan kosong untuk menghapusnya dari kursus itu.',
+    courses: (count) => (count === 0 ? 'Kursus' : `Kursus (${count} dipilih)`),
+    selectAll: 'Pilih semua',
+    selectNone: 'Tidak ada',
+    hidden: 'Disembunyikan',
+    apply: (count) => (count === 1 ? 'Terapkan ke 1 kursus' : `Terapkan ke ${count} kursus`),
+    remove: (count) => (count === 1 ? 'Hapus dari 1 kursus' : `Hapus dari ${count} kursus`)
+  },
+
+  ignoredFiles: {
+    title: 'File yang diabaikan',
+    description:
+      'Unduhan membiarkan file-file ini apa adanya: tanpa versi baru, tidak pernah ditandai terhapus, dan tidak ditambahkan jika belum dilacak.',
+    pathLabel: 'Jalur file',
+    placeholder: 'Folder/file.pdf',
+    hint:
+      'Sertakan ekstensinya dan folder tempatnya berada: file di akar kursus cukup namanya saja. File bernama sama di folder berbeda adalah file yang berbeda. Akhiri jalur dengan / untuk mengabaikan seluruh folder beserta isinya.',
+    add: 'Tambah',
+    folder: 'Folder',
+    remove: (path) => `Berhenti mengabaikan ${path}`,
+    empty: 'Tidak ada file yang diabaikan.',
+    duplicate: 'File itu sudah ada di daftar.',
+    notFound: 'Belum ada di kursus ini',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" sekarang diabaikan` : `${count} file sekarang diabaikan`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Unduhan akan membiarkannya apa adanya. Apakah Anda juga ingin menghapusnya dari kursus ini, beserta semua versi yang tersimpan? Selama diabaikan, unduhan berikutnya tidak akan menambahkannya lagi.'
+        : 'Unduhan akan membiarkannya apa adanya. Apakah Anda juga ingin menghapus semuanya dari kursus ini, beserta semua versi yang tersimpan? Selama diabaikan, unduhan berikutnya tidak akan menambahkannya lagi.',
+    keep: (count) => (count === 1 ? 'Simpan' : 'Simpan')
   },
 
   upload: {
@@ -210,7 +276,11 @@ export const id: Messages = {
   viewer: {
     notFoundTitle: 'File tidak ditemukan',
     notFoundText: 'File ini sudah tidak ada di riwayat Moodle Archive Anda — mungkin telah dihapus.',
-    cannotPreview: 'Jenis file ini tidak dapat dipratinjau di browser.'
+    cannotPreview: 'Jenis file ini tidak dapat dipratinjau di browser.',
+    zoomOut: 'Perkecil',
+    zoomIn: 'Perbesar',
+    fitVertically: 'Sesuaikan secara vertikal',
+    fitHorizontally: 'Sesuaikan secara horizontal'
   },
 
   popup: {

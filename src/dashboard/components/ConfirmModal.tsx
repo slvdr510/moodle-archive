@@ -4,6 +4,7 @@ export function ConfirmModal({
   title,
   message,
   confirmLabel,
+  cancelLabel,
   danger = false,
   onConfirm,
   onCancel
@@ -11,6 +12,8 @@ export function ConfirmModal({
   title: string;
   message: string;
   confirmLabel: string;
+  /** Defaults to "Cancel" — for when declining is itself a choice ("Keep it"). */
+  cancelLabel?: string;
   danger?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -25,7 +28,7 @@ export function ConfirmModal({
         <p>{message}</p>
         <div className="modal-actions">
           <button className="secondary" onClick={onCancel}>
-            {t.common.cancel}
+            {cancelLabel ?? t.common.cancel}
           </button>
           <button className={danger ? 'danger' : undefined} onClick={onConfirm}>
             {confirmLabel}

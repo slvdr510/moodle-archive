@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { CourseFilesPage } from '../src/dashboard/pages/CourseFilesPage';
@@ -44,7 +44,7 @@ async function makeCourse(id: string, paths: string[]): Promise<void> {
   await processEntriesForCourse(id, entries, 1_000, true);
 }
 
-async function addToNewFolder(container: HTMLElement, folderName: string): Promise<void> {
+async function addToNewFolder(container: Element, folderName: string): Promise<void> {
   const input = container.querySelector('input[type=file]') as HTMLInputElement;
   await userEvent.upload(input, new File(['hello'], 'nuevo.pdf', { type: 'application/pdf' }));
   await userEvent.click(await screen.findByLabelText('New folder'));

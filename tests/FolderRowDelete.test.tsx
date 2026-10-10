@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FileRecord } from '../src/types';
@@ -23,7 +23,7 @@ import { FolderRow } from '../src/dashboard/components/FolderRow';
 import type { FolderTreeNode } from '../src/lib/fileTree';
 
 afterEach(() => {
-  cleanup();
+  act(() => cleanup());
   vi.clearAllMocks();
 });
 

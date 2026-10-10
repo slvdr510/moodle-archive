@@ -50,6 +50,8 @@ export const ha: Messages = {
     recentSettings: 'Saitunan waɗanda aka buɗe kwanan nan',
     downloadNameSettings: 'Saitunan sunayen saukewa',
     sideMargin: 'Gefe-gefe',
+    courseListStyle: 'Salon jerin kwasa-kwasai',
+    setInstitution: 'Saita cibiya ga kwasa-kwasai',
     hiddenCourses: 'Kwasa-kwasan da aka ɓoye',
     deleteAll: 'Share duk kwasa-kwasai',
     backupSaved: 'An ajiye ajiyar a cikin babban fayil ɗin Abubuwan da aka sauke.',
@@ -88,7 +90,14 @@ export const ha: Messages = {
   courseRow: {
     lastDownloaded: 'Saukewa ta ƙarshe',
     openInMoodle: 'Buɗe kwas ɗin a Moodle',
-    setTagName: 'Saita sunan alama',
+    setTagName: 'Saita tag (gajarta)',
+    setFullName: 'Saita cikakken suna',
+    tagPlaceholder: 'Gajarta, misali OS',
+    fullNamePlaceholder: 'Cikakken suna (babu komai: na Moodle)',
+    setInstitution: 'Saita cibiya (gajarta)',
+    institutionPlaceholder: 'Gajartar cibiya, misali UHU',
+    institution: 'Cibiya',
+    changeColor: 'Canza launi',
     hideCourse: 'Ɓoye kwas',
     deleteCourse: 'Share kwas'
   },
@@ -102,6 +111,7 @@ export const ha: Messages = {
   courseFiles: {
     backToCourses: 'Koma ga kwasa-kwasai',
     addFile: 'Ƙara fayil…',
+    ignoredFiles: 'Fayilolin da aka yi watsi da su',
     couldNotRead: (fileCount, firstName, error) =>
       `Ba a iya karanta ${fileCount === 1 ? `"${firstName}"` : 'fayilolin da aka jefa'} ba — mai yiwuwa an motsa ko ` +
       `an share fayil ɗin, ko kuma har yanzu ana sauke shi. Sake gwadawa daga wuri tabbatacce. (${error})`,
@@ -118,6 +128,11 @@ export const ha: Messages = {
     lastSaved: (date) => `An ajiye na ƙarshe: ${date}`,
     manual: 'Da hannu',
     manualTitle: 'An ƙara da hannu, ba a sauke daga Moodle ba',
+    ignored: 'An yi watsi',
+    ignoredTitle: 'Saukewa na barin wannan fayil yadda yake',
+    ignoreTitle: 'Yi watsi da canje-canjen wannan fayil',
+    unignoreTitle: 'Daina watsi da wannan fayil',
+    ignoredWithFolderTitle: 'An yi watsi tare da babban fayil ɗinsa',
     deleteTitle: 'Share wannan fayil daga tarihinka',
     downloadTitle: 'Sauke zuwa babban fayil ɗin Abubuwan da aka sauke',
     deleteConfirmTitle: (name) => `A share "${name}"?`,
@@ -127,6 +142,9 @@ export const ha: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Yi watsi da wannan babban fayil da duk abin da ke ciki',
+    unignoreTitle: 'Daina watsi da wannan babban fayil',
+    ignoredTitle: 'Saukewa na barin wannan babban fayil da duk abin da ke ciki yadda suke',
     deleteTitle: 'Share wannan babban fayil daga tarihinka',
     downloadTitle: 'Sauke wannan babban fayil a matsayin zip',
     couldNotDownload: (name, error) => `Ba a iya sauke "${name}" ba: ${error}`,
@@ -138,7 +156,8 @@ export const ha: Messages = {
 
   recentlyOpened: {
     title: 'Waɗanda aka buɗe kwanan nan',
-    remove: 'Cire daga waɗanda aka buɗe kwanan nan'
+    remove: 'Cire daga waɗanda aka buɗe kwanan nan',
+    showAll: 'Nuna duk waɗanda aka buɗe kwanan nan'
   },
 
   recentSettings: {
@@ -161,6 +180,53 @@ export const ha: Messages = {
       'Wuri maras komai a kowane gefe na abubuwan ciki a taga da aka faɗaɗa, a matsayin kaso na allo. A ƙaramar ' +
       'taga, abubuwan ciki suna riƙe wannan faɗin, suna fara amfani da gefe-gefen sannan duk tagar.',
     label: (percent) => `${percent}% a kowane gefe`
+  },
+
+  courseListStyle: {
+    title: 'Salon jerin kwasa-kwasai',
+    description: 'Yadda ake nuna kwasa-kwasai a wannan shafin.',
+    cards: 'Katuna',
+    rows: 'Layuka'
+  },
+
+  courseColor: {
+    title: (name) => `Launin "${name}"`,
+    palette: 'Jerin launuka',
+    custom: 'Launi na musamman',
+    automatic: 'Yi amfani da launi na atomatik'
+  },
+
+  setInstitution: {
+    title: 'Saita cibiya',
+    description: 'Zaɓi kwasa-kwasan da za a ba wannan cibiya. Bar shi babu komai don cire ta daga gare su.',
+    courses: (count) => (count === 0 ? 'Kwasa-kwasai' : `Kwasa-kwasai (an zaɓi ${count})`),
+    selectAll: 'Zaɓi duka',
+    selectNone: 'Babu',
+    hidden: 'A ɓoye',
+    apply: (count) => (count === 1 ? 'Yi amfani a kwas 1' : `Yi amfani a kwasa-kwasai ${count}`),
+    remove: (count) => (count === 1 ? 'Cire daga kwas 1' : `Cire daga kwasa-kwasai ${count}`)
+  },
+
+  ignoredFiles: {
+    title: 'Fayilolin da aka yi watsi da su',
+    description:
+      'Saukewa na barin waɗannan fayiloli yadda suke: babu sababbin sigogi, ba a taɓa nuna an goge su ba, kuma ba a ƙara su idan ba a bin su tukuna.',
+    pathLabel: 'Hanyar fayil',
+    placeholder: 'Babban fayil/fayil.pdf',
+    hint:
+      'Haɗa da tsawo da manyan fayilolin da yake ciki: fayil a tushen kwas sunansa kawai ne. Fayiloli masu suna ɗaya a manyan fayiloli daban-daban fayiloli ne daban. Ƙare hanya da / don yin watsi da babban fayil gaba ɗaya da duk abin da ke ciki.',
+    add: 'Ƙara',
+    folder: 'Babban fayil',
+    remove: (path) => `Daina watsi da ${path}`,
+    empty: 'Babu fayilolin da aka yi watsi da su.',
+    duplicate: 'Wannan fayil yana cikin jerin tuni.',
+    notFound: 'Ba ya cikin wannan kwas tukuna',
+    askDeleteTitle: (count, name) => (count === 1 ? `An yi watsi da "${name}" yanzu` : `An yi watsi da fayiloli ${count} yanzu`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Saukewa za ta bar shi yadda yake. Kana so ka kuma goge shi daga wannan kwas, tare da duk sigoginsa da aka adana? Muddin ana watsi da shi, saukewa na gaba ba za ta sake ƙara shi ba.'
+        : 'Saukewa za ta bar su yadda suke. Kana so ka kuma goge su daga wannan kwas, tare da duk sigoginsu da aka adana? Muddin ana watsi da su, saukewa na gaba ba za ta sake ƙara su ba.',
+    keep: (count) => (count === 1 ? 'Ajiye shi' : 'Ajiye su')
   },
 
   upload: {
@@ -213,7 +279,11 @@ export const ha: Messages = {
   viewer: {
     notFoundTitle: 'Ba a sami fayil ɗin ba',
     notFoundText: 'Wannan fayil ba ya cikin tarihin Moodle Archive ɗinka kuma — mai yiwuwa an share shi.',
-    cannotPreview: 'Ba za a iya duba irin wannan fayil a burauza ba.'
+    cannotPreview: 'Ba za a iya duba irin wannan fayil a burauza ba.',
+    zoomOut: 'Rage girma',
+    zoomIn: 'Ƙara girma',
+    fitVertically: 'Daidaita a tsaye',
+    fitHorizontally: 'Daidaita a kwance'
   },
 
   popup: {

@@ -3,6 +3,8 @@ import { downloadBlobUrl } from './blobDownloadNames';
 import { courseStore, fileStore, recentOpenStore, versionStore } from './db';
 import { guessMimeType } from './fileKind';
 import { getMessages } from './i18n';
+import { hasCourseTag } from './downloadNameSettings';
+import { sameIgnoredPath } from './ignoredFiles';
 import { processEntryBatchForCourse } from './repository';
 import type { Course, ExtractedEntry, FileRecord, RecentOpenRecord, VersionRecord } from '../types';
 
@@ -168,6 +170,36 @@ export interface ImportSummary {
 }
 
 /**
+ * A course being imported over a local one with the same id. What's set locally
+ * always stays — order, hidden state, and the tag, full name, institution and color
+ * the user chose — so an import never overwrites a choice made here; what's unset
+ * locally is filled in from the import. Ignored files are those of both, each once.
+ * URLs are merged, and the later of the two downloads kept.
+ */
+export function mergeImportedCourse(existing: Course, imported: Course): Course {
+  const merged: Course = {
+    ...existing,
+    matchedUrls: Array.from(new Set([...existing.matchedUrls, ...imported.matchedUrls])),
+    url: existing.url || imported.url,
+    lastSyncedAt: Math.max(existing.lastSyncedAt, imported.lastSyncedAt),
+    fullName: existing.fullName ?? imported.fullName,
+    institution: existing.institution ?? imported.institution,
+    color: existing.color ?? imported.color,
+    autoName: existing.autoName ?? imported.autoName
+  };
+  if (!hasCourseTag(existing) && hasCourseTag(imported)) {
+    merged.name = imported.name;
+    merged.tagged = true;
+  }
+  const ignored = [...(existing.ignoredPaths ?? [])];
+  for (const path of imported.ignoredPaths ?? []) {
+    if (!ignored.some((local) => sameIgnoredPath(local, path))) ignored.push(path);
+  }
+  merged.ignoredPaths = ignored.length > 0 ? ignored : undefined;
+  return merged;
+}
+
+/**
  * Restores courses/files/versions/recent-opens from a zip produced by
  * `exportAllData`/`exportCourse`.
  *
@@ -175,8 +207,8 @@ export interface ImportSummary {
  * tag ("Set tag name") — so an imported course is the *same* course as a
  * local one exactly when their ids match, however differently either one is
  * currently named. When they match, the import merges into the existing
- * record: the local tag always wins (an import can't overwrite a rename),
- * and its files are diffed by content hash — exactly like a real download —
+ * record (see mergeImportedCourse: what's set locally wins, what isn't is filled
+ * in from the import), and its files are diffed by content hash — exactly like a real download —
  * so unchanged content isn't re-stored and a genuinely new/changed file
  * still gets classified as such. An id with no local match is a brand-new
  * course, using the imported name and treated as its own "first sync" (so
@@ -197,12 +229,7 @@ export async function importAllData(file: File | Blob): Promise<ImportSummary> {
     const existing = existingById.get(importedCourse.id);
 
     const mergedCourse: Course = existing
-      ? {
-          ...existing, // the local tag (name), order, hidden state, etc. all win as-is
-          matchedUrls: Array.from(new Set([...existing.matchedUrls, ...importedCourse.matchedUrls])),
-          url: existing.url || importedCourse.url,
-          lastSyncedAt: Math.max(existing.lastSyncedAt, importedCourse.lastSyncedAt)
-        }
+      ? mergeImportedCourse(existing, importedCourse)
       : { ...importedCourse, hidden: false, firstSyncCompleted: false };
     await courseStore.put(mergedCourse);
 

@@ -51,6 +51,8 @@ export const pcm: Messages = {
     recentSettings: 'Settings for di ones wey you open recently',
     downloadNameSettings: 'Settings for download name',
     sideMargin: 'Side margin dem',
+    courseListStyle: 'How di course list go look',
+    setInstitution: 'Set institution for courses',
     hiddenCourses: 'Courses wey you hide',
     deleteAll: 'Comot all di courses',
     backupSaved: 'Backup don save for your Downloads folder.',
@@ -87,7 +89,14 @@ export const pcm: Messages = {
   courseRow: {
     lastDownloaded: 'Last time wey you download',
     openInMoodle: 'Open di course for Moodle',
-    setTagName: 'Set tag name',
+    setTagName: 'Set tag (short name)',
+    setFullName: 'Set full name',
+    tagPlaceholder: 'Short name, like OS',
+    fullNamePlaceholder: 'Full name (empty: di one from Moodle)',
+    setInstitution: 'Set institution (short name)',
+    institutionPlaceholder: 'Institution short name, like UHU',
+    institution: 'Institution',
+    changeColor: 'Change color',
     hideCourse: 'Hide course',
     deleteCourse: 'Comot course'
   },
@@ -101,6 +110,7 @@ export const pcm: Messages = {
   courseFiles: {
     backToCourses: 'Go back to courses',
     addFile: 'Add file…',
+    ignoredFiles: 'Files wey you dey ignore',
     couldNotRead: (fileCount, firstName, error) =>
       `We no fit read ${fileCount === 1 ? `"${firstName}"` : 'di files wey you drop'} — maybe dem don move am or ` +
       `delete am, or e still dey download. Try again from one place wey no dey change. (${error})`,
@@ -116,6 +126,11 @@ export const pcm: Messages = {
     lastSaved: (date) => `Last time wey e save: ${date}`,
     manual: 'By hand',
     manualTitle: 'You add am by hand, e no come from Moodle',
+    ignored: 'Ignored',
+    ignoredTitle: 'Download no go touch dis file',
+    ignoreTitle: 'Ignore changes for dis file',
+    unignoreTitle: 'Stop to ignore dis file',
+    ignoredWithFolderTitle: 'You dey ignore am with im folder',
     deleteTitle: 'Comot dis file from your history',
     downloadTitle: 'Download am go your Downloads folder',
     deleteConfirmTitle: (name) => `Make we comot "${name}"?`,
@@ -125,6 +140,9 @@ export const pcm: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'Ignore dis folder and everything wey dey inside',
+    unignoreTitle: 'Stop to ignore dis folder',
+    ignoredTitle: 'Download no go touch dis folder and everything wey dey inside',
     deleteTitle: 'Comot dis folder from your history',
     downloadTitle: 'Download dis folder as zip',
     couldNotDownload: (name, error) => `We no fit download "${name}": ${error}`,
@@ -136,7 +154,8 @@ export const pcm: Messages = {
 
   recentlyOpened: {
     title: 'Wetin you open recently',
-    remove: 'Comot am from wetin you open recently'
+    remove: 'Comot am from wetin you open recently',
+    showAll: 'Show all di ones wey you open recently'
   },
 
   recentSettings: {
@@ -159,6 +178,53 @@ export const pcm: Messages = {
       'Empty space for each side of di content when di window full screen, as part of di screen. For smaller ' +
       'window, di content go keep dat width — e go first use di margins, then di whole window.',
     label: (percent) => `${percent}% for each side`
+  },
+
+  courseListStyle: {
+    title: 'How di course list go look',
+    description: 'How courses go show for dis page.',
+    cards: 'Cards',
+    rows: 'Lines'
+  },
+
+  courseColor: {
+    title: (name) => `Di color for "${name}"`,
+    palette: 'Colors',
+    custom: 'Your own color',
+    automatic: 'Use di automatic color'
+  },
+
+  setInstitution: {
+    title: 'Set institution',
+    description: 'Choose di courses wey go get dis institution. Leave am empty to comot am from dem.',
+    courses: (count) => (count === 0 ? 'Courses' : `Courses (${count} selected)`),
+    selectAll: 'Select all',
+    selectNone: 'Select none',
+    hidden: 'Hidden',
+    apply: (count) => (count === 1 ? 'Apply to 1 course' : `Apply to ${count} courses`),
+    remove: (count) => (count === 1 ? 'Comot from 1 course' : `Comot from ${count} courses`)
+  },
+
+  ignoredFiles: {
+    title: 'Files wey you dey ignore',
+    description:
+      'Download no go touch dis files: no new version, dem no go ever mark am as deleted, and if dem never dey track am, dem no go add am.',
+    pathLabel: 'File path',
+    placeholder: 'Folder/file.pdf',
+    hint:
+      'Put di extension and di folders wey e dey inside: file wey dey di course root na just im name. Files wey get di same name for different folders na different files. End di path with / to ignore one whole folder with everything wey dey inside.',
+    add: 'Add',
+    folder: 'Folder',
+    remove: (path) => `Stop to ignore ${path}`,
+    empty: 'No file wey you dey ignore.',
+    duplicate: 'Dat file don already dey di list.',
+    notFound: 'E never dey dis course',
+    askDeleteTitle: (count, name) => (count === 1 ? `You don dey ignore "${name}" now` : `You don dey ignore ${count} files now`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'Download no go touch am. You wan also delete am from dis course, plus all di versions wey you save? As long as you dey ignore am, next download no go add am back.'
+        : 'Download no go touch dem. You wan also delete dem from dis course, plus all di versions wey you save? As long as you dey ignore dem, next download no go add dem back.',
+    keep: (count) => (count === 1 ? 'Keep am' : 'Keep dem')
   },
 
   upload: {
@@ -211,7 +277,11 @@ export const pcm: Messages = {
   viewer: {
     notFoundTitle: 'We no see di file',
     notFoundText: 'Dis file no dey your Moodle Archive history again — maybe dem don delete am.',
-    cannotPreview: 'You no fit preview dis kain file for browser.'
+    cannotPreview: 'You no fit preview dis kain file for browser.',
+    zoomOut: 'Make am small',
+    zoomIn: 'Make am big',
+    fitVertically: 'Make am fit up-and-down',
+    fitHorizontally: 'Make am fit side-to-side'
   },
 
   popup: {

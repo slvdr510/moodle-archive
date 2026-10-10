@@ -136,7 +136,7 @@ export function App() {
 
   const place = activeTab ? findDownload(downloadState, activeTab.id, activeTab.key) : { kind: 'none' as const };
   const showFinished = status === 'finished' && !hideFinished;
-  const statusLog = injectionError ?? downloadState.statusLog;
+  const statusLog = downloadState.statusLog;
 
   let buttonLabel = t.popup.download;
   if (place.kind === 'current') buttonLabel = t.popup.downloading;
@@ -160,9 +160,9 @@ export function App() {
         </a>
       </header>
 
-      {(injectionError || ((isProcessing || showFinished) && (statusLog || isProcessing))) && (
+      {(isProcessing || showFinished) && (statusLog || isProcessing) && (
         <div className="popup-body">
-          {!injectionError && current && (
+          {current && (
             <p className="popup-course" title={current.title}>
               {current.title}
             </p>
@@ -209,6 +209,14 @@ export function App() {
             ))}
           </ol>
         </div>
+      )}
+
+      {/* This tab couldn't be downloaded (or queued). Said on its own line, below
+          whatever download is already running — which carries on, and stays shown. */}
+      {injectionError && (
+        <p className="popup-error" role="alert">
+          {injectionError}
+        </p>
       )}
 
       <div className="popup-actions">

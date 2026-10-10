@@ -50,6 +50,8 @@ export const hi: Messages = {
     recentSettings: 'हाल में खोली गई फ़ाइलों की सेटिंग',
     downloadNameSettings: 'डाउनलोड नाम सेटिंग',
     sideMargin: 'किनारे के मार्जिन',
+    courseListStyle: 'कोर्स सूची की शैली',
+    setInstitution: 'कोर्सों का संस्थान सेट करें',
     hiddenCourses: 'छिपे हुए कोर्स',
     deleteAll: 'सभी कोर्स हटाएँ',
     backupSaved: 'बैकअप आपके डाउनलोड फ़ोल्डर में सहेजा गया।',
@@ -86,7 +88,14 @@ export const hi: Messages = {
   courseRow: {
     lastDownloaded: 'पिछला डाउनलोड',
     openInMoodle: 'कोर्स Moodle में खोलें',
-    setTagName: 'टैग नाम सेट करें',
+    setTagName: 'टैग (संक्षिप्त नाम) सेट करें',
+    setFullName: 'पूरा नाम सेट करें',
+    tagPlaceholder: 'संक्षिप्त नाम, जैसे OS',
+    fullNamePlaceholder: 'पूरा नाम (ख़ाली: Moodle वाला)',
+    setInstitution: 'संस्थान (संक्षिप्त नाम) सेट करें',
+    institutionPlaceholder: 'संस्थान का संक्षिप्त नाम, जैसे UHU',
+    institution: 'संस्थान',
+    changeColor: 'रंग बदलें',
     hideCourse: 'कोर्स छिपाएँ',
     deleteCourse: 'कोर्स हटाएँ'
   },
@@ -100,6 +109,7 @@ export const hi: Messages = {
   courseFiles: {
     backToCourses: 'कोर्स पर वापस जाएँ',
     addFile: 'फ़ाइल जोड़ें…',
+    ignoredFiles: 'अनदेखी की गई फ़ाइलें',
     couldNotRead: (fileCount, firstName, error) =>
       `${fileCount === 1 ? `"${firstName}"` : 'छोड़ी गई फ़ाइलें'} पढ़ी नहीं जा सकीं — हो सकता है फ़ाइल हटाई या ` +
       `खिसकाई गई हो, या अभी डाउनलोड हो रही हो। किसी स्थायी जगह से फिर से कोशिश करें। (${error})`,
@@ -115,6 +125,11 @@ export const hi: Messages = {
     lastSaved: (date) => `पिछली बार सहेजा गया: ${date}`,
     manual: 'मैन्युअल',
     manualTitle: 'हाथ से जोड़ी गई, Moodle से डाउनलोड नहीं हुई',
+    ignored: 'अनदेखी',
+    ignoredTitle: 'डाउनलोड इस फ़ाइल को जैसी है वैसी ही छोड़ते हैं',
+    ignoreTitle: 'इस फ़ाइल के बदलावों को अनदेखा करें',
+    unignoreTitle: 'इस फ़ाइल को अनदेखा करना बंद करें',
+    ignoredWithFolderTitle: 'अपने फ़ोल्डर के साथ अनदेखा',
     deleteTitle: 'यह फ़ाइल अपने इतिहास से हटाएँ',
     downloadTitle: 'अपने डाउनलोड फ़ोल्डर में डाउनलोड करें',
     deleteConfirmTitle: (name) => `"${name}" हटाएँ?`,
@@ -124,6 +139,9 @@ export const hi: Messages = {
   },
 
   folderRow: {
+    ignoreTitle: 'इस फ़ोल्डर और इसकी सारी सामग्री को अनदेखा करें',
+    unignoreTitle: 'इस फ़ोल्डर को अनदेखा करना बंद करें',
+    ignoredTitle: 'डाउनलोड इस फ़ोल्डर और इसकी सारी सामग्री को जैसा है वैसा ही छोड़ते हैं',
     deleteTitle: 'यह फ़ोल्डर अपने इतिहास से हटाएँ',
     downloadTitle: 'यह फ़ोल्डर zip के रूप में डाउनलोड करें',
     couldNotDownload: (name, error) => `"${name}" डाउनलोड नहीं हो सका: ${error}`,
@@ -135,7 +153,8 @@ export const hi: Messages = {
 
   recentlyOpened: {
     title: 'हाल में खोली गई',
-    remove: 'हाल में खोली गई सूची से हटाएँ'
+    remove: 'हाल में खोली गई सूची से हटाएँ',
+    showAll: 'हाल में खोली गई सभी देखें'
   },
 
   recentSettings: {
@@ -158,6 +177,53 @@ export const hi: Messages = {
       'बड़ी की गई विंडो में सामग्री के हर ओर खाली जगह, स्क्रीन के हिस्से के रूप में। छोटी विंडो में सामग्री ' +
       'यही चौड़ाई बनाए रखती है — पहले मार्जिन इस्तेमाल होते हैं, फिर पूरी विंडो।',
     label: (percent) => `हर ओर ${percent}%`
+  },
+
+  courseListStyle: {
+    title: 'कोर्स सूची की शैली',
+    description: 'इस पेज पर कोर्स कैसे दिखाए जाएँ।',
+    cards: 'कार्ड',
+    rows: 'पंक्तियाँ'
+  },
+
+  courseColor: {
+    title: (name) => `"${name}" का रंग`,
+    palette: 'पैलेट',
+    custom: 'अपना रंग',
+    automatic: 'अपने-आप वाला रंग इस्तेमाल करें'
+  },
+
+  setInstitution: {
+    title: 'संस्थान सेट करें',
+    description: 'वे कोर्स चुनें जिन्हें यह संस्थान देना है। हटाने के लिए ख़ाली छोड़ें।',
+    courses: (count) => (count === 0 ? 'कोर्स' : `कोर्स (${count} चुने गए)`),
+    selectAll: 'सभी चुनें',
+    selectNone: 'कोई नहीं',
+    hidden: 'छिपा हुआ',
+    apply: (count) => (count === 1 ? '1 कोर्स पर लागू करें' : `${count} कोर्सों पर लागू करें`),
+    remove: (count) => (count === 1 ? '1 कोर्स से हटाएँ' : `${count} कोर्सों से हटाएँ`)
+  },
+
+  ignoredFiles: {
+    title: 'अनदेखी की गई फ़ाइलें',
+    description:
+      'डाउनलोड इन फ़ाइलों को जैसी हैं वैसी ही छोड़ते हैं: कोई नया संस्करण नहीं, कभी हटाई गई के रूप में चिह्नित नहीं, और अगर अभी ट्रैक नहीं हो रहीं तो जोड़ी भी नहीं जातीं।',
+    pathLabel: 'फ़ाइल का पथ',
+    placeholder: 'फ़ोल्डर/फ़ाइल.pdf',
+    hint:
+      'एक्सटेंशन और वे फ़ोल्डर शामिल करें जिनमें यह है: कोर्स के रूट में रखी फ़ाइल सिर्फ़ उसका नाम है। अलग-अलग फ़ोल्डरों में एक ही नाम की फ़ाइलें अलग-अलग फ़ाइलें हैं। पूरे फ़ोल्डर और उसकी सारी सामग्री को अनदेखा करने के लिए पथ के अंत में / लगाएँ।',
+    add: 'जोड़ें',
+    folder: 'फ़ोल्डर',
+    remove: (path) => `${path} को अनदेखा करना बंद करें`,
+    empty: 'कोई अनदेखी फ़ाइल नहीं।',
+    duplicate: 'यह फ़ाइल पहले से सूची में है।',
+    notFound: 'अभी इस कोर्स में नहीं है',
+    askDeleteTitle: (count, name) => (count === 1 ? `"${name}" अब अनदेखा है` : `${count} फ़ाइलें अब अनदेखी हैं`),
+    askDeleteMessage: (count) =>
+      count === 1
+        ? 'डाउनलोड इसे जैसी है वैसी ही छोड़ेंगे। क्या आप इसे इसके सभी सहेजे गए संस्करणों के साथ इस कोर्स से हटाना भी चाहते हैं? जब तक यह अनदेखी है, आगे के डाउनलोड इसे फिर से नहीं जोड़ेंगे।'
+        : 'डाउनलोड इन्हें जैसी हैं वैसी ही छोड़ेंगे। क्या आप इन्हें इनके सभी सहेजे गए संस्करणों के साथ इस कोर्स से हटाना भी चाहते हैं? जब तक ये अनदेखी हैं, आगे के डाउनलोड इन्हें फिर से नहीं जोड़ेंगे।',
+    keep: (count) => (count === 1 ? 'रखें' : 'रखें')
   },
 
   upload: {
@@ -210,7 +276,11 @@ export const hi: Messages = {
   viewer: {
     notFoundTitle: 'फ़ाइल नहीं मिली',
     notFoundText: 'यह फ़ाइल अब आपके Moodle Archive इतिहास में नहीं है — शायद हटा दी गई है।',
-    cannotPreview: 'इस प्रकार की फ़ाइल का ब्राउज़र में पूर्वावलोकन नहीं हो सकता।'
+    cannotPreview: 'इस प्रकार की फ़ाइल का ब्राउज़र में पूर्वावलोकन नहीं हो सकता।',
+    zoomOut: 'छोटा करें',
+    zoomIn: 'बड़ा करें',
+    fitVertically: 'लंबवत फ़िट करें',
+    fitHorizontally: 'क्षैतिज फ़िट करें'
   },
 
   popup: {

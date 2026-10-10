@@ -26,7 +26,7 @@ export function RecentSettingsModal({ onClose }: { onClose: () => void }) {
         <p>{t.recentSettings.appliesToAll}</p>
         <div className="upload-options">
           <label className="upload-option">
-            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.currentTarget.checked)} />
             {t.recentSettings.show}
           </label>
           <label className="upload-option">
@@ -34,7 +34,7 @@ export function RecentSettingsModal({ onClose }: { onClose: () => void }) {
               type="checkbox"
               checked={unlimited}
               disabled={!enabled}
-              onChange={(e) => setUnlimited(e.target.checked)}
+              onChange={(e) => setUnlimited(e.currentTarget.checked)}
             />
             {t.recentSettings.noLimit}
           </label>
@@ -46,7 +46,7 @@ export function RecentSettingsModal({ onClose }: { onClose: () => void }) {
               step={1}
               value={maxItems}
               disabled={!enabled || unlimited}
-              onChange={(e) => setMaxItems(e.target.value)}
+              onChange={(e) => setMaxItems(e.currentTarget.value)}
             />
           </label>
         </div>

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { VersionRecord } from '../src/types';
@@ -20,7 +20,7 @@ vi.mock('../src/lib/openFile', () => ({
 import { VersionTimeline } from '../src/dashboard/components/VersionTimeline';
 
 afterEach(() => {
-  cleanup();
+  act(() => cleanup());
   vi.clearAllMocks();
 });
 

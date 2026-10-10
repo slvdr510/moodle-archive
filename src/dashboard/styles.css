@@ -66,6 +66,58 @@ body {
   /* A constant gutter, not a share of the window: one that grew with the window
      would make the rows inside narrower as the window widened past the content. */
   padding: 0 16px 56px;
+  /* At least the window's height, header included, so a page can center its content
+     in whatever space the header leaves (see .courses-page.centered). */
+  box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app > main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* A course's page is exactly the window's height: everything above its file list —
+   the app header, the course's toolbar, recently opened, search — always in view,
+   and the list scrolling on its own in the room left below them. */
+.app:has(.course-files-page) {
+  height: 100vh;
+  padding-bottom: 16px;
+}
+
+.course-files-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-files-page > * {
+  flex: none;
+}
+
+/* Only as tall as its rows, until they don't fit: then it fills the room left and
+   scrolls. */
+.course-files-page > .file-list {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Its scrollbar as unobtrusive as can be: thin, no track, and a faint thumb that
+   only firms up a little while the pointer is over the list. */
+.course-files-page > .file-list {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 12%, transparent) transparent;
+  transition: scrollbar-color 0.15s ease;
+}
+
+.course-files-page > .file-list:hover {
+  scrollbar-color: color-mix(in srgb, var(--fg) 26%, transparent) transparent;
 }
 
 .app-header {
@@ -231,6 +283,34 @@ body {
   margin-top: 8px;
 }
 
+/* Cards: the list sits in the middle of the window — across (each row is centered)
+   and down, measured from the window's top, not the header's bottom: the space
+   below the list is made as tall as what's above it (the header, measured into
+   --app-header-height by App, plus this page's 8px top margin), so the auto
+   margins split the rest evenly. With more cards than fit, those margins come to
+   nothing and the list starts at the top, scrolling as usual. */
+.courses-page.centered {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app:has(.courses-page.centered) {
+  /* Bottom room comes from the spacer below instead. */
+  padding-bottom: 0;
+}
+
+.courses-page.centered > .course-list {
+  margin-block: auto;
+}
+
+.courses-page.centered::after {
+  content: '';
+  flex: none;
+  /* Less the last row's own bottom margin (--card-gap, 14px), already below it. */
+  height: max(24px, calc(var(--app-header-height, 0px) + 8px - 14px));
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -339,6 +419,8 @@ body {
 }
 
 .recently-opened {
+  /* For the "show all" panel, laid over the whole section. */
+  position: relative;
   margin-bottom: 20px;
 }
 
@@ -351,7 +433,97 @@ body {
   color: var(--muted);
 }
 
+/* The list and, when it doesn't all fit, the button that shows the rest. */
+.recently-opened-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* A single row of items, however many there are: the ones that wrap onto a second
+   one are cut off, and offered by the "+N" button instead (see RecentlyOpened). */
 .recently-opened-list {
+  flex: 1;
+  min-width: 0;
+  /* Room kept at the row's end for the "+N" button, at its narrowest. */
+  padding-inline-end: 72px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  /* Set to one item's height by RecentlyOpened, which measures it. */
+  overflow: hidden;
+}
+
+.recently-opened-more-button {
+  /* Shaped like the items beside it, and exactly as tall: its height is set to an
+     item's, measured by RecentlyOpened. */
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.recently-opened.open .recently-opened-more-button {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  border-color: var(--border);
+}
+
+/* From where the last item on the row ends (set by RecentlyOpened) to the row's end,
+   as tall as an item: the whole rest of the row keeps the panel open. A flex box
+   rather than a block, so the button isn't set on a line of text. */
+.recently-opened-more {
+  /* The hover area around the button, and the room between it and the last item. */
+  --more-hover-margin: 4px;
+  position: absolute;
+  top: calc(-1 * var(--more-hover-margin));
+  inset-inline-end: 0;
+  display: flex;
+  box-sizing: border-box;
+  padding-block: var(--more-hover-margin);
+  padding-inline-start: 8px;
+}
+
+.recently-opened-more .recently-opened-more-button {
+  flex: 1;
+  justify-content: center;
+}
+
+/* While open (see RecentlyOpened): the whole section again — its title, then every
+   item, all aligned to the start — in a panel laid over it, the button hidden under it. Exactly as
+   wide as the section (and so as the search box and file list below); only its top
+   reaches out by its padding and border (13px), so the title stays at its height. */
+.recently-opened-panel {
+  display: none;
+  position: absolute;
+  z-index: 40;
+  top: -13px;
+  inset-inline: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.18);
+  scrollbar-width: thin;
+}
+
+.recently-opened.open .recently-opened-panel {
+  display: block;
+}
+
+/* Aligned to the start, like the title above them and the row it opens from. */
+.recently-opened-panel-items {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -540,65 +712,304 @@ button:disabled {
   color: var(--deleted);
 }
 
-.course-list,
 .file-list {
   list-style: none;
   margin: 0;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
+  /* Rounds the corners. On a course's page the list scrolls on its own instead (see
+     .course-files-page), and folders' sticky headers stick to its top. */
+  overflow: clip;
   background: var(--bg);
   box-shadow: var(--shadow);
 }
 
-.course-row {
+/* Cards of one fixed size in balanced rows, each row centered: how many go on each
+   is decided in CoursesPage (see cardLayout.ts), which ends a row with a
+   .course-list-break. --card-width and --card-gap are set there too. */
+.course-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  justify-content: center;
+  /* The space between rows is each card's bottom margin instead: a row gap would
+     also open up around every (empty) break, doubling the space there. */
+  column-gap: var(--card-gap);
+  row-gap: 0;
+}
+
+/* Forces the next card onto a new row. */
+.course-list-break {
+  flex-basis: 100%;
+  height: 0;
+}
+
+/* The "no courses" messages span the whole width, boxed like a card. */
+.course-list > .empty {
+  flex-basis: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+/* Except "all your courses are hidden": just the message, with no box around it —
+   neither its own (cards) nor the list's (rows). */
+.course-list > .empty:not(.empty-welcome),
+.course-list.as-rows:has(> .empty:not(.empty-welcome)) {
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+.course-card {
+  /* Set per card from the course's name (courseColors.ts); the fallback only shows
+     for a card rendered without one. */
+  --course-color: var(--accent);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Every card the same size, whatever its name (--card-width, from cardLayout.ts,
+     and this height): room for a tag large in the middle, or a name's three lines
+     (cut short with an ellipsis past that) above the footer. */
+  height: var(--card-height, 190px);
+  width: var(--card-width);
+  max-width: 100%;
+  margin-bottom: var(--card-gap);
+  box-sizing: border-box;
+  min-width: 0;
+  /* The same all round, so a tag centered in the card is centered on it (the
+     color band along the top is only 5px, well inside this). */
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--course-color) 6%, var(--bg));
+  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: background 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
 }
 
-.course-row:last-child {
-  border-bottom: none;
+.course-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: var(--course-color);
 }
 
-.course-row:hover,
-.course-row.menu-open {
-  background: var(--surface);
+.course-card:hover,
+.course-card.menu-open {
+  background: color-mix(in srgb, var(--course-color) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--course-color) 45%, var(--border));
 }
 
-.course-row.dragging {
+.course-card.dragging {
   opacity: 0.4;
 }
 
-.course-row.drag-over {
-  box-shadow: inset 0 2px 0 var(--accent);
+.course-card.drag-over {
+  border-color: var(--course-color);
+  box-shadow: 0 0 0 1px var(--course-color);
 }
 
 .course-name {
   font-size: 15.5px;
   font-weight: 500;
-  /* The mismatch isn't a flex/box problem (align-items: center on .course-row
-     already splits the space evenly) — it's Inter's own font metrics: its
-     ascent/descent are asymmetric around the actual glyphs, so any line-height
-     value leaves visibly more room on one side than the other. This trims the
-     line box down to the glyphs' own edges so centering lines up visually,
-     not just mathematically. No-op (falls back to today's look) on browsers
-     that don't support it yet. */
-  text-box-trim: trim-both;
-  text-box-edge: cap alphabetic;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  /* A long name wraps onto a few lines, then is cut short with an ellipsis — the full
+     name is in its tooltip. min-width lets a single unbroken word shrink too. */
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* The tag (an abbreviation) and, beneath it, the course's full name — or just the
+   full name, for a course without a tag (see courseNames.ts). */
+.course-card-names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Under a tag, the full name gets the room: the tag is short, so one line is enough. */
+.course-name.with-subtitle {
+  -webkit-line-clamp: 1;
+}
+
+.course-full-name {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* A tagged card shows just the tag, filling the card: centered on it both ways (the
+   footer floats over its bottom, see below), and as large as fits — the height
+   allows up to 60% of it, leaving the footer its room, the width as much as the
+   tag's length (--tag-length, set on the element, at ~0.62em a character) leaves
+   room for. The full name stays in the tooltip only (rows still show it). */
+.course-list:not(.as-rows) .course-card-names.has-tag {
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  justify-content: center;
+  align-items: center;
+}
+
+.course-list:not(.as-rows) .course-card-names.has-tag .course-name {
+  /* Also never so tall it reaches the footer when it shows (see --footer-room). */
+  font-size: clamp(
+    12px,
+    min(60cqh, calc((100cqh - var(--footer-room)) / 1.05), calc(100cqw / (var(--tag-length) * 0.62))),
+    72px
+  );
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-align: center;
+  /* A long tag that still doesn't fit at the smallest size wraps onto a second line. */
+  -webkit-line-clamp: 2;
+}
+
+.course-list:not(.as-rows) .course-card-names.has-tag .course-full-name {
+  display: none;
+}
+
+/* When the footer shows (hover, or the menu open), the centered tag or name slides up
+   to be centered on the room left above it instead — by half of what the footer takes
+   at the card's bottom (its 26px plus its 8px from the edge) — and back down after. */
+.course-list:not(.as-rows) .course-card-names.has-tag,
+.course-list:not(.as-rows) .course-card-names.has-full-name {
+  transition: transform 0.2s ease-in-out;
+}
+
+.course-list:not(.as-rows) .course-card:hover .course-card-names.has-tag,
+.course-list:not(.as-rows) .course-card:hover .course-card-names.has-full-name,
+.course-list:not(.as-rows) .course-card.menu-open .course-card-names.has-tag,
+.course-list:not(.as-rows) .course-card.menu-open .course-card-names.has-full-name {
+  transform: translateY(calc(-1 * (26px + 8px) / 2));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-list:not(.as-rows) .course-card-names.has-tag,
+  .course-list:not(.as-rows) .course-card-names.has-full-name {
+    transition: none;
+  }
+}
+
+/* A card without a tag shows its full name the same way: centered on the card, bold,
+   and as large as fits in up to three lines — sized from its length (--name-length,
+   set on the element: at ~0.58em a character, three lines of the card's width hold
+   3 × 100cqw / (0.58 × length)), from 22px down to 15px, past which it's cut short. */
+.course-list:not(.as-rows) .course-card-names.has-full-name {
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  justify-content: center;
+  align-items: center;
+}
+
+.course-list:not(.as-rows) .course-card-names.has-full-name .course-name {
+  /* Also never so tall that three lines reach the footer (see --footer-room). */
+  font-size: clamp(
+    11px,
+    min(calc(300cqw / (var(--name-length) * 0.58)), calc((100cqh - var(--footer-room)) / 3.75)),
+    22px
+  );
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-align: center;
+  /* Lines of about the same length ("Interconexión / de Redes de / Computadores"),
+     rather than the first ones filled up and a short one left at the end. */
+  text-wrap: balance;
+  -webkit-line-clamp: 3;
+}
+
+/* Pinned to the card's bottom, so the dates line up across a row of cards
+   whatever the length of each name above them. */
+.course-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  margin-top: auto;
+}
+
+/* The institution's abbreviation (if set) and the last download, side by side. */
+.course-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.course-institution {
+  flex: none;
+  max-width: 96px;
+  /* Just the text, styled like the last download's time beside it, only a touch
+     stronger: its muted color taken partway toward the text's. */
+  color: color-mix(in srgb, var(--muted) 60%, var(--fg));
+  font-size: 12.5px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* On a card it only shows on hover (or while its menu is open), faded rather than
+   removed so nothing beside it moves. A row always shows it. */
+.course-list:not(.as-rows) .course-card .course-institution {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.course-list:not(.as-rows) .course-card:hover .course-institution,
+.course-list:not(.as-rows) .course-card.menu-open .course-institution {
+  opacity: 1;
+}
+
+/* Likewise the time since the last download, on a card (a row keeps it in view). */
+.course-list:not(.as-rows) .course-last-synced {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.course-list:not(.as-rows) .course-card:hover .course-last-synced,
+.course-list:not(.as-rows) .course-card.menu-open .course-last-synced {
+  opacity: 1;
 }
 
 .course-last-synced {
   color: var(--muted);
   font-size: 12.5px;
   white-space: nowrap;
-  text-box-trim: trim-both;
-  text-box-edge: cap alphabetic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.course-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
 }
 
 .course-open-url {
@@ -614,12 +1025,12 @@ button.course-open-url {
   opacity: 0;
 }
 
-.course-row:hover .course-open-url,
-.course-row.menu-open .course-open-url {
+.course-card:hover .course-open-url,
+.course-card.menu-open .course-open-url {
   opacity: 0.75;
 }
 
-.course-row:hover .course-open-url:hover {
+.course-card:hover .course-open-url:hover {
   opacity: 1;
 }
 
@@ -633,10 +1044,133 @@ button.course-open-url {
   font-size: 15px;
 }
 
-.course-row-right {
-  display: flex;
+.course-card .course-name-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* "Rows" style (Course list style): the same items as one boxed list, a row each —
+   the course list's look before cards. Each keeps its color as a stripe on the left. */
+.course-list.as-rows {
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.course-list.as-rows > .empty {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* On a card, the footer floats over the card's bottom edge instead of taking room
+   from the name above it, so a tag can be centered on the whole card. Its contents
+   only show on hover anyway. What the centered name must leave clear for it, at the
+   bottom — and so at the top too, to stay centered — is --footer-room: the footer's
+   26px less the card's padding it overlaps (16px - its own 8px from the edge), plus
+   24px of breathing room between the two, on each side. */
+.course-card {
+  --footer-room: calc(2 * (26px - 8px + 24px));
+}
+
+.course-list:not(.as-rows) .course-card-footer {
+  position: absolute;
+  inset: auto 16px 8px;
+  margin-top: 0;
+}
+
+.course-list.as-rows .course-card {
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
+  height: auto;
+  width: auto;
+  margin-bottom: 0;
+  min-height: 0;
+  padding: 16px 18px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg);
+  transition: background 0.12s ease;
+}
+
+.course-list.as-rows .course-card:last-child {
+  border-bottom: none;
+}
+
+.course-list.as-rows .course-card::before {
+  inset: 0 auto 0 0;
+  width: 4px;
+  height: auto;
+}
+
+.course-list.as-rows .course-card:hover,
+.course-list.as-rows .course-card.menu-open {
+  background: var(--surface);
+}
+
+.course-list.as-rows .course-card.drag-over {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.course-list.as-rows .course-name {
+  display: block;
+  -webkit-line-clamp: unset;
+  /* A row's name wraps instead of being cut, so nothing to hide — and hiding it
+     with the line box trimmed below would clip the tops and bottoms of letters. */
+  overflow: visible;
+  /* Trims Inter's asymmetric ascent/descent, so the name looks centered against the
+     buttons beside it, not just mathematically. A no-op where unsupported. */
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+}
+
+.course-list.as-rows .course-card-names {
+  flex: 1;
+  /* In a row, the full name goes to the right of the tag, on the same line. */
+  flex-direction: row;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.course-list.as-rows .course-card-names .course-name.with-subtitle {
+  flex: none;
+  max-width: 50%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* No trimming of the line box here: with the overflow hidden for the ellipsis,
+     it would clip the tops of the letters, accents and descenders. Aligned on the
+     full name's baseline, it doesn't need it to look centered either. */
+  text-box-trim: none;
+}
+
+.course-list.as-rows .course-name.with-subtitle {
+  -webkit-line-clamp: unset;
+}
+
+/* In a row, the full name stays on one line, cut short with an ellipsis. */
+.course-list.as-rows .course-full-name {
+  flex: 1;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.course-list.as-rows .course-card-footer {
+  flex: none;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.course-list.as-rows .course-card .course-name-input {
+  width: auto;
 }
 
 .menu-button {
@@ -656,12 +1190,12 @@ button.course-open-url {
   opacity: 0;
 }
 
-.course-row:hover .menu-button {
+.course-card:hover .menu-button {
   opacity: 0.55;
 }
 
-.course-row:hover .menu-button:hover,
-.course-row.menu-open .menu-button {
+.course-card:hover .menu-button:hover,
+.course-card.menu-open .menu-button {
   opacity: 1;
   background: color-mix(in srgb, var(--fg) 10%, transparent);
 }
@@ -934,8 +1468,15 @@ button.course-open-url {
 }
 
 .file-row,
-.folder-row {
+.folder-row-header {
   border-bottom: 1px solid var(--border);
+}
+
+/* A folder's contents, nested in its row (see FolderRow). */
+.folder-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* Both kinds of row are at least this tall, so a tree connector's elbow (which sits
@@ -944,6 +1485,7 @@ button.course-open-url {
 .folder-row {
   position: relative;
   --row-mid: 25px;
+  --folder-header-height: 51px;
   --guide: color-mix(in srgb, var(--fg) 24%, transparent);
 }
 
@@ -1195,6 +1737,20 @@ button.course-open-url {
   cursor: pointer;
   font-weight: 600;
   transition: background 0.12s ease;
+  /* Stays stuck to the top of the file list (which scrolls on its own) while the
+     folder's contents scroll past, until they've gone (the row holding them ends).
+     Nested folders stack below their parents': each one is offset by the headers
+     above it (--depth, set on the element, times a header's height), and painted
+     over the deeper ones that slide up under it as they leave. */
+  position: sticky;
+  top: calc(var(--depth, 0) * var(--folder-header-height));
+  z-index: calc(20 - var(--depth, 0));
+  /* A fixed height, so those offsets add up exactly: the 26px buttons, the padding
+     and the bottom border. */
+  height: var(--folder-header-height);
+  box-sizing: border-box;
+  /* Opaque, so the rows scrolling under it don't show through. */
+  background: var(--bg);
 }
 
 .folder-row-header:hover {
@@ -1368,6 +1924,11 @@ button.course-open-url {
 /* Added by hand rather than downloaded from Moodle — see FileRecord.manual. */
 .status-badge.status-manual {
   background: var(--accent);
+}
+
+/* Left as it is by downloads — see Course.ignoredPaths. */
+.status-badge.status-ignored {
+  background: var(--unchanged);
 }
 
 .version-timeline {
@@ -1597,4 +2158,288 @@ button.course-open-url {
 .upload-modal h2 {
   /* A filename like "Como_anadir_libreria_JCSP.pdf" has no spaces to break on. */
   overflow-wrap: anywhere;
+}
+
+.course-list-style-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.course-list-style-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.course-list-style-option:hover {
+  /* Beats the generic button:hover's accent fill. */
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--fg);
+}
+
+.course-list-style-option.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  color: var(--fg);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.ignored-files-modal {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.ignored-files-empty {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.ignored-files-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ignored-files-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+
+.ignored-files-list li:last-child {
+  border-bottom: none;
+}
+
+.ignored-file-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ignored-folder-icon {
+  flex: none;
+  color: var(--muted);
+}
+
+.ignored-file-missing {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ignored-files-list .icon-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+}
+
+/* The path field and its Add button, side by side. */
+.ignored-files-add {
+  display: flex;
+  gap: 8px;
+}
+
+.ignored-files-add input {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-institution-modal {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.set-institution-courses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.set-institution-select-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+/* A button that reads as a plain text link. */
+button.link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+button.link-button:hover {
+  background: none;
+  text-decoration: underline;
+}
+
+.set-institution-courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.set-institution-courses li {
+  border-bottom: 1px solid var(--border);
+}
+
+.set-institution-courses li:last-child {
+  border-bottom: none;
+}
+
+/* Overrides .modal label's stacked layout: checkbox, name and tags in one line. */
+.modal label.set-institution-course {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  color: var(--fg);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.modal .set-institution-course input {
+  flex: none;
+  padding: 0;
+}
+
+.set-institution-course-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.set-institution-course-full-name {
+  color: var(--muted);
+}
+
+.set-institution-hidden {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.course-color-modal {
+  width: 380px;
+  max-width: calc(100vw - 32px);
+}
+
+/* A miniature of the course's card, in the color being picked. */
+.course-color-preview {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 84px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--course-color) 6%, var(--bg));
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.course-color-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: var(--course-color);
+}
+
+.course-color-preview span {
+  max-width: 90%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.course-color-swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+button.course-color-swatch {
+  height: 34px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  /* Over the generic button:hover fill, which would hide the swatch's own color. */
+  transition: transform 0.1s ease;
+}
+
+button.course-color-swatch:hover {
+  border-color: transparent;
+  transform: scale(1.06);
+}
+
+button.course-color-swatch.active {
+  border-color: var(--bg);
+  box-shadow: 0 0 0 2px var(--fg);
+}
+
+/* Overrides .modal label's stacked layout: the color well, then its label. */
+.modal label.course-color-custom {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.modal .course-color-custom input[type='color'] {
+  width: 44px;
+  height: 30px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+button.course-color-auto {
+  align-self: flex-start;
+}
+
+button.course-color-auto:disabled {
+  color: var(--muted);
+  cursor: default;
+  text-decoration: none;
 }

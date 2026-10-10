@@ -72,7 +72,7 @@ describe('viewer page', () => {
     await loadViewer(versionId);
 
     await vi.waitFor(() => expect(document.querySelector('main img')).not.toBeNull());
-    expect(document.querySelector('header')?.textContent).toBe('photo.png');
+    expect(document.querySelector('header .filename')?.textContent).toBe('photo.png');
     expect(document.querySelector('img')?.getAttribute('src')).toBe('blob:fake');
     expect((vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob).type).toBe('image/png');
   });
@@ -95,7 +95,7 @@ describe('viewer page', () => {
     await loadViewer(versionId);
 
     await vi.waitFor(() => expect(document.querySelector('header')).not.toBeNull());
-    expect(document.querySelector('header')?.textContent).toBe('<img src=x>.png');
+    expect(document.querySelector('header .filename')?.textContent).toBe('<img src=x>.png');
     expect(document.querySelectorAll('img')).toHaveLength(1);
   });
 

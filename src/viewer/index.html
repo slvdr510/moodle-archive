@@ -21,12 +21,65 @@
         height: 100%;
         border: none;
       }
+      /* A fixed height: a long filename is cut short with an ellipsis rather than
+         wrapping onto more lines, which the 41px below all rely on. */
+      /* Three columns, so the zoom controls sit in the middle of the bar whatever the
+         filename's length. */
       header {
-        padding: 10px 16px;
+        box-sizing: border-box;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 16px;
+        height: 41px;
+        padding: 0 16px;
         background: #1a1d23;
         border-bottom: 1px solid #2a2d34;
         font-size: 13px;
-        word-break: break-all;
+      }
+      .filename {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      /* With no controls (the text view), the filename can use the whole bar. */
+      .filename:only-child {
+        grid-column: 1 / -1;
+      }
+      .zoom-controls {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+      .zoom-controls button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .zoom-controls button:hover:not(:disabled) {
+        background: #2a2d34;
+      }
+      .zoom-controls button:disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+      .zoom-level {
+        min-width: 48px;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        color: #9ca3af;
       }
       main {
         display: flex;
@@ -37,6 +90,31 @@
       img {
         max-width: 100%;
         max-height: calc(100vh - 41px);
+      }
+      /* Zoomed and dragged by enableImagePanZoom (main.ts), via the image's transform. */
+      main.image-view {
+        display: block;
+        position: relative;
+        height: calc(100vh - 41px);
+        min-height: 0;
+        overflow: hidden;
+        touch-action: none;
+        user-select: none;
+      }
+      /* Only when zoomed in past fitting the window is there anywhere to drag it to. */
+      main.image-view.pannable {
+        cursor: grab;
+      }
+      main.image-view.pannable.dragging {
+        cursor: grabbing;
+      }
+      main.image-view img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        max-width: none;
+        max-height: none;
+        transform-origin: 0 0;
       }
       pre {
         width: 100%;

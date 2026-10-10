@@ -294,24 +294,59 @@ async function readBodyWithProgress(
   return concatChunks(chunks);
 }
 
-// A resource configured to open in a new window is served as an HTML wrapper page
-// (a div.resourceworkaround containing a link) instead of the file itself. Follow that
-// link to reach the actual file, falling back to the original response if none is found.
+/** Finds the actual file behind a resource's HTML wrapper page, if it is one:
+ *  - "open in a new window" / "force download": a div.resourceworkaround containing a link.
+ *  - "embed" with an image: an img.resourceimage.
+ *  - "embed" with anything else (PDF, video, audio...): an object/iframe/embed/media
+ *    element pointing at a pluginfile.php URL — anything else (e.g. a YouTube iframe)
+ *    isn't the resource's own file. */
+export function findWrappedFileUrl(document: Document): string | undefined {
+  const link = document.querySelector('.resourceworkaround a');
+  if (link instanceof HTMLAnchorElement && link.href) {
+    return link.href;
+  }
+
+  const image = document.querySelector('img.resourceimage');
+  if (image instanceof HTMLImageElement && image.src) {
+    return image.src;
+  }
+
+  const embedded = document.querySelectorAll(
+    '#resourceobject, .resourcecontent object, .resourcecontent iframe, .resourcecontent embed, ' +
+      '.resourcecontent video, .resourcecontent audio, .resourcecontent source'
+  );
+  for (const element of embedded) {
+    const src = element.getAttribute('data') ?? element.getAttribute('src');
+    if (!src) continue;
+    const url = new URL(src, document.baseURI).href;
+    if (url.includes('/pluginfile.php/')) {
+      return url;
+    }
+  }
+
+  return undefined;
+}
+
+// A resource whose display mode isn't "automatic"/"open" is served as an HTML wrapper
+// page instead of the file itself. Follow it to reach the actual file, falling back to
+// the original response if none is found.
 async function resolveResourceWorkaround(response: Response): Promise<Response> {
   const contentType = response.headers.get('content-type') ?? '';
   if (!contentType.includes('text/html')) {
     return response;
   }
 
+  // Read a clone, so the original's body is still unread if we end up returning it.
+  const html = await withStallTimeout(response.clone().text(), STALL_TIMEOUT_MS);
   const domParser = new DOMParser();
-  const document = domParser.parseFromString(await withStallTimeout(response.text(), STALL_TIMEOUT_MS), 'text/html');
-  const link = document.querySelector('.resourceworkaround a');
+  const document = domParser.parseFromString(html, 'text/html');
+  const fileUrl = findWrappedFileUrl(document);
 
-  if (!(link instanceof HTMLAnchorElement)) {
+  if (!fileUrl) {
     return response;
   }
 
-  return fetchWithStallGuard(link.href);
+  return fetchWithStallGuard(fileUrl);
 }
 
 async function downloadMoodleFiles(partialMoodleFiles: PartialMoodleFile[]): Promise<MoodleFile[]> {

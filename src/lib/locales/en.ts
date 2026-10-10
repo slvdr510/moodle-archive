@@ -54,6 +54,8 @@ export const en = {
     recentSettings: 'Recently opened settings',
     downloadNameSettings: 'Download name settings',
     sideMargin: 'Side margins',
+    courseListStyle: 'Course list style',
+    setInstitution: 'Set institution for courses',
     hiddenCourses: 'Hidden courses',
     deleteAll: 'Delete all courses',
     backupSaved: 'Backup saved to your Downloads folder.',
@@ -92,7 +94,14 @@ export const en = {
   courseRow: {
     lastDownloaded: 'Last downloaded',
     openInMoodle: 'Open the course in Moodle',
-    setTagName: 'Set tag name',
+    setTagName: 'Set tag (abbreviation)',
+    setFullName: 'Set full name',
+    tagPlaceholder: 'Abbreviation, e.g. OS',
+    fullNamePlaceholder: 'Full name (empty: the one from Moodle)',
+    setInstitution: 'Set institution (abbreviation)',
+    institutionPlaceholder: 'Institution abbreviation, e.g. UHU',
+    institution: 'Institution',
+    changeColor: 'Change color',
     hideCourse: 'Hide course',
     deleteCourse: 'Delete course'
   },
@@ -106,6 +115,7 @@ export const en = {
   courseFiles: {
     backToCourses: 'Back to courses',
     addFile: 'Add file…',
+    ignoredFiles: 'Ignored files',
     couldNotRead: (fileCount: number, firstName: string, error: string) =>
       `Could not read ${fileCount === 1 ? `"${firstName}"` : 'the dropped files'} — the file may have been moved or ` +
       `deleted, or it is still being downloaded. Try again from a stable location. (${error})`,
@@ -121,6 +131,11 @@ export const en = {
     lastSaved: (date: string) => `Last saved: ${date}`,
     manual: 'Manual',
     manualTitle: 'Added by hand, not downloaded from Moodle',
+    ignored: 'Ignored',
+    ignoredTitle: 'Downloads leave this file as it is',
+    ignoreTitle: 'Ignore changes to this file',
+    unignoreTitle: 'Stop ignoring this file',
+    ignoredWithFolderTitle: 'Ignored along with its folder',
     deleteTitle: 'Delete this file from your history',
     downloadTitle: 'Download to your Downloads folder',
     deleteConfirmTitle: (name: string) => `Delete "${name}"?`,
@@ -130,6 +145,9 @@ export const en = {
   },
 
   folderRow: {
+    ignoreTitle: 'Ignore this folder and everything in it',
+    unignoreTitle: 'Stop ignoring this folder',
+    ignoredTitle: 'Downloads leave this folder and everything in it as they are',
     deleteTitle: 'Delete this folder from your history',
     downloadTitle: 'Download this folder as a zip',
     couldNotDownload: (name: string, error: string) => `Could not download "${name}": ${error}`,
@@ -141,7 +159,8 @@ export const en = {
 
   recentlyOpened: {
     title: 'Recently opened',
-    remove: 'Remove from recently opened'
+    remove: 'Remove from recently opened',
+    showAll: 'Show all recently opened'
   },
 
   recentSettings: {
@@ -164,6 +183,54 @@ export const en = {
       'Empty space on each side of the content in a maximized window, as a share of the screen. The content ' +
       'keeps that width in a smaller window, using up the margins first and then the whole window.',
     label: (percent: number) => `${percent}% on each side`
+  },
+
+  courseListStyle: {
+    title: 'Course list style',
+    description: 'How courses are shown on this page.',
+    cards: 'Cards',
+    rows: 'Rows'
+  },
+
+  courseColor: {
+    title: (name: string) => `Color of "${name}"`,
+    palette: 'Palette',
+    custom: 'Custom color',
+    automatic: 'Use automatic color'
+  },
+
+  setInstitution: {
+    title: 'Set institution',
+    description: 'Choose the courses to give this institution. Leave it empty to remove the institution from them.',
+    courses: (count: number): string => (count === 0 ? 'Courses' : `Courses (${count} selected)`),
+    selectAll: 'Select all',
+    selectNone: 'Select none',
+    hidden: 'Hidden',
+    apply: (count: number): string => (count === 1 ? 'Apply to 1 course' : `Apply to ${count} courses`),
+    remove: (count: number): string => (count === 1 ? 'Remove from 1 course' : `Remove from ${count} courses`)
+  },
+
+  ignoredFiles: {
+    title: 'Ignored files',
+    description:
+      'Downloads leave these files as they are: no new versions, never marked as deleted, and not added if they aren’t tracked yet.',
+    pathLabel: 'File path',
+    placeholder: 'Folder/file.pdf',
+    hint:
+      'Include the extension and any folders it’s in: a file at the course root is just its name. Files with the same name in different folders are different files. End a path with / to ignore a whole folder with everything in it.',
+    add: 'Add',
+    folder: 'Folder',
+    remove: (path: string) => `Stop ignoring ${path}`,
+    empty: 'No ignored files.',
+    duplicate: 'That file is already in the list.',
+    notFound: 'Not in this course yet',
+    askDeleteTitle: (count: number, name: string): string =>
+      count === 1 ? `"${name}" is now ignored` : `${count} files are now ignored`,
+    askDeleteMessage: (count: number): string =>
+      count === 1
+        ? 'Downloads will leave it as it is. Do you also want to delete it from this course, with all its saved versions? While it’s ignored, later downloads won’t add it back.'
+        : 'Downloads will leave them as they are. Do you also want to delete them from this course, with all their saved versions? While they’re ignored, later downloads won’t add them back.',
+    keep: (count: number): string => (count === 1 ? 'Keep it' : 'Keep them')
   },
 
   upload: {
@@ -217,7 +284,11 @@ export const en = {
   viewer: {
     notFoundTitle: 'File not found',
     notFoundText: 'This file is no longer in your Moodle Archive history — it may have been deleted.',
-    cannotPreview: 'This kind of file can’t be previewed in the browser.'
+    cannotPreview: 'This kind of file can’t be previewed in the browser.',
+    zoomOut: 'Zoom out',
+    zoomIn: 'Zoom in',
+    fitVertically: 'Fit vertically',
+    fitHorizontally: 'Fit horizontally'
   },
 
   popup: {

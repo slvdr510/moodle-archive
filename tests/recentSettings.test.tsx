@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RecentSettingsModal } from '../src/dashboard/components/RecentSettingsModal';
@@ -12,7 +12,7 @@ import {
 } from '../src/lib/recentSettings';
 
 afterEach(() => {
-  cleanup();
+  act(() => cleanup());
   localStorage.clear();
 });
 
