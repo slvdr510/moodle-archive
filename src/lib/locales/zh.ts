@@ -63,6 +63,7 @@ export const zh: Messages = {
     dropBackups: '拖放 .zip 备份以导入其中的课程',
     exportAllTitle: '导出所有课程？',
     exportAllMessage: '所有跟踪的课程、文件和版本都将保存为一个 zip 文件，放在“下载”文件夹中。',
+    exportAllHidden: (count) => `其中还包括 ${count} 门已隐藏的课程。`,
     exportCourseTitle: (name) => `导出“${name}”？`,
     exportCourseMessage: '该课程、其文件及所有版本都将保存为一个 zip 文件，放在“下载”文件夹中。',
     deleteAllTitle: '删除所有课程？',

@@ -65,6 +65,8 @@ export const ha: Messages = {
     exportAllTitle: 'A fitar da duk kwasa-kwasai?',
     exportAllMessage:
       'Za a ajiye duk kwas, fayil da sigar da ake bibiya a cikin zip guda ɗaya a babban fayil ɗin Abubuwan da aka sauke.',
+    exportAllHidden: (count) =>
+      count === 1 ? 'Ya kuma haɗa da kwas 1 da aka ɓoye.' : `Ya kuma haɗa da kwasa-kwasai ${count} da aka ɓoye.`,
     exportCourseTitle: (name) => `A fitar da "${name}"?`,
     exportCourseMessage:
       'Za a ajiye kwas ɗin, fayilolinsa da duk sigogi a cikin zip a babban fayil ɗin Abubuwan da aka sauke.',

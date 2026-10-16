@@ -181,10 +181,25 @@ describe('CoursesPage toolbar overflow menu', () => {
     await userEvent.click(screen.getByText('Export all courses'));
 
     expect(screen.getByText('Export all courses?')).toBeInTheDocument();
+    expect(screen.queryByText(/hidden/)).not.toBeInTheDocument();
     expect(exportAllDataMock).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole('button', { name: 'Export' }));
     expect(exportAllDataMock).toHaveBeenCalledOnce();
+  });
+
+  it('the export-all confirmation says how many hidden courses it includes', async () => {
+    allMock.mockResolvedValue([
+      makeCourse({ id: 'a', name: 'Course A' }),
+      makeCourse({ id: 'b', name: 'Course B', hidden: true }),
+      makeCourse({ id: 'c', name: 'Course C', hidden: true })
+    ]);
+    renderCoursesPage();
+
+    await userEvent.click(await screen.findByTitle('More options'));
+    await userEvent.click(screen.getByText('Export all courses'));
+
+    expect(screen.getByText(/It also includes 2 courses that are hidden\.$/)).toBeInTheDocument();
   });
 
   it('cancelling the export confirmation does not call exportAllData', async () => {

@@ -4,6 +4,12 @@ import { InvalidBackupError, exportAllData, exportCourse, importAllData, mergeIm
 import { courseStore, fileStore, recentOpenStore, resetTrackedData, versionStore } from '../src/lib/db';
 import type { Course, FileRecord, VersionRecord } from '../src/types';
 
+// The real one saves through a link click (see downloadBlob.test.ts); here it goes
+// straight to the stubbed chrome.downloads.download, so these tests can check what's saved.
+vi.mock('../src/lib/downloadBlob', () => ({
+  downloadBlobUrl: (url: string, filename: string) => chrome.downloads.download({ url, filename })
+}));
+
 async function seedOneCourse(): Promise<{ course: Course; file: FileRecord; version: VersionRecord }> {
   const course: Course = {
     id: crypto.randomUUID(),

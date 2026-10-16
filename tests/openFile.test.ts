@@ -2,6 +2,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MAX_INLINE_BYTES, canPreviewInline, downloadVersion, openVersionInBrowser } from '../src/lib/openFile';
 
+// The real one saves through a link click (see downloadBlob.test.ts); here it goes
+// straight to the stubbed chrome.downloads.download, so these tests can check what's saved.
+vi.mock('../src/lib/downloadBlob', () => ({
+  downloadBlobUrl: (url: string, filename: string) => chrome.downloads.download({ url, filename })
+}));
+
 describe('canPreviewInline', () => {
   it('treats images, text-ish types and PDFs as previewable in-browser', () => {
     for (const name of ['photo.PNG', 'notes.txt', 'page.html', 'data.csv', 'notes.json', 'notes.pdf']) {

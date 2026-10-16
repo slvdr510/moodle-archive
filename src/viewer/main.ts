@@ -2,7 +2,7 @@ import { fileStore, versionStore } from '../lib/db';
 import { downloadNameFor } from '../lib/downloadNameSettings';
 import { getRenderKind } from '../lib/fileKind';
 import { withCorrectType } from '../lib/openFile';
-import { forgetDownloadName, rememberDownloadName } from '../lib/blobDownloadNames';
+import { clickDownload } from '../lib/downloadBlob';
 import { applyDocumentLanguage, ensureMessages, getMessages } from '../lib/i18n';
 import type { Messages } from '../lib/locales/en';
 import { clampView, defaultFit, defaultView, fitHeightView, fitScale, fitWidthView, MAX_SCALE, nextZoomLevel, panBy, zoomAt, type ImageSizes, type ImageView } from './imageView';
@@ -25,15 +25,24 @@ function showMessage(title: string, text: string): void {
   document.body.append(message);
 }
 
-/** The filename header and centered content area shared by the image and text views.
- *  Returns the header, for a view to add its own controls to. */
-function showFramed(filename: string, content: HTMLElement): HTMLElement {
+/** The filename header and centered content area shared by the image and text views. Returns the
+ *  header, for a view to add its own controls to (before the download button). */
+function showFramed(filename: string, content: HTMLElement, download: () => void, t: Messages): HTMLElement {
   const header = document.createElement('header');
   const name = document.createElement('span');
   name.className = 'filename';
   name.textContent = filename;
   name.title = filename;
-  header.append(name);
+  const downloadButton = document.createElement('button');
+  downloadButton.type = 'button';
+  downloadButton.innerHTML = DOWNLOAD_ICON;
+  downloadButton.title = t.popup.download;
+  downloadButton.setAttribute('aria-label', t.popup.download);
+  downloadButton.addEventListener('click', download);
+  const actions = document.createElement('div');
+  actions.className = 'header-actions';
+  actions.append(downloadButton);
+  header.append(name, actions);
   const main = document.createElement('main');
   main.append(content);
   document.body.append(header, main);
@@ -46,6 +55,7 @@ const PAN_STEP = 60;
 // depending on the fonts installed.
 const svgIcon = (paths: string): string =>
   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+const DOWNLOAD_ICON = svgIcon('<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>');
 /** An arrow spanning top to bottom: the image as tall as the window. */
 const FIT_VERTICALLY_ICON = svgIcon(
   '<path d="M4 3h16"/><path d="M4 21h16"/><path d="M12 7v10"/><path d="m9 10 3-3 3 3"/><path d="m9 14 3 3 3-3"/>'
@@ -86,7 +96,7 @@ function enableImagePanZoom(image: HTMLImageElement, header: HTMLElement, t: Mes
   const controls = document.createElement('div');
   controls.className = 'zoom-controls';
   controls.append(zoomOutButton, zoomLevel, zoomInButton, fitButton);
-  header.append(controls);
+  header.insertBefore(controls, header.querySelector('.header-actions'));
 
   let view: ImageView = { x: 0, y: 0, scale: 1 };
   // While fitted, a window resize refits instead of leaving the image where it was.
@@ -240,26 +250,39 @@ async function main(): Promise<void> {
   const content = withCorrectType(version.content, filename);
   document.title = filename;
 
+  // Saved under the name the dashboard would use (with the course's tag, if that's on).
+  const downloadName = downloadNameFor(file.courseId, filename).catch(() => filename);
+  let url: string | undefined;
+  const contentUrl = (): string => (url ??= URL.createObjectURL(content));
+  const download = (): void => void downloadName.then((name) => clickDownload(contentUrl(), name));
+
   switch (getRenderKind(filename)) {
     case 'pdf': {
+      // Chrome's PDF viewer, with its own toolbar and no header of ours. Its download
+      // button saves the blob under its UUID, so that download is swapped for one under
+      // the real name. (A URL of our own the background serves doesn't work: Chrome's
+      // download manager fetches it without the service worker, and the download fails.)
+      const frameUrl = contentUrl();
+      chrome.downloads.onCreated.addListener((item) => {
+        if ((item.finalUrl || item.url).split('#')[0] !== frameUrl) return;
+        void chrome.downloads
+          .cancel(item.id)
+          .then(() => chrome.downloads.erase({ id: item.id }))
+          .catch((err: unknown) => console.error(err));
+        // A blob URL of its own, so this download isn't mistaken for the viewer's.
+        void downloadName.then((name) => clickDownload(URL.createObjectURL(content), name));
+      });
       const frame = document.createElement('iframe');
       frame.title = filename;
-      const url = URL.createObjectURL(content);
-      // So the PDF viewer's own download button saves under `filename`, not the
-      // blob's UUID — see blobDownloadNames.ts. Best effort: the PDF shows either way.
-      await downloadNameFor(file.courseId, filename)
-        .then((name) => rememberDownloadName(url, name))
-        .catch((err: unknown) => console.error(err));
-      window.addEventListener('pagehide', () => void forgetDownloadName(url).catch(() => {}));
-      frame.src = url;
+      frame.src = frameUrl;
       document.body.append(frame);
       break;
     }
     case 'image': {
       const image = document.createElement('img');
       image.alt = filename;
-      image.src = URL.createObjectURL(content);
-      enableImagePanZoom(image, showFramed(filename, image), t);
+      image.src = contentUrl();
+      enableImagePanZoom(image, showFramed(filename, image, download, t), t);
       break;
     }
     case 'text': {
@@ -267,7 +290,7 @@ async function main(): Promise<void> {
       // since this page has the extension's own origin.
       const text = document.createElement('pre');
       text.textContent = await content.text();
-      showFramed(filename, text);
+      showFramed(filename, text, download, t);
       break;
     }
     default:

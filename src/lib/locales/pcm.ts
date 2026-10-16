@@ -65,6 +65,8 @@ export const pcm: Messages = {
     dropBackups: 'Drop .zip backup dem here make we import dia courses',
     exportAllTitle: 'Make we export all di courses?',
     exportAllMessage: 'Every course, file and version wey we dey track go save inside one zip for your Downloads folder.',
+    exportAllHidden: (count) =>
+      count === 1 ? 'E also include 1 course wey dey hidden.' : `E also include ${count} courses wey dey hidden.`,
     exportCourseTitle: (name) => `Make we export "${name}"?`,
     exportCourseMessage: 'Di course, im files and every version go save inside one zip for your Downloads folder.',
     deleteAllTitle: 'Make we comot all di courses?',

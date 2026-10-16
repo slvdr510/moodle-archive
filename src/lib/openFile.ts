@@ -1,4 +1,4 @@
-import { downloadBlobUrl } from './blobDownloadNames';
+import { downloadBlobUrl } from './downloadBlob';
 import { getRenderKind, guessMimeType } from './fileKind';
 import { getMessages } from './i18n';
 

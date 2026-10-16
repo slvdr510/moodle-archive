@@ -19,7 +19,6 @@ import {
 import { sha256 } from '../lib/hash';
 import { ignoredFilesFor, markDeletedForCourse, processEntryBatchForCourse, type ProcessCourseResult } from '../lib/repository';
 import type { Course, ExtractedEntry } from '../types';
-import { installDownloadNaming } from '../lib/blobDownloadNames';
 import { loadMessages } from '../lib/locales';
 
 interface CourseSnapshotChunkPayload {
@@ -267,8 +266,6 @@ function handleDownloadRequestMessage(message: DownloadRequestMessage, sendRespo
       return false;
   }
 }
-
-installDownloadNaming();
 
 // Courses tagged before tags were tracked get their tag recognized right after the
 // extension updates (or on the next browser start, if that run didn't finish).

@@ -64,6 +64,7 @@ export const vi: Messages = {
     dropBackups: 'Thả các bản sao lưu .zip để nhập khóa học',
     exportAllTitle: 'Xuất tất cả khóa học?',
     exportAllMessage: 'Mọi khóa học, tệp và phiên bản đang theo dõi sẽ được lưu vào một tệp zip trong thư mục Tải xuống.',
+    exportAllHidden: (count) => `Bao gồm cả ${count} khóa học đang bị ẩn.`,
     exportCourseTitle: (name) => `Xuất "${name}"?`,
     exportCourseMessage: 'Khóa học, các tệp và mọi phiên bản sẽ được lưu vào một tệp zip trong thư mục Tải xuống.',
     deleteAllTitle: 'Xóa tất cả khóa học?',

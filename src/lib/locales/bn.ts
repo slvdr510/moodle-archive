@@ -64,6 +64,7 @@ export const bn: Messages = {
     dropBackups: 'কোর্স ইমপোর্ট করতে .zip ব্যাকআপ এখানে ছাড়ুন',
     exportAllTitle: 'সব কোর্স এক্সপোর্ট করবেন?',
     exportAllMessage: 'ট্র্যাক করা প্রতিটি কোর্স, ফাইল ও সংস্করণ একটি zip-এ আপনার ডাউনলোডস ফোল্ডারে সংরক্ষিত হবে।',
+    exportAllHidden: (count) => `এতে লুকানো ${count}টি কোর্সও অন্তর্ভুক্ত।`,
     exportCourseTitle: (name) => `"${name}" এক্সপোর্ট করবেন?`,
     exportCourseMessage: 'কোর্স, এর ফাইল ও প্রতিটি সংস্করণ একটি zip-এ আপনার ডাউনলোডস ফোল্ডারে সংরক্ষিত হবে।',
     deleteAllTitle: 'সব কোর্স মুছবেন?',

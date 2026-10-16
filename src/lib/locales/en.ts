@@ -68,6 +68,8 @@ export const en = {
     dropBackups: 'Drop .zip backups to import their courses',
     exportAllTitle: 'Export all courses?',
     exportAllMessage: 'Every tracked course, file, and version will be saved to a single zip in your Downloads folder.',
+    exportAllHidden: (count: number): string =>
+      count === 1 ? 'It also includes 1 course that is hidden.' : `It also includes ${count} courses that are hidden.`,
     exportCourseTitle: (name: string) => `Export "${name}"?`,
     exportCourseMessage: 'The course, its files, and every version will be saved to a zip in your Downloads folder.',
     deleteAllTitle: 'Delete all courses?',

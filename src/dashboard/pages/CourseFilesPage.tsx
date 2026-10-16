@@ -432,7 +432,7 @@ export function CourseFilesPage({
             />
           )}
 
-          {message && <p className="hint-text">{message}</p>}
+          {message && <p className="hint-text status-message">{message}</p>}
 
           <RecentlyOpened records={recentOpens} filesById={filesById} onChange={refreshRecentOpens} />
 

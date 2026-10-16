@@ -43,27 +43,63 @@ afterEach(() => {
 });
 
 describe('viewer page', () => {
-  it('embeds a PDF in an iframe backed by a correctly typed blob', async () => {
+  it('embeds a PDF in an iframe backed by a correctly typed blob, with no header of ours', async () => {
+    vi.stubGlobal('chrome', { downloads: { onCreated: { addListener: vi.fn() } } });
     const versionId = await seedVersion('notes.pdf', new Blob(['%PDF-1.4']));
 
     await loadViewer(versionId);
 
     await vi.waitFor(() => expect(document.querySelector('iframe')?.src).toBe('blob:fake'));
     expect(document.title).toBe('notes.pdf');
+    expect(document.querySelector('header')).toBeNull();
     const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
     expect(blob.type).toBe('application/pdf');
+    vi.unstubAllGlobals();
   });
 
-  it("remembers the PDF's filename for its blob URL so downloads keep the real name", async () => {
-    const set = vi.fn(async () => {});
-    vi.stubGlobal('chrome', { storage: { session: { set, remove: vi.fn(async () => {}) } } });
+  it("swaps the PDF viewer's own download of the blob for one under the real name", async () => {
+    let onCreated: ((item: Partial<chrome.downloads.DownloadItem>) => void) | undefined;
+    const cancel = vi.fn(async () => {});
+    const erase = vi.fn(async () => []);
+    vi.stubGlobal('chrome', {
+      downloads: { cancel, erase, onCreated: { addListener: (listener: typeof onCreated) => (onCreated = listener) } }
+    });
+    let blobs = 0;
+    URL.createObjectURL = vi.fn(() => `blob:fake-${++blobs}`);
+    const clicked: Array<{ href: string; download: string }> = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push({ href: this.href, download: this.download });
+    });
     const versionId = await seedVersion('Tema_2.pdf', new Blob(['%PDF-1.4']));
 
     await loadViewer(versionId);
+    await vi.waitFor(() => expect(document.querySelector('iframe')?.src).toBe('blob:fake-1'));
 
-    await vi.waitFor(() => expect(document.querySelector('iframe')?.src).toBe('blob:fake'));
-    expect(set).toHaveBeenCalledWith({ 'viewerDownloadName:blob:fake': 'Tema_2.pdf' });
+    // Someone else's download is left alone.
+    onCreated!({ id: 1, url: 'https://example.com/a.pdf', finalUrl: 'https://example.com/a.pdf' });
+    onCreated!({ id: 2, url: 'blob:fake-1', finalUrl: 'blob:fake-1' });
+
+    await vi.waitFor(() => expect(clicked).toEqual([{ href: 'blob:fake-2', download: 'Tema_2.pdf' }]));
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(cancel).toHaveBeenCalledWith(2);
+    await vi.waitFor(() => expect(erase).toHaveBeenCalledWith({ id: 2 }));
     vi.unstubAllGlobals();
+  });
+
+  it("downloads an image under its real name from the header's button, not the blob's UUID", async () => {
+    const clicked: Array<{ href: string; download: string }> = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push({ href: this.href, download: this.download });
+    });
+    const versionId = await seedVersion('foto.png', new Blob(['bytes']));
+
+    await loadViewer(versionId);
+
+    await vi.waitFor(() => expect(document.querySelector('header .header-actions button')).not.toBeNull());
+    document.querySelector<HTMLButtonElement>('header .header-actions button')!.click();
+    await vi.waitFor(() => expect(clicked).toEqual([{ href: 'blob:fake', download: 'foto.png' }]));
+    // The image's blob URL is reused rather than a second one made.
+    expect(URL.createObjectURL).toHaveBeenCalledOnce();
   });
 
   it('shows an image under a filename header', async () => {

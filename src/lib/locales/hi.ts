@@ -64,6 +64,7 @@ export const hi: Messages = {
     dropBackups: 'कोर्स आयात करने के लिए .zip बैकअप यहाँ छोड़ें',
     exportAllTitle: 'सभी कोर्स निर्यात करें?',
     exportAllMessage: 'हर ट्रैक किया गया कोर्स, फ़ाइल और संस्करण एक zip में आपके डाउनलोड फ़ोल्डर में सहेजा जाएगा।',
+    exportAllHidden: (count) => `इसमें ${count} छिपे हुए कोर्स भी शामिल हैं।`,
     exportCourseTitle: (name) => `"${name}" निर्यात करें?`,
     exportCourseMessage: 'कोर्स, उसकी फ़ाइलें और हर संस्करण एक zip में आपके डाउनलोड फ़ोल्डर में सहेजे जाएँगे।',
     deleteAllTitle: 'सभी कोर्स हटाएँ?',

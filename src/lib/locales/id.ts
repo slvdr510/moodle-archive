@@ -64,6 +64,7 @@ export const id: Messages = {
     dropBackups: 'Letakkan cadangan .zip untuk mengimpor kursusnya',
     exportAllTitle: 'Ekspor semua kursus?',
     exportAllMessage: 'Setiap kursus, file, dan versi yang dilacak akan disimpan ke satu file zip di folder Unduhan Anda.',
+    exportAllHidden: (count) => `Termasuk juga ${count} kursus yang disembunyikan.`,
     exportCourseTitle: (name) => `Ekspor "${name}"?`,
     exportCourseMessage: 'Kursus, file-filenya, dan setiap versinya akan disimpan ke file zip di folder Unduhan Anda.',
     deleteAllTitle: 'Hapus semua kursus?',

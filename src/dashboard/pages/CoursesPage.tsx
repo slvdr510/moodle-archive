@@ -368,7 +368,7 @@ export function CoursesPage({
         </div>
       )}
 
-      {message && <p className={message.kind === 'error' ? 'hint-text error' : 'hint-text'}>{message.text}</p>}
+      {message && <p className={message.kind === 'error' ? 'hint-text status-message error' : 'hint-text status-message'}>{message.text}</p>}
 
       {draggingFiles && (
         <div className="drop-overlay" aria-hidden="true">
@@ -381,7 +381,9 @@ export function CoursesPage({
           title={pendingExport.kind === 'all' ? t.courses.exportAllTitle : t.courses.exportCourseTitle(pendingExport.course.name)}
           message={
             pendingExport.kind === 'all'
-              ? t.courses.exportAllMessage
+              ? hiddenCourses.length > 0
+                ? `${t.courses.exportAllMessage} ${t.courses.exportAllHidden(hiddenCourses.length)}`
+                : t.courses.exportAllMessage
               : t.courses.exportCourseMessage
           }
           confirmLabel={t.common.export}

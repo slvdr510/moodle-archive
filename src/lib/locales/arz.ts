@@ -65,6 +65,8 @@ export const arz: Messages = {
     dropBackups: 'سيب ملفات ‎.zip الاحتياطية هنا علشان تستورد الكورسات اللي فيها',
     exportAllTitle: 'تصدّر كل الكورسات؟',
     exportAllMessage: 'كل الكورسات والملفات والنسخ اللي بنتابعها هتتحفظ في ملف zip واحد في فولدر التنزيلات.',
+    exportAllHidden: (count) =>
+      count === 1 ? 'وفيه كمان كورس واحد مخفي.' : `وفيه كمان ${count} كورسات مخفية.`,
     exportCourseTitle: (name) => `تصدّر «${name}»؟`,
     exportCourseMessage: 'الكورس وملفاته وكل نسخه هيتحفظوا في ملف zip في فولدر التنزيلات.',
     deleteAllTitle: 'تمسح كل الكورسات؟',

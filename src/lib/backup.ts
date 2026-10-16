@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { downloadBlobUrl } from './blobDownloadNames';
+import { downloadBlobUrl } from './downloadBlob';
 import { courseStore, fileStore, recentOpenStore, versionStore } from './db';
 import { guessMimeType } from './fileKind';
 import { getMessages } from './i18n';

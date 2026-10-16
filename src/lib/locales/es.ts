@@ -64,6 +64,8 @@ export const es: Messages = {
     dropBackups: 'Suelta copias de seguridad .zip para importar sus cursos',
     exportAllTitle: '¿Exportar todos los cursos?',
     exportAllMessage: 'Todos los cursos, archivos y versiones guardados se exportarán en un único zip en tu carpeta de Descargas.',
+    exportAllHidden: (count) =>
+      count === 1 ? 'Incluye también 1 curso que está oculto.' : `Incluye también ${count} cursos que están ocultos.`,
     exportCourseTitle: (name) => `¿Exportar "${name}"?`,
     exportCourseMessage: 'El curso, sus archivos y todas sus versiones se guardarán en un zip en tu carpeta de Descargas.',
     deleteAllTitle: '¿Eliminar todos los cursos?',

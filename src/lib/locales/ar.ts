@@ -64,6 +64,8 @@ export const ar: Messages = {
     dropBackups: 'أفلِت النسخ الاحتياطية بصيغة ‎.zip لاستيراد مقرراتها',
     exportAllTitle: 'تصدير جميع المقررات؟',
     exportAllMessage: 'سيتم حفظ كل المقررات والملفات والإصدارات المتتبَّعة في ملف zip واحد في مجلد التنزيلات.',
+    exportAllHidden: (count) =>
+      count === 1 ? 'يشمل أيضًا مقررًا واحدًا مخفيًا.' : `يشمل أيضًا ${count} مقررات مخفية.`,
     exportCourseTitle: (name) => `تصدير «${name}»؟`,
     exportCourseMessage: 'سيتم حفظ المقرر وملفاته وكل إصداراته في ملف zip في مجلد التنزيلات.',
     deleteAllTitle: 'حذف جميع المقررات؟',

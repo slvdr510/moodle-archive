@@ -64,6 +64,8 @@ export const sw: Messages = {
     dropBackups: 'Dondosha nakala rudufu za .zip ili kuleta kozi zake',
     exportAllTitle: 'Hamisha kozi zote?',
     exportAllMessage: 'Kila kozi, faili na toleo linalofuatiliwa vitahifadhiwa kwenye zip moja katika folda yako ya Vipakuliwa.',
+    exportAllHidden: (count) =>
+      count === 1 ? 'Pia inajumuisha kozi 1 iliyofichwa.' : `Pia inajumuisha kozi ${count} zilizofichwa.`,
     exportCourseTitle: (name) => `Hamisha "${name}"?`,
     exportCourseMessage: 'Kozi, faili zake na kila toleo vitahifadhiwa kwenye zip katika folda yako ya Vipakuliwa.',
     deleteAllTitle: 'Futa kozi zote?',

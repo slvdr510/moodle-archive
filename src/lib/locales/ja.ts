@@ -64,6 +64,7 @@ export const ja: Messages = {
     dropBackups: '.zip バックアップをドロップしてコースをインポート',
     exportAllTitle: 'すべてのコースをエクスポートしますか？',
     exportAllMessage: '追跡中のすべてのコース、ファイル、バージョンを 1 つの zip にまとめてダウンロード フォルダに保存します。',
+    exportAllHidden: (count) => `非表示のコース ${count} 件も含まれます。`,
     exportCourseTitle: (name) => `「${name}」をエクスポートしますか？`,
     exportCourseMessage: 'コース、そのファイル、すべてのバージョンを zip にまとめてダウンロード フォルダに保存します。',
     deleteAllTitle: 'すべてのコースを削除しますか？',

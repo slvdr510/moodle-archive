@@ -64,6 +64,7 @@ export const ur: Messages = {
     dropBackups: 'کورسز درآمد کرنے کے لیے ‎.zip بیک اپ یہاں چھوڑیں',
     exportAllTitle: 'تمام کورسز برآمد کریں؟',
     exportAllMessage: 'ہر ٹریک کیا گیا کورس، فائل اور ورژن ایک zip میں آپ کے ڈاؤن لوڈز فولڈر میں محفوظ ہو جائے گا۔',
+    exportAllHidden: (count) => `اس میں ${count} چھپے ہوئے کورس بھی شامل ہیں۔`,
     exportCourseTitle: (name) => `"${name}" برآمد کریں؟`,
     exportCourseMessage: 'کورس، اس کی فائلیں اور ہر ورژن ایک zip میں آپ کے ڈاؤن لوڈز فولڈر میں محفوظ ہو جائیں گے۔',
     deleteAllTitle: 'تمام کورسز حذف کریں؟',

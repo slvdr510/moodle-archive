@@ -64,6 +64,7 @@ export const te: Messages = {
     dropBackups: 'కోర్సులను దిగుమతి చేయడానికి .zip బ్యాకప్‌లను ఇక్కడ వదలండి',
     exportAllTitle: 'అన్ని కోర్సులను ఎగుమతి చేయాలా?',
     exportAllMessage: 'ట్రాక్ చేస్తున్న ప్రతి కోర్సు, ఫైల్, వెర్షన్ ఒకే zipలో మీ డౌన్‌లోడ్‌ల ఫోల్డర్‌లో సేవ్ అవుతాయి.',
+    exportAllHidden: (count) => `దాచిన ${count} కోర్సులు కూడా ఇందులో ఉంటాయి.`,
     exportCourseTitle: (name) => `"${name}"ని ఎగుమతి చేయాలా?`,
     exportCourseMessage: 'కోర్సు, దాని ఫైళ్లు, ప్రతి వెర్షన్ ఒక zipలో మీ డౌన్‌లోడ్‌ల ఫోల్డర్‌లో సేవ్ అవుతాయి.',
     deleteAllTitle: 'అన్ని కోర్సులను తొలగించాలా?',

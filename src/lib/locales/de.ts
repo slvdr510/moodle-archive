@@ -65,6 +65,8 @@ export const de: Messages = {
     exportAllTitle: 'Alle Kurse exportieren?',
     exportAllMessage:
       'Alle erfassten Kurse, Dateien und Versionen werden in einer einzigen Zip-Datei in deinem Downloads-Ordner gespeichert.',
+    exportAllHidden: (count) =>
+      count === 1 ? 'Dazu gehört auch 1 Kurs, der ausgeblendet ist.' : `Dazu gehören auch ${count} Kurse, die ausgeblendet sind.`,
     exportCourseTitle: (name) => `„${name}“ exportieren?`,
     exportCourseMessage:
       'Der Kurs, seine Dateien und alle Versionen werden als Zip-Datei in deinem Downloads-Ordner gespeichert.',
