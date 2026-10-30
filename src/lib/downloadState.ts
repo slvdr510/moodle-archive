@@ -1,4 +1,5 @@
 import type { Status } from '../content/main';
+import type { DownloadSlotFile } from '../content/moodleCrawler';
 import { canonicalMoodleUrl } from './moodleUrl';
 
 /** A course download, identified by the tab it runs in and by what it downloads. */
@@ -10,12 +11,21 @@ export interface QueuedDownload {
   title: string;
 }
 
+export interface ActiveFile {
+  name: string;
+  /** Waiting to try the file again, after it failed partway. */
+  retrying?: boolean;
+}
+
 export interface DownloadState {
   /** Of `current`: 'processing' while it runs, 'finished' once it's done. */
   status: Status;
   statusLog?: string;
   downloadCount: number;
   progress?: { current: number; total: number };
+  /** The files coming down right now, by the slot each is in (see concurrentDownloads.ts):
+   *  null for a slot with none. */
+  activeFiles?: (ActiveFile | null)[];
   /** The download running now, or the last one that ran. */
   current?: QueuedDownload;
   /** Downloads waiting for `current` to finish, first in line first. */
@@ -76,7 +86,23 @@ export function requestDownload(
 /** Marks the running download as done, optionally with a closing message. */
 export function finishCurrent(state: DownloadState, statusLog?: string): DownloadState {
   if (state.status !== 'processing') return state;
-  return { ...state, status: 'finished', finishedSeen: false, statusLog: statusLog ?? state.statusLog, progress: undefined };
+  return {
+    ...state,
+    status: 'finished',
+    finishedSeen: false,
+    statusLog: statusLog ?? state.statusLog,
+    progress: undefined,
+    activeFiles: undefined
+  };
+}
+
+/** The running download's `slot` now on the file `name` — or, null, on none. */
+export function showActiveFile(state: DownloadState, { slot, name, retrying }: DownloadSlotFile): DownloadState {
+  const file: ActiveFile | null = name === null ? null : retrying ? { name, retrying } : { name };
+  const activeFiles = Array.from({ length: Math.max(state.activeFiles?.length ?? 0, slot + 1) }, (_, i) =>
+    i === slot ? file : (state.activeFiles?.[i] ?? null)
+  );
+  return { ...state, activeFiles };
 }
 
 /** The first queued download, started — when nothing is running and one is waiting. */

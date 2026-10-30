@@ -1,7 +1,7 @@
-import { fileStore, versionStore } from './db';
+import { fileStore, stagingStore, versionStore } from './db';
 import { getRootFolderPath } from './fileTree';
-import { isIgnoredPath } from './ignoredFiles';
-import { sha256 } from './hash';
+import { NO_IGNORE_RULES, isIgnoredPath, type IgnoreRules } from './ignoredFiles';
+import { Sha256, sha256 } from './hash';
 import { guessMimeType } from './fileKind';
 import type { Course, ExtractedEntry, FileRecord, FileStatus, VersionRecord } from '../types';
 
@@ -67,7 +67,7 @@ export async function processEntryBatchForCourse(
       sha256: entry.sha256,
       size: entry.size,
       timestamp: timestampMs,
-      content: new Blob([entry.content as BufferSource], { type: guessMimeType(entry.relativePath) })
+      content: new Blob([entry.content as BlobPart], { type: guessMimeType(entry.relativePath) })
     };
     await versionStore.put(versionRecord);
 
@@ -121,6 +121,28 @@ export async function processEntriesForCourse(
   return result;
 }
 
+/** A file a download sent piece by piece (see stagingStore), put back together to be
+ *  stored — as a Blob of its pieces, never read whole into memory. Fails if any of its
+ *  `pieceCount` pieces never arrived, rather than storing part of the file. */
+export async function unstageEntry(downloadId: string, relativePath: string, pieceCount: number): Promise<ExtractedEntry> {
+  const pieces = await stagingStore.pieces(downloadId, relativePath, pieceCount);
+  if (pieces.length !== pieceCount) throw new Error(`"${relativePath}" did not arrive whole.`);
+  const content = new Blob(pieces.map((piece) => piece.content));
+  return { relativePath, content, sha256: await hashPieces(pieces.map((piece) => piece.content), content.size), size: content.size };
+}
+
+// Up to this size a file is hashed whole by the browser's own SHA-256, several times
+// faster. A bigger one (a lecture recording) is hashed a piece at a time instead, so
+// it's never all in memory at once.
+const HASH_WHOLE_UP_TO = 64 * 1024 * 1024;
+
+async function hashPieces(pieces: Blob[], size: number): Promise<string> {
+  if (size <= HASH_WHOLE_UP_TO) return sha256(new Uint8Array(await new Blob(pieces).arrayBuffer()));
+  const hash = new Sha256();
+  for (const piece of pieces) hash.update(new Uint8Array(await piece.arrayBuffer()));
+  return hash.digestHex();
+}
+
 /**
  * Adds files the user provided directly (not crawled from Moodle) to a course. A
  * path that's already tracked gets the new content as one more version (the old one
@@ -151,6 +173,14 @@ export async function addManualFiles(
       if (stored) await fileStore.put({ ...stored, currentStatus: 'unchanged', deletedAt: undefined, manual: true });
     }
   }
+}
+
+/** A course's ignored paths and the root they're relative to, for the downloader to
+ *  skip those files without fetching them (see crawlCourse). */
+export async function ignoreRulesFor(course: Course): Promise<IgnoreRules> {
+  const ignoredPaths = course.ignoredPaths ?? [];
+  if (ignoredPaths.length === 0) return NO_IGNORE_RULES;
+  return { ignoredPaths, rootPath: getRootFolderPath(await fileStore.byCourse(course.id)) };
 }
 
 /**

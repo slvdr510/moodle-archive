@@ -49,6 +49,7 @@ export const ur: Messages = {
     importCourses: 'کورسز درآمد کریں',
     recentSettings: 'حال ہی میں کھولی گئی فائلوں کی ترتیبات',
     downloadNameSettings: 'ڈاؤن لوڈ ناموں کی ترتیبات',
+    concurrentDownloads: 'بیک وقت ڈاؤن لوڈز',
     sideMargin: 'اطراف کے حاشیے',
     courseListStyle: 'کورس فہرست کا انداز',
     setInstitution: 'کورسز کا ادارہ سیٹ کریں',
@@ -116,8 +117,8 @@ export const ur: Messages = {
       `ہو گئی ہو، یا ابھی ڈاؤن لوڈ ہو رہی ہو۔ کسی مستقل جگہ سے دوبارہ کوشش کریں۔ (${error})`,
     couldNotAdd: (fileCount, error) => `${fileCount === 1 ? 'فائل' : 'فائلیں'} شامل نہیں ہو سکیں: ${error}`,
     dropFiles: (name) => `"${name}" میں شامل کرنے کے لیے فائلیں یہاں چھوڑیں`,
-    searchPlaceholder: 'نام سے فائلیں تلاش کریں…',
-    noMatches: (query) => `"${query}" سے کوئی فائل میل نہیں کھاتی۔`,
+    searchPlaceholder: 'فائلیں اور فولڈر تلاش کرنے کے لیے ٹائپ کرنا شروع کریں — یہاں کلک کرنے کی ضرورت نہیں',
+    noMatches: (query) => `"${query}" سے کوئی فائل یا فولڈر میل نہیں کھاتا۔`,
     noFiles: 'اس کورس کی ابھی کوئی فائل ڈاؤن لوڈ نہیں ہوئی۔'
   },
 
@@ -170,6 +171,14 @@ export const ur: Messages = {
     title: 'ڈاؤن لوڈ نام',
     description: 'تمام کورسز پر لاگو ہوتا ہے۔ بغیر ٹیگ والے کورسز کی فائلیں اپنے اصل نام سے ڈاؤن لوڈ ہوتی ہیں۔',
     prefixCourseTag: 'ڈاؤن لوڈ ناموں کے شروع میں کورس کا ٹیگ لگائیں (مثلاً TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'بیک وقت ڈاؤن لوڈز',
+    description:
+      'کسی کورس کی کتنی فائلیں ایک ساتھ ڈاؤن لوڈ ہوں۔ ' +
+      'تیز کنکشن پر زیادہ رکھنے سے ڈاؤن لوڈ جلدی مکمل ہو سکتا ہے، لیکن آپ کے ادارے کے Moodle سرور پر زیادہ بوجھ پڑتا ہے۔ ' +
+      'طے شدہ: 2۔ اگلے ڈاؤن لوڈ سے لاگو ہوتا ہے۔'
   },
 
   sideMargin: {
@@ -288,6 +297,7 @@ export const ur: Messages = {
     cannotScan: 'یہ صفحہ اسکین نہیں ہو سکتا — پہلے Moodle کورس کا ٹیب کھولیں۔',
     filesDownloaded: (count) => `${count} فائلیں ڈاؤن لوڈ ہوئیں`,
     downloading: 'ڈاؤن لوڈ ہو رہا ہے...',
+    retrying: 'دوبارہ کوشش ہو رہی ہے…',
     download: 'ڈاؤن لوڈ کریں',
     history: 'تاریخ',
     addToQueue: 'قطار میں شامل کریں',
@@ -301,9 +311,14 @@ export const ur: Messages = {
     processingLinks: 'لنکس پر کارروائی ہو رہی ہے...',
     processing: (url) => `${url} پر کارروائی ہو رہی ہے`,
     downloadingFiles: 'فائلیں ڈاؤن لوڈ ہو رہی ہیں...',
-    downloadingFile: (name) => `${name} ڈاؤن لوڈ ہو رہی ہے`,
     cancelled: (name, reason) =>
       `ڈاؤن لوڈ منسوخ: "${name}" ڈاؤن لوڈ نہیں ہو سکی (${reason})۔ کچھ بھی محفوظ نہیں ہوا — دوبارہ کوشش کریں۔`,
+    sessionExpired:
+      'ڈاؤن لوڈ منسوخ: Moodle نے لاگ ان کرنے کو کہا (شاید آپ کا سیشن ختم ہو گیا ہے)۔ Moodle میں لاگ ان کریں اور دوبارہ ڈاؤن لوڈ کریں۔ کچھ بھی محفوظ نہیں ہوا۔',
+    retrying: (name) => `"${name}" دوبارہ آزمایا جا رہا ہے…`,
+    ignoredSkipped: (count) => count === 1 ? 'نظرانداز 1 فائل چھوڑ دی گئی۔' : `نظرانداز ${count} فائلیں چھوڑ دی گئیں۔`,
+    unavailable: (count) =>
+      count === 1 ? '1 فائل اب Moodle پر دستیاب نہیں (اس کا لنک خرابی دیتا ہے)، اس لیے ڈاؤن لوڈ نہیں کی گئی۔' : `${count} فائلیں اب Moodle پر دستیاب نہیں (ان کے لنک خرابی دیتے ہیں)، اس لیے ڈاؤن لوڈ نہیں کی گئیں۔`,
     downloadFailed: 'ڈاؤن لوڈ ناکام ہو گیا',
     noResponse: 'جواب کا انتظار کرتے ہوئے وقت ختم ہو گیا',
     stalled: 'رکا ہوا: وقت پر کوئی ڈیٹا موصول نہیں ہوا',

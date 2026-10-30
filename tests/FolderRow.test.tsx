@@ -37,17 +37,17 @@ describe('FolderRow', () => {
     expect(screen.getByText('Child')).toBeInTheDocument();
   });
 
-  it('starts expanded when defaultExpanded is set, e.g. for search results', () => {
+  it('starts expanded when it is among openFolders, e.g. for search results', () => {
     render(
       <ul>
-        <FolderRow node={makeFolderTree()} depth={0} defaultExpanded />
+        <FolderRow node={makeFolderTree()} depth={0} openFolders={new Set(['Parent'])} />
       </ul>
     );
 
     expect(screen.getByText('Child')).toBeInTheDocument();
   });
 
-  it('propagates defaultExpanded to nested subfolders too', () => {
+  it('opens the nested folders among openFolders, and leaves the others closed', () => {
     const node: FolderTreeNode = {
       kind: 'folder',
       name: 'Parent',
@@ -57,18 +57,49 @@ describe('FolderRow', () => {
           kind: 'folder',
           name: 'Child',
           path: 'Parent/Child',
-          children: [{ kind: 'folder', name: 'Grandchild', path: 'Parent/Child/Grandchild', children: [] }]
+          children: [
+            {
+              kind: 'folder',
+              name: 'Grandchild',
+              path: 'Parent/Child/Grandchild',
+              children: [{ kind: 'folder', name: 'Inside', path: 'Parent/Child/Grandchild/Inside', children: [] }]
+            }
+          ]
         }
       ]
     };
 
     render(
       <ul>
-        <FolderRow node={node} depth={0} defaultExpanded />
+        <FolderRow node={node} depth={0} openFolders={new Set(['Parent', 'Parent/Child'])} />
       </ul>
     );
 
     expect(screen.getByText('Grandchild')).toBeInTheDocument();
+    expect(screen.queryByText('Inside')).not.toBeInTheDocument();
+  });
+
+  it('opens or closes as a new search finds something inside it or no longer does', () => {
+    const { rerender } = render(
+      <ul>
+        <FolderRow node={makeFolderTree()} depth={0} openFolders={new Set()} />
+      </ul>
+    );
+    expect(screen.queryByText('Child')).not.toBeInTheDocument();
+
+    rerender(
+      <ul>
+        <FolderRow node={makeFolderTree()} depth={0} openFolders={new Set(['Parent'])} />
+      </ul>
+    );
+    expect(screen.getByText('Child')).toBeInTheDocument();
+
+    rerender(
+      <ul>
+        <FolderRow node={makeFolderTree()} depth={0} openFolders={new Set()} />
+      </ul>
+    );
+    expect(screen.queryByText('Child')).not.toBeInTheDocument();
   });
 
   describe('tree connectors', () => {
@@ -86,6 +117,7 @@ describe('FolderRow', () => {
         { kind: 'folder', name: 'B', path: 'Parent/B', children: [] }
       ]
     };
+    const allOpen = new Set(['Parent', 'Parent/A', 'Parent/A/A1', 'Parent/B']);
 
     function guidesOf(name: string): string[] {
       // A folder's own guides are in its header — its row also holds its contents'.
@@ -96,7 +128,7 @@ describe('FolderRow', () => {
     it('draws no connector for a top-level row', () => {
       render(
         <ul>
-          <FolderRow node={tree} depth={0} defaultExpanded />
+          <FolderRow node={tree} depth={0} openFolders={allOpen} />
         </ul>
       );
       expect(guidesOf('Parent')).toEqual([]);
@@ -105,7 +137,7 @@ describe('FolderRow', () => {
     it('gives each child a tee, and closes the last child with a corner', () => {
       render(
         <ul>
-          <FolderRow node={tree} depth={0} defaultExpanded />
+          <FolderRow node={tree} depth={0} openFolders={allOpen} />
         </ul>
       );
       expect(guidesOf('A')).toEqual(['elbow']);
@@ -115,7 +147,7 @@ describe('FolderRow', () => {
     it('keeps an ancestor\'s line running through its descendants only while it has later siblings', () => {
       render(
         <ul>
-          <FolderRow node={tree} depth={0} defaultExpanded />
+          <FolderRow node={tree} depth={0} openFolders={allOpen} />
         </ul>
       );
       // A1 hangs from A, and A still has a sibling (B) below it, so A's line passes through A1.
@@ -134,7 +166,7 @@ describe('FolderRow', () => {
             children: [{ kind: 'folder', name: 'Child', path: 'Parent/Child', children: [] }]
           }}
           depth={0}
-          defaultExpanded
+          openFolders={new Set(['Parent'])}
         />
       </ul>
     );

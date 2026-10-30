@@ -116,4 +116,20 @@ describe('FolderRow download', () => {
     expect(buildFolderZipMock).toHaveBeenCalledWith('Tema', 'Tema', expect.arrayContaining([inner, outer]));
     expect(screen.queryByText('sub')).not.toBeInTheDocument();
   });
+
+  it('in search results, offers it only for a folder holding all it has, not just what was found', () => {
+    render(
+      <ul>
+        {/* Tema shows only what was found in it; sub, inside it, was found by its name. */}
+        <FolderRow node={node} depth={0} onFolderDeleted={vi.fn()} canDownload openFolders={new Set(['Tema'])} />
+      </ul>
+    );
+    const header = (name: string) => screen.getByText(name).closest('.folder-row-header') as HTMLElement;
+
+    expect(header('Tema').querySelector('[title="Delete this folder from your history"]')).toBeNull();
+    expect(header('Tema').querySelector('[title="Download this folder as a zip"]')).toBeNull();
+    expect(header('sub').querySelector('[title="Delete this folder from your history"]')).not.toBeNull();
+    expect(header('sub').querySelector('[title="Download this folder as a zip"]')).not.toBeNull();
+  });
 });
+

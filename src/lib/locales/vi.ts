@@ -49,6 +49,7 @@ export const vi: Messages = {
     importCourses: 'Nhập khóa học',
     recentSettings: 'Cài đặt mở gần đây',
     downloadNameSettings: 'Cài đặt tên tệp tải xuống',
+    concurrentDownloads: 'Tải xuống đồng thời',
     sideMargin: 'Lề hai bên',
     courseListStyle: 'Kiểu danh sách khóa học',
     setInstitution: 'Đặt cơ sở cho các khóa học',
@@ -116,8 +117,8 @@ export const vi: Messages = {
       `hoặc vẫn đang được tải xuống. Hãy thử lại từ một vị trí ổn định. (${error})`,
     couldNotAdd: (_fileCount, error) => `Không thể thêm tệp: ${error}`,
     dropFiles: (name) => `Thả tệp để thêm vào "${name}"`,
-    searchPlaceholder: 'Tìm tệp theo tên…',
-    noMatches: (query) => `Không có tệp nào khớp với "${query}".`,
+    searchPlaceholder: 'Bắt đầu gõ để tìm tệp và thư mục, không cần nhấp vào đây',
+    noMatches: (query) => `Không có tệp hoặc thư mục nào khớp với "${query}".`,
     noFiles: 'Chưa tải xuống tệp nào cho khóa học này.'
   },
 
@@ -170,6 +171,14 @@ export const vi: Messages = {
     title: 'Tên tệp tải xuống',
     description: 'Áp dụng cho mọi khóa học. Khóa học không có thẻ sẽ được tải xuống với tên gốc của tệp.',
     prefixCourseTag: 'Thêm thẻ khóa học vào đầu tên tệp tải xuống (vd: TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Tải xuống đồng thời',
+    description:
+      'Số tệp của một khóa học được tải xuống cùng lúc. ' +
+      'Nhiều hơn có thể xong sớm hơn khi mạng nhanh, nhưng máy chủ Moodle của cơ sở bạn sẽ chịu tải nặng hơn. ' +
+      'Mặc định: 2. Áp dụng từ lần tải xuống tiếp theo.'
   },
 
   sideMargin: {
@@ -288,6 +297,7 @@ export const vi: Messages = {
     cannotScan: 'Không thể quét trang này — hãy mở một thẻ khóa học Moodle trước.',
     filesDownloaded: (count) => `Đã tải xuống ${count} tệp`,
     downloading: 'Đang tải xuống...',
+    retrying: 'Đang thử lại…',
     download: 'Tải xuống',
     history: 'Lịch sử',
     addToQueue: 'Thêm vào hàng đợi',
@@ -301,9 +311,13 @@ export const vi: Messages = {
     processingLinks: 'Đang xử lý liên kết...',
     processing: (url) => `Đang xử lý ${url}`,
     downloadingFiles: 'Đang tải tệp xuống...',
-    downloadingFile: (name) => `Đang tải xuống ${name}`,
     cancelled: (name, reason) =>
       `Đã hủy tải xuống: không thể tải "${name}" (${reason}). Chưa lưu gì cả — hãy thử lại.`,
+    sessionExpired:
+      'Đã hủy tải xuống: Moodle yêu cầu đăng nhập (có thể phiên của bạn đã hết hạn). Hãy đăng nhập Moodle rồi tải lại. Chưa lưu gì cả.',
+    retrying: (name) => `Đang thử lại "${name}"…`,
+    ignoredSkipped: (count) => `Đã bỏ qua ${count} tệp được đánh dấu bỏ qua.`,
+    unavailable: (count) => `${count} tệp không còn trên Moodle (liên kết bị lỗi) nên không được tải xuống.`,
     downloadFailed: 'tải xuống thất bại',
     noResponse: 'Hết thời gian chờ phản hồi',
     stalled: 'Bị treo: không nhận được dữ liệu kịp thời',

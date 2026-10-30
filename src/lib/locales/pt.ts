@@ -49,6 +49,7 @@ export const pt: Messages = {
     importCourses: 'Importar curso(s)',
     recentSettings: 'Configurações de abertos recentemente',
     downloadNameSettings: 'Configurações de nomes de download',
+    concurrentDownloads: 'Downloads simultâneos',
     sideMargin: 'Margens laterais',
     courseListStyle: 'Estilo da lista de cursos',
     setInstitution: 'Definir instituição de cursos',
@@ -120,8 +121,8 @@ export const pt: Messages = {
         ? `Não foi possível adicionar o arquivo: ${error}`
         : `Não foi possível adicionar os arquivos: ${error}`,
     dropFiles: (name) => `Solte arquivos para adicioná-los a "${name}"`,
-    searchPlaceholder: 'Pesquisar arquivos por nome…',
-    noMatches: (query) => `Nenhum arquivo corresponde a "${query}".`,
+    searchPlaceholder: 'Comece a digitar para pesquisar arquivos e pastas, sem clicar aqui',
+    noMatches: (query) => `Nenhum arquivo ou pasta corresponde a "${query}".`,
     noFiles: 'Nenhum arquivo baixado ainda para este curso.'
   },
 
@@ -175,6 +176,14 @@ export const pt: Messages = {
     title: 'Nomes de download',
     description: 'Aplica-se a todos os cursos. Cursos sem etiqueta são baixados com o nome original do arquivo.',
     prefixCourseTag: 'Adicionar a etiqueta do curso no início dos nomes de download (ex.: ETIQUETA_arquivo.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Downloads simultâneos',
+    description:
+      'Quantos arquivos de um curso são baixados ao mesmo tempo. ' +
+      'Com mais, o download pode terminar antes numa conexão rápida, mas o servidor Moodle da sua instituição fica mais sobrecarregado. ' +
+      'Padrão: 2. Vale a partir do próximo download.'
   },
 
   sideMargin: {
@@ -293,6 +302,7 @@ export const pt: Messages = {
     cannotScan: 'Esta página não pode ser analisada: abra primeiro uma aba de curso do Moodle.',
     filesDownloaded: (count) => `${count} arquivo(s) baixado(s)`,
     downloading: 'Baixando...',
+    retrying: 'Tentando de novo…',
     download: 'Baixar',
     history: 'Histórico',
     addToQueue: 'Adicionar à fila',
@@ -306,9 +316,15 @@ export const pt: Messages = {
     processingLinks: 'Processando links...',
     processing: (url) => `Processando ${url}`,
     downloadingFiles: 'Baixando arquivos...',
-    downloadingFile: (name) => `Baixando ${name}`,
     cancelled: (name, reason) =>
       `Download cancelado: não foi possível baixar "${name}" (${reason}). Nada foi salvo; tente novamente.`,
+    sessionExpired:
+      'Download cancelado: o Moodle pediu para entrar (sua sessão pode ter expirado). Entre no Moodle e baixe de novo. Nada foi salvo.',
+    retrying: (name) => `Tentando "${name}" de novo…`,
+    ignoredSkipped: (count) =>
+      count === 1 ? '1 arquivo ignorado foi pulado.' : `${count} arquivos ignorados foram pulados.`,
+    unavailable: (count) =>
+      count === 1 ? '1 arquivo não está mais disponível no Moodle (o link dá erro) e não foi baixado.' : `${count} arquivos não estão mais disponíveis no Moodle (os links dão erro) e não foram baixados.`,
     downloadFailed: 'o download falhou',
     noResponse: 'Tempo esgotado aguardando uma resposta',
     stalled: 'Travado: nenhum dado recebido a tempo',

@@ -79,7 +79,8 @@ export interface RecentOpenRecord {
 /** One file crawled from Moodle, ready to be diffed/stored as a version. */
 export interface ExtractedEntry {
   relativePath: string;
-  content: Uint8Array;
+  /** A Blob when it's put together from pieces still on disk (see unstageEntry). */
+  content: Uint8Array | Blob;
   sha256: string;
   size: number;
 }

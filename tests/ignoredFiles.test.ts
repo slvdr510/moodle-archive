@@ -1,9 +1,18 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
-import { cleanIgnoredPath, displayPath, ignoredPathMatchesAny, ignoreState, isIgnoredPath, toggleIgnoredPath } from '../src/lib/ignoredFiles';
+import {
+  NO_IGNORE_RULES,
+  cleanIgnoredPath,
+  displayPath,
+  ignoredPathMatchesAny,
+  ignoreState,
+  isIgnoredFolder,
+  isIgnoredPath,
+  toggleIgnoredPath
+} from '../src/lib/ignoredFiles';
 import { courseStore, fileStore, versionStore } from '../src/lib/db';
 import { sha256 } from '../src/lib/hash';
-import { ignoredFilesFor, markDeletedForCourse, processEntryBatchForCourse } from '../src/lib/repository';
+import { ignoreRulesFor, ignoredFilesFor, markDeletedForCourse, processEntryBatchForCourse } from '../src/lib/repository';
 import type { Course, ExtractedEntry } from '../src/types';
 
 const ROOT = 'Sistemas_Operativos';
@@ -58,6 +67,16 @@ describe('ignored paths', () => {
     expect(ignoreState('a.pdf', ['a.pdf'])).toBe('self');
   });
 
+  it('says whether a whole folder is ignored, before knowing what is in it', () => {
+    expect(isIgnoredFolder(`${ROOT}/Tema_1`, ROOT, ['Tema 1/'])).toBe(true);
+    expect(isIgnoredFolder(`${ROOT}/Tema_1/Practicas`, ROOT, ['Tema 1/'])).toBe(true);
+    expect(isIgnoredFolder(`${ROOT}/Tema_10`, ROOT, ['Tema 1/'])).toBe(false);
+    expect(isIgnoredFolder(`${ROOT}/Tema_1`, ROOT, ['Tema_1/a.pdf'])).toBe(false); // only one file in it
+    expect(isIgnoredFolder(`${ROOT}/Tema_1`, ROOT, ['Tema_1'])).toBe(false); // a file named like it
+    expect(isIgnoredFolder(ROOT, ROOT, [`${ROOT}/`])).toBe(false); // the root, never
+    expect(isIgnoredFolder('Tema_1', '', ['Tema_1/'])).toBe(true);
+  });
+
   it('says whether an ignored path matches any file of the course yet', () => {
     const files = ['Tema_1/a.pdf', 'b.pdf'];
     expect(ignoredPathMatchesAny('Tema 1/', files)).toBe(true);
@@ -77,19 +96,34 @@ async function entry(relativePath: string, text: string): Promise<ExtractedEntry
   return { relativePath, content, sha256: await sha256(content), size: content.byteLength };
 }
 
+function newCourse(): Course {
+  return {
+    id: crypto.randomUUID(),
+    name: 'Sistemas Operativos',
+    url: '',
+    matchedUrls: [],
+    createdAt: 0,
+    lastSyncedAt: 0,
+    order: 0,
+    firstSyncCompleted: true,
+    hidden: false
+  };
+}
+
+describe('ignoreRulesFor (integration)', () => {
+  it("gives the downloader a course's ignored paths and the root they're relative to", async () => {
+    const course = newCourse();
+    await courseStore.put(course);
+    await processEntryBatchForCourse(course.id, [await entry(`${ROOT}/a.pdf`, 'a'), await entry(`${ROOT}/Tema_1/b.pdf`, 'b')], 1, true);
+
+    expect(await ignoreRulesFor({ ...course, ignoredPaths: ['Tema 1/'] })).toEqual({ ignoredPaths: ['Tema 1/'], rootPath: ROOT });
+    expect(await ignoreRulesFor(course)).toEqual(NO_IGNORE_RULES);
+  });
+});
+
 describe('ignoredFilesFor (integration)', () => {
   it('leaves an ignored file as it is on a later download, and only that one', async () => {
-    const course: Course = {
-      id: crypto.randomUUID(),
-      name: 'Sistemas Operativos',
-      url: '',
-      matchedUrls: [],
-      createdAt: 0,
-      lastSyncedAt: 0,
-      order: 0,
-      firstSyncCompleted: true,
-      hidden: false
-    };
+    const course = newCourse();
     await courseStore.put(course);
     await processEntryBatchForCourse(
       course.id,
@@ -121,5 +155,35 @@ describe('ignoredFilesFor (integration)', () => {
     expect(await versionCount(`${ROOT}/Tema_1/apuntes.pdf`)).toBe(2); // same name, other folder: updated
     expect(files.get(`${ROOT}/Tema_1/borrar.pdf`)?.currentStatus).toBe('unchanged'); // ignored: not marked deleted
     expect(files.has(`${ROOT}/nuevo.pdf`)).toBe(false); // ignored before it was ever tracked: never added
+  });
+});
+
+describe('a download that never fetched the ignored files (integration)', () => {
+  it('keeps the ignored ones it already had, and still notices files gone from Moodle', async () => {
+    const course = newCourse();
+    await courseStore.put(course);
+    await processEntryBatchForCourse(
+      course.id,
+      [
+        await entry(`${ROOT}/apuntes.pdf`, 'apuntes'),
+        await entry(`${ROOT}/Videos/clase1.mp4`, 'video'),
+        await entry(`${ROOT}/Videos/clase2.mp4`, 'video 2'),
+        await entry(`${ROOT}/borrado.pdf`, 'gone')
+      ],
+      1,
+      true
+    );
+    const ignored = await ignoredFilesFor({ ...course, ignoredPaths: ['Videos/'] });
+
+    // The downloader left Videos/ out entirely, and borrado.pdf is gone from Moodle:
+    // only apuntes.pdf comes back.
+    const crawled = [await entry(`${ROOT}/apuntes.pdf`, 'apuntes')];
+    await processEntryBatchForCourse(course.id, crawled, 2);
+    await markDeletedForCourse(course.id, [...crawled.map((e) => e.relativePath), ...ignored.trackedPaths], 2);
+
+    const status = new Map((await fileStore.byCourse(course.id)).map((f) => [f.relativePath, f.currentStatus]));
+    expect(status.get(`${ROOT}/Videos/clase1.mp4`)).toBe('unchanged');
+    expect(status.get(`${ROOT}/Videos/clase2.mp4`)).toBe('unchanged');
+    expect(status.get(`${ROOT}/borrado.pdf`)).toBe('deleted');
   });
 });

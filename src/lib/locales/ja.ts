@@ -49,6 +49,7 @@ export const ja: Messages = {
     importCourses: 'コースをインポート',
     recentSettings: '最近開いたファイルの設定',
     downloadNameSettings: 'ダウンロード名の設定',
+    concurrentDownloads: '同時ダウンロード数',
     sideMargin: '左右の余白',
     courseListStyle: 'コース一覧の表示形式',
     setInstitution: 'コースに機関を設定',
@@ -116,8 +117,8 @@ export const ja: Messages = {
       `削除されたか、まだダウンロード中の可能性があります。安定した場所からもう一度お試しください。(${error})`,
     couldNotAdd: (_fileCount, error) => `ファイルを追加できませんでした: ${error}`,
     dropFiles: (name) => `ファイルをドロップして「${name}」に追加`,
-    searchPlaceholder: 'ファイル名で検索…',
-    noMatches: (query) => `「${query}」に一致するファイルはありません。`,
+    searchPlaceholder: 'ここをクリックせずに入力するだけで、ファイルやフォルダを検索できます',
+    noMatches: (query) => `「${query}」に一致するファイルやフォルダはありません。`,
     noFiles: 'このコースのファイルはまだダウンロードされていません。'
   },
 
@@ -170,6 +171,12 @@ export const ja: Messages = {
     title: 'ダウンロード名',
     description: 'すべてのコースに適用されます。タグのないコースはファイル本来の名前でダウンロードされます。',
     prefixCourseTag: 'ダウンロード名の先頭にコースのタグを付ける（例: TAG_file.pdf）'
+  },
+
+  concurrentDownloads: {
+    title: '同時ダウンロード数',
+    description:
+      'コースのファイルを同時にいくつダウンロードするか。回線が速ければ、多いほど早く終わることがありますが、所属機関の Moodle サーバーへの負荷が大きくなります。既定値は 2 です。次回のダウンロードから適用されます。'
   },
 
   sideMargin: {
@@ -287,6 +294,7 @@ export const ja: Messages = {
     cannotScan: 'このページはスキャンできません。先に Moodle のコースのタブを開いてください。',
     filesDownloaded: (count) => `${count} 件のファイルをダウンロードしました`,
     downloading: 'ダウンロード中...',
+    retrying: '再試行中…',
     download: 'ダウンロード',
     history: '履歴',
     addToQueue: 'キューに追加',
@@ -300,9 +308,13 @@ export const ja: Messages = {
     processingLinks: 'リンクを処理中...',
     processing: (url) => `${url} を処理中`,
     downloadingFiles: 'ファイルをダウンロード中...',
-    downloadingFile: (name) => `${name} をダウンロード中`,
     cancelled: (name, reason) =>
       `ダウンロードを中止しました:「${name}」をダウンロードできませんでした（${reason}）。何も保存されていません。もう一度お試しください。`,
+    sessionExpired:
+      'ダウンロードを中止しました:Moodle からログインを求められました（セッションが切れた可能性があります）。Moodle にログインして、もう一度ダウンロードしてください。何も保存されていません。',
+    retrying: (name) => `「${name}」を再試行しています…`,
+    ignoredSkipped: (count) => `無視中のファイル ${count} 件をスキップしました。`,
+    unavailable: (count) => `Moodle で利用できなくなったファイル ${count} 件（リンクがエラーになります）はダウンロードしませんでした。`,
     downloadFailed: 'ダウンロードに失敗しました',
     noResponse: '応答待ちがタイムアウトしました',
     stalled: '停止: 時間内にデータを受信できませんでした',

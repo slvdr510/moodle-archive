@@ -1,5 +1,5 @@
 import { base64ToBytes } from '../lib/base64';
-import { courseStore } from '../lib/db';
+import { courseStore, stagingStore } from '../lib/db';
 import { migrateLegacyCourseTags } from '../lib/courseTagMigration';
 import { humanizeCourseTitle, matchCourseForResource } from '../lib/courseMatcher';
 import {
@@ -9,6 +9,7 @@ import {
   readDownloadState,
   removeFromQueue,
   requestDownload,
+  showActiveFile,
   startNext,
   tabGone,
   writeDownloadState,
@@ -16,16 +17,51 @@ import {
   type DownloadState,
   type RequestDownloadResponse
 } from '../lib/downloadState';
-import { sha256 } from '../lib/hash';
-import { ignoredFilesFor, markDeletedForCourse, processEntryBatchForCourse, type ProcessCourseResult } from '../lib/repository';
+import { NO_IGNORE_RULES, type IgnoreRules } from '../lib/ignoredFiles';
+import {
+  ignoreRulesFor,
+  ignoredFilesFor,
+  markDeletedForCourse,
+  processEntryBatchForCourse,
+  unstageEntry,
+  type ProcessCourseResult
+} from '../lib/repository';
 import type { Course, ExtractedEntry } from '../types';
+import type { DownloadSlotFile } from '../content/moodleCrawler';
 import { loadMessages } from '../lib/locales';
+
+interface SnapshotPieceMessage {
+  topic: 'snapshot-piece';
+  payload: {
+    downloadId: string;
+    relativePath: string;
+    index: number;
+    /** base64-encoded — see ../lib/base64.ts for why. */
+    content: string;
+  };
+}
+
+function isSnapshotPieceMessage(message: unknown): message is SnapshotPieceMessage {
+  return typeof message === 'object' && message !== null && (message as SnapshotPieceMessage).topic === 'snapshot-piece';
+}
+
+function isSnapshotDiscardMessage(message: unknown): boolean {
+  return typeof message === 'object' && message !== null && (message as { topic?: unknown }).topic === 'snapshot-discard';
+}
+
+/** Holds a piece of a file as the download sends it, apart from the archive until the
+ *  whole course is in — see stagingStore. */
+async function handleSnapshotPiece({ downloadId, relativePath, index, content }: SnapshotPieceMessage['payload']): Promise<void> {
+  await stagingStore.put({ downloadId, relativePath, index, content: new Blob([base64ToBytes(content) as BufferSource]) });
+}
 
 interface CourseSnapshotChunkPayload {
   courseUrl: string;
   courseTitle: string;
-  /** `content` is base64-encoded — see ../lib/base64.ts for why. */
-  entries: { relativePath: string; content: string }[];
+  downloadId: string;
+  /** This chunk's files, their content already sent piece by piece (see
+   *  handleSnapshotPiece). */
+  files: { relativePath: string; pieces: number }[];
   timestampMs: number;
   chunkIndex: number;
   totalChunks: number;
@@ -42,6 +78,23 @@ interface CourseSnapshotChunkMessage {
 
 function isCourseSnapshotChunkMessage(message: unknown): message is CourseSnapshotChunkMessage {
   return typeof message === 'object' && message !== null && (message as CourseSnapshotChunkMessage).topic === 'course-snapshot-chunk';
+}
+
+interface IgnoreRulesRequestMessage {
+  topic: 'ignore-rules-request';
+  payload: { courseUrl: string; courseTitle: string };
+}
+
+function isIgnoreRulesRequestMessage(message: unknown): message is IgnoreRulesRequestMessage {
+  return typeof message === 'object' && message !== null && (message as IgnoreRulesRequestMessage).topic === 'ignore-rules-request';
+}
+
+/** The downloader asks, before fetching a course's files, which of them the user
+ *  ignored. The course is matched as its snapshot will be (see findOrCreateCourse),
+ *  without creating it: one not downloaded before has nothing ignored. */
+async function handleIgnoreRulesRequest({ courseUrl, courseTitle }: IgnoreRulesRequestMessage['payload']): Promise<IgnoreRules> {
+  const course = matchCourseForResource(courseUrl, courseTitle, await courseStore.all());
+  return course ? ignoreRulesFor(course) : NO_IGNORE_RULES;
 }
 
 async function findOrCreateCourse(courseUrl: string, courseTitle: string): Promise<Course> {
@@ -83,7 +136,9 @@ async function findOrCreateCourse(courseUrl: string, courseTitle: string): Promi
  * kill it mid-request, silently dropping the response and leaving the popup stuck
  * on "Saving to history..." forever. The content script now splits a snapshot into
  * several smaller chunks (see content/main.ts); this handles one chunk at a time,
- * running the one-time-only deletion check after the last chunk arrives.
+ * running the one-time-only deletion check after the last chunk arrives. The files'
+ * content isn't in the chunk: it came piece by piece while downloading (see
+ * handleSnapshotPiece), and is moved into the archive here.
  */
 async function handleCourseSnapshotChunk(
   payload: CourseSnapshotChunkPayload
@@ -97,21 +152,22 @@ async function handleCourseSnapshotChunk(
   await courseStore.put(course);
 
   // Files the user chose to ignore are left exactly as they are — see ignoredFilesFor.
+  // The downloader already leaves out most (see handleIgnoreRulesRequest); this
+  // catches the rest: one ignored while the download ran, or all of them if it
+  // couldn't ask.
   const ignored = await ignoredFilesFor(course);
 
-  const entries: ExtractedEntry[] = await Promise.all(
-    payload.entries.filter((raw) => !ignored.isIgnored(raw.relativePath)).map(async (raw) => {
-      const content = base64ToBytes(raw.content);
-      return {
-        relativePath: raw.relativePath,
-        content,
-        sha256: await sha256(content),
-        size: content.byteLength
-      };
-    })
-  );
+  const entries: ExtractedEntry[] = [];
+  for (const file of payload.files) {
+    if (!ignored.isIgnored(file.relativePath)) {
+      entries.push(await unstageEntry(payload.downloadId, file.relativePath, file.pieces));
+    }
+  }
 
   const result = await processEntryBatchForCourse(course.id, entries, payload.timestampMs, isFirstSync);
+  for (const file of payload.files) {
+    await stagingStore.removeFile(payload.downloadId, file.relativePath);
+  }
 
   const isLastChunk = payload.chunkIndex === payload.totalChunks - 1;
   if (isLastChunk) {
@@ -211,7 +267,7 @@ function trackDownloadState(message: unknown, sender: chrome.runtime.MessageSend
   switch (topic) {
     case 'status':
       if (payload === 'processing') {
-        whenCurrent((s) => ({ ...s, statusLog: undefined, downloadCount: 0, progress: undefined }));
+        whenCurrent((s) => ({ ...s, statusLog: undefined, downloadCount: 0, progress: undefined, activeFiles: undefined }));
       } else if (payload === 'finished') {
         void serialized(async () => {
           await updateDownloadState((s) => (isFromCurrentDownload(s, sender) ? finishCurrent(s) : s));
@@ -227,6 +283,9 @@ function trackDownloadState(message: unknown, sender: chrome.runtime.MessageSend
       break;
     case 'download-progress':
       whenCurrent((s) => ({ ...s, progress: payload as DownloadState['progress'] }));
+      break;
+    case 'download-file':
+      whenCurrent((s) => showActiveFile(s, payload as DownloadSlotFile));
       break;
   }
 }
@@ -275,6 +334,11 @@ function runCourseTagMigration(): void {
 chrome.runtime.onInstalled.addListener(runCourseTagMigration);
 chrome.runtime.onStartup.addListener(runCourseTagMigration);
 
+// A download cut short by the browser closing never got to drop what it had sent.
+chrome.runtime.onStartup.addListener(() => {
+  stagingStore.clear().catch((error: unknown) => console.error('Could not drop the files of an unsaved download:', error));
+});
+
 chrome.tabs.onRemoved.addListener(handleTabGone);
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'loading') handleTabGone(tabId);
@@ -282,6 +346,28 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (isDownloadRequestMessage(message)) return handleDownloadRequestMessage(message, sendResponse);
+  if (isIgnoreRulesRequestMessage(message)) {
+    handleIgnoreRulesRequest(message.payload)
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        console.error('Could not read the ignored files:', error);
+        sendResponse(undefined);
+      });
+    return true;
+  }
+  if (isSnapshotPieceMessage(message)) {
+    handleSnapshotPiece(message.payload)
+      .then(() => sendResponse({ ok: true }))
+      .catch((error: unknown) => sendResponse({ ok: false, error: String(error) }));
+    return true;
+  }
+  if (isSnapshotDiscardMessage(message)) {
+    stagingStore
+      .clear()
+      .catch((error: unknown) => console.error('Could not drop the files of an unsaved download:', error))
+      .finally(() => sendResponse(undefined));
+    return true;
+  }
   trackDownloadState(message, sender);
 
   if (!isCourseSnapshotChunkMessage(message)) {

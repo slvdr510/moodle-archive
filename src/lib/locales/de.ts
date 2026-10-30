@@ -49,6 +49,7 @@ export const de: Messages = {
     importCourses: 'Kurs(e) importieren',
     recentSettings: 'Einstellungen für zuletzt geöffnet',
     downloadNameSettings: 'Einstellungen für Download-Namen',
+    concurrentDownloads: 'Gleichzeitige Downloads',
     sideMargin: 'Seitenränder',
     courseListStyle: 'Stil der Kursliste',
     setInstitution: 'Einrichtung für Kurse festlegen',
@@ -121,8 +122,8 @@ export const de: Messages = {
     couldNotAdd: (fileCount, error) =>
       `${fileCount === 1 ? 'Die Datei konnte' : 'Die Dateien konnten'} nicht hinzugefügt werden: ${error}`,
     dropFiles: (name) => `Dateien hier ablegen, um sie zu „${name}“ hinzuzufügen`,
-    searchPlaceholder: 'Dateien nach Name suchen…',
-    noMatches: (query) => `Keine Dateien passen zu „${query}“.`,
+    searchPlaceholder: 'Einfach lostippen, um Dateien und Ordner zu suchen – ohne hier zu klicken',
+    noMatches: (query) => `Keine Dateien oder Ordner passen zu „${query}“.`,
     noFiles: 'Für diesen Kurs wurden noch keine Dateien heruntergeladen.'
   },
 
@@ -176,6 +177,14 @@ export const de: Messages = {
     title: 'Download-Namen',
     description: 'Gilt für alle Kurse. Kurse ohne Kürzel werden unter dem eigenen Namen der Datei heruntergeladen.',
     prefixCourseTag: 'Kurskürzel an den Anfang der Download-Namen setzen (z. B. KÜRZEL_datei.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Gleichzeitige Downloads',
+    description:
+      'Wie viele Dateien eines Kurses gleichzeitig heruntergeladen werden. ' +
+      'Mit mehr kann ein Download bei schneller Verbindung früher fertig sein, belastet aber den Moodle-Server deiner Einrichtung stärker. ' +
+      'Standardmäßig 2. Gilt ab dem nächsten Download.'
   },
 
   sideMargin: {
@@ -294,6 +303,7 @@ export const de: Messages = {
     cannotScan: 'Diese Seite kann nicht durchsucht werden – öffne zuerst einen Moodle-Kurs in einem Tab.',
     filesDownloaded: (count) => `${count} Datei(en) heruntergeladen`,
     downloading: 'Wird heruntergeladen...',
+    retrying: 'Neuer Versuch…',
     download: 'Herunterladen',
     history: 'Verlauf',
     addToQueue: 'Zur Warteschlange hinzufügen',
@@ -307,9 +317,15 @@ export const de: Messages = {
     processingLinks: 'Links werden verarbeitet...',
     processing: (url) => `Verarbeite ${url}`,
     downloadingFiles: 'Dateien werden heruntergeladen...',
-    downloadingFile: (name) => `Lade ${name} herunter`,
     cancelled: (name, reason) =>
       `Download abgebrochen: „${name}“ konnte nicht heruntergeladen werden (${reason}). Es wurde nichts gespeichert – versuche es erneut.`,
+    sessionExpired:
+      'Download abgebrochen: Moodle verlangt eine Anmeldung (deine Sitzung ist vielleicht abgelaufen). Melde dich bei Moodle an und lade erneut herunter. Es wurde nichts gespeichert.',
+    retrying: (name) => `„${name}“ wird erneut versucht…`,
+    ignoredSkipped: (count) =>
+      count === 1 ? '1 ignorierte Datei wurde übersprungen.' : `${count} ignorierte Dateien wurden übersprungen.`,
+    unavailable: (count) =>
+      count === 1 ? '1 Datei ist auf Moodle nicht mehr verfügbar (ihr Link führt zu einem Fehler) und wurde nicht heruntergeladen.' : `${count} Dateien sind auf Moodle nicht mehr verfügbar (ihre Links führen zu einem Fehler) und wurden nicht heruntergeladen.`,
     downloadFailed: 'Download fehlgeschlagen',
     noResponse: 'Zeitüberschreitung beim Warten auf eine Antwort',
     stalled: 'Hängt: keine Daten rechtzeitig empfangen',

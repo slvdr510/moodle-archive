@@ -49,6 +49,7 @@ export const ar: Messages = {
     importCourses: 'استيراد مقررات',
     recentSettings: 'إعدادات الملفات المفتوحة مؤخرًا',
     downloadNameSettings: 'إعدادات أسماء التنزيل',
+    concurrentDownloads: 'التنزيلات المتزامنة',
     sideMargin: 'الهوامش الجانبية',
     courseListStyle: 'نمط قائمة المقررات',
     setInstitution: 'تعيين المؤسسة لمقررات',
@@ -117,8 +118,8 @@ export const ar: Messages = {
       `أو لا يزال قيد التنزيل. أعد المحاولة من موقع ثابت. (${error})`,
     couldNotAdd: (fileCount, error) => `تعذّرت إضافة ${fileCount === 1 ? 'الملف' : 'الملفات'}: ${error}`,
     dropFiles: (name) => `أفلِت الملفات لإضافتها إلى «${name}»`,
-    searchPlaceholder: 'البحث عن الملفات بالاسم…',
-    noMatches: (query) => `لا توجد ملفات تطابق «${query}».`,
+    searchPlaceholder: 'ابدأ الكتابة للبحث عن الملفات والمجلدات، دون الحاجة إلى النقر هنا',
+    noMatches: (query) => `لا توجد ملفات أو مجلدات تطابق «${query}».`,
     noFiles: 'لم يُنزَّل أي ملف لهذا المقرر بعد.'
   },
 
@@ -171,6 +172,14 @@ export const ar: Messages = {
     title: 'أسماء التنزيل',
     description: 'ينطبق على جميع المقررات. تُنزَّل ملفات المقررات التي ليس لها وسم باسم الملف الأصلي.',
     prefixCourseTag: 'إضافة وسم المقرر إلى بداية أسماء التنزيل (مثل TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'التنزيلات المتزامنة',
+    description:
+      'عدد ملفات المقرر التي تُنزَّل في الوقت نفسه. ' +
+      'مع عدد أكبر قد ينتهي التنزيل أسرع على اتصال سريع، لكن الحمل يزيد على خادم Moodle في مؤسستك. ' +
+      'القيمة الافتراضية: 2. يُطبَّق بدءًا من التنزيل التالي.'
   },
 
   sideMargin: {
@@ -289,6 +298,7 @@ export const ar: Messages = {
     cannotScan: 'لا يمكن فحص هذه الصفحة — افتح علامة تبويب لمقرر في Moodle أولًا.',
     filesDownloaded: (count) => `تم تنزيل ${count} ملف`,
     downloading: 'جارٍ التنزيل...',
+    retrying: 'جارٍ إعادة المحاولة…',
     download: 'تنزيل',
     history: 'السجل',
     addToQueue: 'إضافة إلى قائمة الانتظار',
@@ -302,9 +312,13 @@ export const ar: Messages = {
     processingLinks: 'جارٍ معالجة الروابط...',
     processing: (url) => `جارٍ معالجة ${url}`,
     downloadingFiles: 'جارٍ تنزيل الملفات...',
-    downloadingFile: (name) => `جارٍ تنزيل ${name}`,
     cancelled: (name, reason) =>
       `أُلغي التنزيل: تعذّر تنزيل «${name}» (${reason}). لم يُحفظ أي شيء — أعد المحاولة.`,
+    sessionExpired:
+      'أُلغي التنزيل: طلب Moodle تسجيل الدخول (ربما انتهت جلستك). سجّل الدخول إلى Moodle ونزّل مرة أخرى. لم يُحفظ أي شيء.',
+    retrying: (name) => `جارٍ إعادة محاولة «${name}»…`,
+    ignoredSkipped: (count) => `تم تخطي الملفات المتجاهَلة: ${count}.`,
+    unavailable: (count) => `لم تُنزَّل ملفات لم تعد متاحة على Moodle (روابطها تعطي خطأ): ${count}.`,
     downloadFailed: 'فشل التنزيل',
     noResponse: 'انتهت مهلة انتظار الرد',
     stalled: 'متوقف: لم تصل أي بيانات في الوقت المحدد',

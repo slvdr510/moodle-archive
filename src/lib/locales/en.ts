@@ -53,6 +53,7 @@ export const en = {
     importCourses: 'Import course(s)',
     recentSettings: 'Recently opened settings',
     downloadNameSettings: 'Download name settings',
+    concurrentDownloads: 'Simultaneous downloads',
     sideMargin: 'Side margins',
     courseListStyle: 'Course list style',
     setInstitution: 'Set institution for courses',
@@ -123,8 +124,8 @@ export const en = {
       `deleted, or it is still being downloaded. Try again from a stable location. (${error})`,
     couldNotAdd: (fileCount: number, error: string) => `Could not add the file${fileCount === 1 ? '' : 's'}: ${error}`,
     dropFiles: (name: string) => `Drop files to add them to "${name}"`,
-    searchPlaceholder: 'Search files by name…',
-    noMatches: (query: string) => `No files match "${query}".`,
+    searchPlaceholder: 'Start typing to search files and folders — no need to click here',
+    noMatches: (query: string) => `No files or folders match "${query}".`,
     noFiles: 'No files downloaded yet for this course.'
   },
 
@@ -177,6 +178,14 @@ export const en = {
     title: 'Download names',
     description: "Applies to every course. Courses without a tag are downloaded under the file's own name.",
     prefixCourseTag: 'Add the course tag to the start of download names (e.g. TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Simultaneous downloads',
+    description:
+      "How many of a course's files are downloaded at the same time. " +
+      "With more, a download can finish sooner on a fast connection, but your institution's Moodle server gets more load. " +
+      '2 by default. Applies from the next download on.'
   },
 
   sideMargin: {
@@ -297,6 +306,7 @@ export const en = {
     cannotScan: 'This page cannot be scanned — open a Moodle course tab first.',
     filesDownloaded: (count: number) => `${count} file(s) downloaded`,
     downloading: 'Downloading...',
+    retrying: 'Retrying…',
     download: 'Download',
     history: 'History',
     addToQueue: 'Add to queue',
@@ -311,9 +321,15 @@ export const en = {
     processingLinks: 'Processing links...',
     processing: (url: string) => `Processing ${url}`,
     downloadingFiles: 'Downloading files...',
-    downloadingFile: (name: string) => `Downloading ${name}`,
     cancelled: (name: string, reason: string) =>
       `Download cancelled: could not download "${name}" (${reason}). Nothing was saved — try again.`,
+    sessionExpired:
+      'Download cancelled: Moodle asked you to log in (your session may have expired). Log in to Moodle and download again. Nothing was saved.',
+    retrying: (name: string) => `Trying "${name}" again…`,
+    ignoredSkipped: (count: number) =>
+      count === 1 ? '1 ignored file was skipped.' : `${count} ignored files were skipped.`,
+    unavailable: (count: number) =>
+      count === 1 ? '1 file is no longer available on Moodle (its link gives an error) and was not downloaded.' : `${count} files are no longer available on Moodle (their links give an error) and were not downloaded.`,
     downloadFailed: 'download failed',
     noResponse: 'Timed out waiting for a response',
     stalled: 'Stalled: no data received in time',

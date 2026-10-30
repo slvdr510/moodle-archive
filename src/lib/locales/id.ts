@@ -49,6 +49,7 @@ export const id: Messages = {
     importCourses: 'Impor kursus',
     recentSettings: 'Pengaturan baru dibuka',
     downloadNameSettings: 'Pengaturan nama unduhan',
+    concurrentDownloads: 'Unduhan bersamaan',
     sideMargin: 'Margin samping',
     courseListStyle: 'Gaya daftar kursus',
     setInstitution: 'Atur institusi untuk kursus',
@@ -116,8 +117,8 @@ export const id: Messages = {
       `dipindahkan atau dihapus, atau masih diunduh. Coba lagi dari lokasi yang stabil. (${error})`,
     couldNotAdd: (_fileCount, error) => `Tidak dapat menambahkan file: ${error}`,
     dropFiles: (name) => `Letakkan file untuk menambahkannya ke "${name}"`,
-    searchPlaceholder: 'Cari file berdasarkan nama…',
-    noMatches: (query) => `Tidak ada file yang cocok dengan "${query}".`,
+    searchPlaceholder: 'Mulai mengetik untuk mencari file dan folder, tanpa perlu mengeklik di sini',
+    noMatches: (query) => `Tidak ada file atau folder yang cocok dengan "${query}".`,
     noFiles: 'Belum ada file yang diunduh untuk kursus ini.'
   },
 
@@ -170,6 +171,14 @@ export const id: Messages = {
     title: 'Nama unduhan',
     description: 'Berlaku untuk semua kursus. Kursus tanpa tag diunduh dengan nama file aslinya.',
     prefixCourseTag: 'Tambahkan tag kursus di awal nama unduhan (mis. TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Unduhan bersamaan',
+    description:
+      'Berapa banyak file kursus yang diunduh sekaligus. ' +
+      'Dengan lebih banyak, unduhan bisa selesai lebih cepat pada koneksi yang cepat, tetapi server Moodle institusi Anda mendapat beban lebih besar. ' +
+      'Bawaan: 2. Berlaku mulai unduhan berikutnya.'
   },
 
   sideMargin: {
@@ -288,6 +297,7 @@ export const id: Messages = {
     cannotScan: 'Halaman ini tidak dapat dipindai — buka tab kursus Moodle terlebih dahulu.',
     filesDownloaded: (count) => `${count} file diunduh`,
     downloading: 'Mengunduh...',
+    retrying: 'Mencoba lagi…',
     download: 'Unduh',
     history: 'Riwayat',
     addToQueue: 'Tambahkan ke antrean',
@@ -301,9 +311,14 @@ export const id: Messages = {
     processingLinks: 'Memproses tautan...',
     processing: (url) => `Memproses ${url}`,
     downloadingFiles: 'Mengunduh file...',
-    downloadingFile: (name) => `Mengunduh ${name}`,
     cancelled: (name, reason) =>
       `Unduhan dibatalkan: tidak dapat mengunduh "${name}" (${reason}). Tidak ada yang disimpan — coba lagi.`,
+    sessionExpired:
+      'Unduhan dibatalkan: Moodle meminta Anda masuk (sesi Anda mungkin sudah berakhir). Masuk ke Moodle lalu unduh lagi. Tidak ada yang disimpan.',
+    retrying: (name) => `Mencoba lagi "${name}"…`,
+    ignoredSkipped: (count) => `${count} file yang diabaikan dilewati.`,
+    unavailable: (count) =>
+      `${count} file tidak lagi tersedia di Moodle (tautannya menampilkan galat) dan tidak diunduh.`,
     downloadFailed: 'unduhan gagal',
     noResponse: 'Waktu habis menunggu respons',
     stalled: 'Macet: tidak ada data yang diterima tepat waktu',

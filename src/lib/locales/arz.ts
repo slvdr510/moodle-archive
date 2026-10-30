@@ -50,6 +50,7 @@ export const arz: Messages = {
     importCourses: 'استورد كورسات',
     recentSettings: 'إعدادات اللي اتفتح قريب',
     downloadNameSettings: 'إعدادات أسامي التنزيل',
+    concurrentDownloads: 'التنزيلات في نفس الوقت',
     sideMargin: 'الهوامش اللي على الجناب',
     courseListStyle: 'شكل قايمة الكورسات',
     setInstitution: 'حط المؤسسة لكورسات',
@@ -118,8 +119,8 @@ export const arz: Messages = {
       `أو لسه بيتنزّل. جرّب تاني من مكان ثابت. (${error})`,
     couldNotAdd: (fileCount, error) => `مقدرناش نضيف ${fileCount === 1 ? 'الملف' : 'الملفات'}: ${error}`,
     dropFiles: (name) => `سيب الملفات هنا علشان تضيفها لـ«${name}»`,
-    searchPlaceholder: 'دوّر على ملفات بالاسم…',
-    noMatches: (query) => `مفيش ملفات شبه «${query}».`,
+    searchPlaceholder: 'ابدأ اكتب عشان تدوّر على ملفات وفولدرات، من غير ما تدوس هنا',
+    noMatches: (query) => `مفيش ملفات ولا فولدرات شبه «${query}».`,
     noFiles: 'لسه مفيش ملفات اتنزّلت للكورس ده.'
   },
 
@@ -172,6 +173,14 @@ export const arz: Messages = {
     title: 'أسامي التنزيل',
     description: 'بيتطبق على كل الكورسات. الكورسات اللي ملهاش تاج بتتنزّل باسم الملف نفسه.',
     prefixCourseTag: 'حط تاج الكورس في أول اسم التنزيل (زي TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'التنزيلات في نفس الوقت',
+    description:
+      'كام ملف من الكورس يتنزّلوا في نفس الوقت. ' +
+      'لو زوّدتهم التنزيل ممكن يخلص أسرع لو النت سريع، بس الحمل بيزيد على سيرفر Moodle بتاع مؤسستك. ' +
+      'الافتراضي 2. بيتطبق من التنزيل الجاي.'
   },
 
   sideMargin: {
@@ -290,6 +299,7 @@ export const arz: Messages = {
     cannotScan: 'الصفحة دي مينفعش تتفحص — افتح تابة فيها كورس على Moodle الأول.',
     filesDownloaded: (count) => `اتنزّل ${count} ملف`,
     downloading: 'بينزّل...',
+    retrying: 'بنحاول تاني…',
     download: 'نزّل',
     history: 'التاريخ',
     addToQueue: 'ضيف للطابور',
@@ -303,9 +313,13 @@ export const arz: Messages = {
     processingLinks: 'بيجهّز اللينكات...',
     processing: (url) => `بيجهّز ${url}`,
     downloadingFiles: 'بينزّل الملفات...',
-    downloadingFile: (name) => `بينزّل ${name}`,
     cancelled: (name, reason) =>
       `التنزيل اتلغى: مقدرناش ننزّل «${name}» (${reason}). مفيش حاجة اتحفظت — جرّب تاني.`,
+    sessionExpired:
+      'التنزيل اتلغى: Moodle طلب تسجيل الدخول (ممكن الجلسة بتاعتك خلصت). سجّل دخول في Moodle ونزّل تاني. مفيش حاجة اتحفظت.',
+    retrying: (name) => `بنحاول تاني في «${name}»…`,
+    ignoredSkipped: (count) => `اتخطّينا ${count} ملف متجاهل.`,
+    unavailable: (count) => `${count} ملف مبقاش موجود على Moodle (اللينك بيطلّع خطأ) ومتنزّلش.`,
     downloadFailed: 'التنزيل فشل',
     noResponse: 'الوقت خلص واحنا مستنيين رد',
     stalled: 'واقف: مفيش بيانات وصلت في الوقت',

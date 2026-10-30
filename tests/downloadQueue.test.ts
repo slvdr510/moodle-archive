@@ -7,6 +7,7 @@ import {
   finishCurrent,
   removeFromQueue,
   requestDownload,
+  showActiveFile,
   startNext,
   tabGone,
   type QueuedDownload
@@ -98,5 +99,17 @@ describe('isDownloadableUrl', () => {
     expect(isDownloadableUrl('https://www.google.com/')).toBe(false);
     expect(isDownloadableUrl('chrome://extensions/')).toBe(false);
     expect(isDownloadableUrl('')).toBe(false);
+  });
+
+  it('keeps which file each side-by-side download is on, until the download finishes', () => {
+    let state = requestDownload(INITIAL_DOWNLOAD_STATE, course(1, 10)).state;
+    state = showActiveFile(state, { slot: 1, name: 'Grabacion.mp4' });
+    expect(state.activeFiles).toEqual([null, { name: 'Grabacion.mp4' }]);
+    state = showActiveFile(state, { slot: 1, name: 'Grabacion.mp4', retrying: true });
+    expect(state.activeFiles).toEqual([null, { name: 'Grabacion.mp4', retrying: true }]);
+    state = showActiveFile(state, { slot: 0, name: 'Tema_1.pdf' });
+    state = showActiveFile(state, { slot: 1, name: null });
+    expect(state.activeFiles).toEqual([{ name: 'Tema_1.pdf' }, null]);
+    expect(finishCurrent(state).activeFiles).toBeUndefined();
   });
 });

@@ -49,6 +49,7 @@ export const zh: Messages = {
     importCourses: '导入课程',
     recentSettings: '最近打开设置',
     downloadNameSettings: '下载文件名设置',
+    concurrentDownloads: '同时下载数',
     sideMargin: '两侧边距',
     courseListStyle: '课程列表样式',
     setInstitution: '为课程设置机构',
@@ -111,8 +112,8 @@ export const zh: Messages = {
       `请从稳定的位置重试。（${error}）`,
     couldNotAdd: (_fileCount, error) => `无法添加文件：${error}`,
     dropFiles: (name) => `拖放文件以添加到“${name}”`,
-    searchPlaceholder: '按名称搜索文件…',
-    noMatches: (query) => `没有与“${query}”匹配的文件。`,
+    searchPlaceholder: '直接输入即可搜索文件和文件夹，无需点击此处',
+    noMatches: (query) => `没有与“${query}”匹配的文件或文件夹。`,
     noFiles: '此课程尚未下载任何文件。'
   },
 
@@ -163,6 +164,12 @@ export const zh: Messages = {
     title: '下载文件名',
     description: '适用于所有课程。没有标签的课程会以文件本身的名称下载。',
     prefixCourseTag: '在下载文件名开头添加课程标签（例如 TAG_file.pdf）'
+  },
+
+  concurrentDownloads: {
+    title: '同时下载数',
+    description:
+      '一门课程同时下载多少个文件。网速较快时，数量越多可能完成得越快，但会加重你所在机构 Moodle 服务器的负担。默认为 2。从下一次下载开始生效。'
   },
 
   sideMargin: {
@@ -278,6 +285,7 @@ export const zh: Messages = {
     cannotScan: '无法扫描此页面——请先打开一个 Moodle 课程标签页。',
     filesDownloaded: (count) => `已下载 ${count} 个文件`,
     downloading: '正在下载...',
+    retrying: '正在重试…',
     download: '下载',
     history: '历史记录',
     addToQueue: '加入队列',
@@ -291,9 +299,13 @@ export const zh: Messages = {
     processingLinks: '正在处理链接...',
     processing: (url) => `正在处理 ${url}`,
     downloadingFiles: '正在下载文件...',
-    downloadingFile: (name) => `正在下载 ${name}`,
     cancelled: (name, reason) =>
       `下载已取消：无法下载“${name}”（${reason}）。未保存任何内容，请重试。`,
+    sessionExpired:
+      '下载已取消：Moodle 要求登录（你的会话可能已过期）。请登录 Moodle 后重新下载。未保存任何内容。',
+    retrying: (name) => `正在重试“${name}”…`,
+    ignoredSkipped: (count) => `已跳过 ${count} 个已忽略的文件。`,
+    unavailable: (count) => `${count} 个文件在 Moodle 上已不可用（链接出错），未下载。`,
     downloadFailed: '下载失败',
     noResponse: '等待响应超时',
     stalled: '已停滞：未能及时收到数据',

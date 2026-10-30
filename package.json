@@ -1,12 +1,15 @@
 {
   "name": "moodle-archive",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "node scripts/build-icons.mjs && tsc -b && vite build && vite build --config vite.content.config.ts",
     "package": "npm run build && cd dist && zip -r -X ../moodle-archive.zip . -x '.*' && cd ..",
+    "build:firefox": "tsc -b && vite build --mode firefox && vite build --config vite.content.config.ts --mode firefox",
+    "package:firefox": "npm run build:firefox && cd dist-firefox && zip -r -X ../moodle-archive-firefox.zip . -x '.*' && cd ..",
+    "package:source": "git archive --format=zip --output=moodle-archive-source.zip HEAD",
     "test": "vitest run",
     "typecheck": "tsc -b --noEmit"
   },

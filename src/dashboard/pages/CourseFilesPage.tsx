@@ -6,7 +6,7 @@ import { displayPath, ignoreState, isIgnoredPath, toggleIgnoredPath } from '../.
 import { coursePageTitle, withoutTag } from '../../lib/courseNames';
 import { hasCourseTag } from '../../lib/downloadNameSettings';
 import { addManualFiles } from '../../lib/repository';
-import { filterFilesByQuery } from '../../lib/search';
+import { searchFileTree } from '../../lib/search';
 import type { Course, FileRecord, RecentOpenRecord, VersionRecord } from '../../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { DropdownMenu } from '../components/DropdownMenu';
@@ -21,6 +21,8 @@ import { useDateColumnWidth } from '../hooks/useDateColumnWidth';
 import { PreloadedVersionsContext } from '../hooks/useFileOpener';
 import { useFileDrop } from '../hooks/useFileDrop';
 import { IgnoredFilesContext, type IgnoredFiles } from '../hooks/useIgnoredFiles';
+import { useScrollFromAnywhere } from '../hooks/useScrollFromAnywhere';
+import { useTypeToSearch } from '../hooks/useTypeToSearch';
 import { useT } from '../hooks/useTranslation';
 
 /** A file the user picked or dropped, already read into memory. */
@@ -68,6 +70,9 @@ export function CourseFilesPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileListRef = useRef<HTMLUListElement>(null);
   useDateColumnWidth(fileListRef);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useScrollFromAnywhere(fileListRef, searchInputRef);
+  useTypeToSearch(searchInputRef);
 
   // Everything the page shows is read first — the course, its files, recently opened,
   // and every file's versions — and the page only shown once it all is, so it
@@ -224,16 +229,13 @@ export function CourseFilesPage({
   const filesById = useMemo(() => new Map(files.map((f) => [f.id, f])), [files]);
 
   const isSearching = query.trim().length > 0;
-  const displayedFiles = useMemo(
-    () => (isSearching ? filterFilesByQuery(files, query) : files),
-    [files, query, isSearching]
+  const fullTree = useMemo(() => buildFileTree(files), [files]);
+  // Search results are the same tree cut down to what's found, so they keep the real
+  // folder structure instead of a flat list of full paths — see searchFileTree.
+  const { nodes: tree, openFolders } = useMemo(
+    () => (isSearching ? searchFileTree(fullTree, query) : { nodes: fullTree, openFolders: undefined }),
+    [fullTree, query, isSearching]
   );
-  // Reuses the same tree-building as the normal view, just scoped to the matching
-  // files, so search results keep the real folder structure instead of a flat
-  // list of full paths. `files` (the full list) is passed as the reference so the
-  // redundant-root-folder unwrapping is decided from the real structure, not from
-  // however few files happen to match the search.
-  const tree = useMemo(() => buildFileTree(displayedFiles, files), [displayedFiles, files]);
 
   // Where the upload modal can put things. Always built from the full file list, never
   // the search-filtered one, and expressed in real paths (the root is the hidden
@@ -241,11 +243,11 @@ export function CourseFilesPage({
   const rootPath = useMemo(() => getRootFolderPath(files), [files]);
   const folderOptions = useMemo(
     () =>
-      listFolders(buildFileTree(files)).map((folder) => ({
+      listFolders(fullTree).map((folder) => ({
         path: folder.path,
         label: rootPath && folder.path.startsWith(`${rootPath}/`) ? folder.path.slice(rootPath.length + 1) : folder.path
       })),
-    [files, rootPath]
+    [fullTree, rootPath]
   );
   const existingPaths = useMemo(() => new Set(files.map((f) => f.relativePath)), [files]);
 
@@ -437,11 +439,18 @@ export function CourseFilesPage({
           <RecentlyOpened records={recentOpens} filesById={filesById} onChange={refreshRecentOpens} />
 
           <input
+            ref={searchInputRef}
             className="search-input"
             type="text"
             placeholder={t.courseFiles.searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              // Esc clears the search; with nothing left to clear, it leaves the box.
+              if (e.key !== 'Escape') return;
+              if (query) setQuery('');
+              else e.currentTarget.blur();
+            }}
           />
 
           <ul className="file-list" ref={fileListRef}>
@@ -453,9 +462,9 @@ export function CourseFilesPage({
                   depth={0}
                   onFileOpened={refreshRecentOpens}
                   onFileDeleted={handleFileDeleted}
-                  onFolderDeleted={isSearching ? undefined : handleFilesDeleted}
-                  canDownload={!isSearching}
-                  defaultExpanded={isSearching}
+                  onFolderDeleted={handleFilesDeleted}
+                  canDownload
+                  openFolders={openFolders}
                 />
               ) : (
                 <FileRow

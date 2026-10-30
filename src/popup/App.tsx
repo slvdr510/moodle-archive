@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { FileDownloadProgress } from '../content/moodleCrawler';
 import { formatBytes } from '../lib/bytes';
 import { openDashboard } from '../lib/dashboardTab';
 import { useT } from '../dashboard/hooks/useTranslation';
@@ -13,12 +14,10 @@ import {
   type RequestDownloadResponse
 } from '../lib/downloadState';
 
-interface FileDownloadProgress {
-  /** Cumulative bytes downloaded so far across the whole course — never reset
-   *  between files, so a speed reading derived from it never has to fake a
-   *  per-file restart (see moodleCrawler.ts). */
-  current: number;
-}
+// How far back each speed looks. Bytes don't arrive evenly: while a piece of a file is
+// handed over none are read, and then the ones waiting come in at once, so over a
+// fraction of a second the speed swung between nearly 0 and tens of MB/s.
+const SPEED_WINDOW_MS = 2000;
 
 function sendToBackground(message: DownloadRequestMessage): Promise<unknown> {
   return chrome.runtime.sendMessage(message);
@@ -39,12 +38,13 @@ export function App() {
   // Set only when the downloader couldn't even be injected, so it never reaches the
   // background's state.
   const [injectionError, setInjectionError] = useState<string | undefined>(undefined);
-  const [speedBps, setSpeedBps] = useState<number | undefined>(undefined);
+  // Of each file coming down side by side, by its slot (see DownloadState.activeFiles).
+  const [speeds, setSpeeds] = useState<(number | undefined)[]>([]);
   const [shaking, setShaking] = useState(false);
 
-  // Speed is derived from consecutive 'download-bytes' samples rather than kept in
-  // state, so re-renders aren't needed just to track the previous sample.
-  const lastSampleRef = useRef<{ bytes: number; time: number } | null>(null);
+  // Speeds are derived from each slot's recent 'download-bytes' samples rather than
+  // kept in state, so re-renders aren't needed just to track the samples.
+  const samplesRef = useRef(new Map<number, { bytes: number; time: number }[]>());
   const activeTabIdRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function App() {
     return unsubscribe;
   }, []);
 
-  const { status, downloadCount, progress, current, queue } = downloadState;
+  const { status, downloadCount, progress, current, queue, activeFiles } = downloadState;
   const isProcessing = status === 'processing';
 
   // Marks the finished result as seen while it's on screen. Display doesn't depend
@@ -78,8 +78,8 @@ export function App() {
   useEffect(() => {
     if (!isProcessing) return;
     setHideFinished(false);
-    setSpeedBps(undefined);
-    lastSampleRef.current = null;
+    setSpeeds([]);
+    samplesRef.current.clear();
   }, [isProcessing, current?.tabId]);
 
   useEffect(() => {
@@ -87,18 +87,26 @@ export function App() {
       if (typeof message !== 'object' || message === null) return;
       const { topic, payload } = message as { topic?: string; payload?: unknown };
       if (topic === 'download-bytes') {
-        const { current } = payload as FileDownloadProgress;
-        const now = performance.now();
-        const last = lastSampleRef.current;
-        // `current` only ever climbs (it's cumulative across the whole course, not
-        // reset per file), so a brief connection-setup gap between files just
+        const { slot, current, time } = payload as FileDownloadProgress;
+        const samples = samplesRef.current.get(slot) ?? [];
+        samplesRef.current.set(slot, samples);
+        // `current` only ever climbs (it's cumulative across all of the slot's files,
+        // not reset per file), so a brief connection-setup gap between files just
         // shows up as a lower reading over that interval — never a hard jump to
-        // 0 — while a real stall still reads as genuinely close to 0.
-        if (last && current >= last.bytes) {
-          const elapsedSeconds = (now - last.time) / 1000;
-          if (elapsedSeconds > 0) setSpeedBps((current - last.bytes) / elapsedSeconds);
+        // 0 — while a real stall still reads as genuinely close to 0. It only drops
+        // when a file is tried again from its start: count from there.
+        if (samples.length > 0 && current < samples[samples.length - 1].bytes) {
+          samples.length = 0;
+          setSpeeds((previous) => Object.assign([...previous], { [slot]: undefined }));
         }
-        lastSampleRef.current = { bytes: current, time: now };
+        samples.push({ bytes: current, time });
+        // The oldest sample kept is the last one at least SPEED_WINDOW_MS old.
+        while (samples.length > 2 && time - samples[1].time >= SPEED_WINDOW_MS) samples.shift();
+        const first = samples[0];
+        if (time > first.time) {
+          const speed = (current - first.bytes) / ((time - first.time) / 1000);
+          setSpeeds((previous) => Object.assign([...previous], { [slot]: speed }));
+        }
       }
       // Only this tab's own download failing to find anything shakes its button —
       // not a queued download running in some other tab.
@@ -174,14 +182,27 @@ export function App() {
             <progress className="popup-progress" value={progress.current} max={progress.total} />
           )}
 
-          {isProcessing && (downloadCount > 0 || speedBps !== undefined) && (
+          {/* Each file coming down, with its own speed: they come down side by side. */}
+          {isProcessing &&
+            activeFiles?.map(
+              (file, slot) =>
+                file && (
+                  <p key={slot} className="popup-file">
+                    <span title={file.name}>{file.name}</span>
+                    <span className="popup-speed">
+                      {file.retrying
+                        ? t.popup.retrying
+                        : speeds[slot] !== undefined
+                          ? `${formatBytes(Math.round(speeds[slot]))}/s`
+                          : ''}
+                    </span>
+                  </p>
+                )
+            )}
+
+          {isProcessing && downloadCount > 0 && (
             <p className="popup-count">
-              {/* Bytes start flowing for file #1 before it's actually finished (and only
-                  then does downloadCount tick up from 0) — showing "0 file(s)" or nothing
-                  in that window looked broken next to an already-moving speed, so floor
-                  it at 1 for as long as this row is visible at all. */}
-              <span>{t.popup.filesDownloaded(Math.max(downloadCount, 1))}</span>
-              <span className="popup-speed">{speedBps !== undefined ? `${formatBytes(Math.round(speedBps))}/s` : ''}</span>
+              <span>{t.popup.filesDownloaded(downloadCount)}</span>
             </p>
           )}
         </div>

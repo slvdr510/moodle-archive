@@ -24,8 +24,3 @@ function useElementSize(
 export function useElementWidth(ref: RefObject<HTMLElement | null>): number {
   return useElementSize(ref, 'width', Infinity);
 }
-
-/** `ref`'s current height in px — 0 until measured. */
-export function useElementHeight(ref: RefObject<HTMLElement | null>): number {
-  return useElementSize(ref, 'height', 0);
-}

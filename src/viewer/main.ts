@@ -35,7 +35,7 @@ function showFramed(filename: string, content: HTMLElement, download: () => void
   name.title = filename;
   const downloadButton = document.createElement('button');
   downloadButton.type = 'button';
-  downloadButton.innerHTML = DOWNLOAD_ICON;
+  downloadButton.append(iconElement(DOWNLOAD_ICON));
   downloadButton.title = t.popup.download;
   downloadButton.setAttribute('aria-label', t.popup.download);
   downloadButton.addEventListener('click', download);
@@ -54,7 +54,10 @@ const PAN_STEP = 60;
 // Drawn as SVG rather than Unicode arrows, which look different (or don't show at all)
 // depending on the fonts installed.
 const svgIcon = (paths: string): string =>
-  `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+/** `icon`, one of the ones below, as a node of its own — parsed, rather than written into
+ *  the page as HTML. */
+const iconElement = (icon: string): Element => new DOMParser().parseFromString(icon, 'image/svg+xml').documentElement;
 const DOWNLOAD_ICON = svgIcon('<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>');
 /** An arrow spanning top to bottom: the image as tall as the window. */
 const FIT_VERTICALLY_ICON = svgIcon(
@@ -119,7 +122,7 @@ function enableImagePanZoom(image: HTMLImageElement, header: HTMLElement, t: Mes
     // The button shows what pressing it does: fit the other way once fitted vertically.
     const offersHorizontal = fitsVertically();
     const fitTitle = offersHorizontal ? t.viewer.fitHorizontally : t.viewer.fitVertically;
-    fitButton.innerHTML = offersHorizontal ? FIT_HORIZONTALLY_ICON : FIT_VERTICALLY_ICON;
+    fitButton.replaceChildren(iconElement(offersHorizontal ? FIT_HORIZONTALLY_ICON : FIT_VERTICALLY_ICON));
     fitButton.title = fitTitle;
     fitButton.setAttribute('aria-label', fitTitle);
     main.classList.toggle('pannable', view.scale > minScale + 1e-9);

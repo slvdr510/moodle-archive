@@ -6,9 +6,9 @@ import { defineConfig } from 'vite';
 // front for arbitrary self-hosted Moodle domains. chrome.scripting.executeScript's `files`
 // option needs a single, import-free script, so this is built separately from the main
 // crxjs/Vite build (which produces ES modules) as one self-contained IIFE bundle.
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   build: {
-    outDir: 'dist',
+    outDir: mode === 'firefox' ? 'dist-firefox' : 'dist',
     emptyOutDir: false,
     lib: {
       entry: 'src/content/main.ts',
@@ -17,4 +17,4 @@ export default defineConfig({
       fileName: () => 'content/main.js'
     }
   }
-});
+}));

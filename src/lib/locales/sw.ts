@@ -49,6 +49,7 @@ export const sw: Messages = {
     importCourses: 'Leta kozi',
     recentSettings: 'Mipangilio ya zilizofunguliwa hivi karibuni',
     downloadNameSettings: 'Mipangilio ya majina ya vipakuliwa',
+    concurrentDownloads: 'Vipakuliwa kwa wakati mmoja',
     sideMargin: 'Pambizo za pembeni',
     courseListStyle: 'Mtindo wa orodha ya kozi',
     setInstitution: 'Weka taasisi kwa kozi',
@@ -118,8 +119,8 @@ export const sw: Messages = {
     couldNotAdd: (fileCount, error) =>
       `Imeshindwa kuongeza ${fileCount === 1 ? 'faili' : 'faili hizo'}: ${error}`,
     dropFiles: (name) => `Dondosha faili ili kuziongeza kwenye "${name}"`,
-    searchPlaceholder: 'Tafuta faili kwa jina…',
-    noMatches: (query) => `Hakuna faili zinazolingana na "${query}".`,
+    searchPlaceholder: 'Anza kuandika ili kutafuta faili na folda, bila kubofya hapa',
+    noMatches: (query) => `Hakuna faili wala folda zinazolingana na "${query}".`,
     noFiles: 'Bado hakuna faili zilizopakuliwa kwa kozi hii.'
   },
 
@@ -172,6 +173,14 @@ export const sw: Messages = {
     title: 'Majina ya vipakuliwa',
     description: 'Inatumika kwa kozi zote. Kozi zisizo na lebo hupakuliwa kwa jina asili la faili.',
     prefixCourseTag: 'Ongeza lebo ya kozi mwanzoni mwa majina ya vipakuliwa (k.m. LEBO_faili.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Vipakuliwa kwa wakati mmoja',
+    description:
+      'Ni faili ngapi za kozi zinazopakuliwa kwa wakati mmoja. ' +
+      'Zikiwa nyingi zaidi, upakuaji unaweza kuisha mapema kwenye muunganisho wa kasi, lakini seva ya Moodle ya taasisi yako hupata mzigo zaidi. ' +
+      'Chaguo-msingi: 2. Inatumika kuanzia upakuaji unaofuata.'
   },
 
   sideMargin: {
@@ -290,6 +299,7 @@ export const sw: Messages = {
     cannotScan: 'Ukurasa huu hauwezi kuchanganuliwa — fungua kichupo cha kozi ya Moodle kwanza.',
     filesDownloaded: (count) => `Faili ${count} zimepakuliwa`,
     downloading: 'Inapakua...',
+    retrying: 'Inajaribu tena…',
     download: 'Pakua',
     history: 'Historia',
     addToQueue: 'Ongeza kwenye foleni',
@@ -303,9 +313,14 @@ export const sw: Messages = {
     processingLinks: 'Inachakata viungo...',
     processing: (url) => `Inachakata ${url}`,
     downloadingFiles: 'Inapakua faili...',
-    downloadingFile: (name) => `Inapakua ${name}`,
     cancelled: (name, reason) =>
       `Upakuaji umeghairiwa: imeshindwa kupakua "${name}" (${reason}). Hakuna kilichohifadhiwa — jaribu tena.`,
+    sessionExpired:
+      'Upakuaji umeghairiwa: Moodle imeomba uingie (huenda muda wa kipindi chako umeisha). Ingia kwenye Moodle kisha upakue tena. Hakuna kilichohifadhiwa.',
+    retrying: (name) => `Inajaribu tena "${name}"…`,
+    ignoredSkipped: (count) => count === 1 ? 'Faili 1 inayopuuzwa imerukwa.' : `Faili ${count} zinazopuuzwa zimerukwa.`,
+    unavailable: (count) =>
+      count === 1 ? 'Faili 1 haipatikani tena kwenye Moodle (kiungo chake kinaleta hitilafu) na haikupakuliwa.' : `Faili ${count} hazipatikani tena kwenye Moodle (viungo vyake vinaleta hitilafu) na hazikupakuliwa.`,
     downloadFailed: 'upakuaji umeshindwa',
     noResponse: 'Muda umekwisha ukisubiri jibu',
     stalled: 'Imekwama: hakuna data iliyopokelewa kwa wakati',

@@ -2,7 +2,7 @@
 
 [Chrome web store link](https://chromewebstore.google.com/detail/fnhkaidabjeciifnkipdeodjdmheejpj?utm_source=item-share-cb)
 
-A Chrome extension (Manifest V3) that downloads the files from a Moodle course
+A browser extension for Chrome and Firefox (Manifest V3) that downloads the files from a Moodle course
 and keeps a full version history of them — entirely inside the browser, with no
 server, no account, and no folder permissions.
 
@@ -14,7 +14,18 @@ everything else is deduplicated by content hash.
 ## Features
 
 - **One-click course download** — crawls a Moodle course page (including
-  folders and sub-resources) and pulls down every file it finds.
+  folders, sub-resources, and each assignment's files: its statement and what you
+  handed in) and pulls down every file it finds, two at a time by default (up to
+  four, under **Simultaneous downloads** in the course list's ⋮ menu).
+- **Nothing saved halfway** — a download is saved only once every file has come
+  down. A connection that drops for a moment is retried on its own; one that
+  stays down, or Moodle asking you to log in again, cancels the download and
+  leaves the course exactly as it was. A file Moodle no longer has (or no longer
+  lets you open) is left out, rather than saved as its error page.
+- **Ignore files and folders** — ignored ones aren't downloaded again, and keep
+  the versions you already have.
+- **Search** — inside a course, just start typing to find files and folders by
+  name; a folder whose name matches shows with everything in it.
 - **Version history per file** — every time a file's content changes, a new
   version is kept; unchanged files aren't re-stored.
 - **Diff viewer** — compare any two versions of a text file side by side.
@@ -56,7 +67,7 @@ When you click **Download** on a Moodle course page, the extension reads the
 content of that page (file names, links, and folder structure) to find the
 files it needs to fetch. That content — along with the files themselves and
 their version history — is stored **only** in your browser's local IndexedDB
-storage. Nothing ever leaves your device, except for the files Chrome itself
+storage. Nothing ever leaves your device, except for the files the browser itself
 writes to your Downloads folder when you ask it to (via **Download**,
 **Backup / restore**, or opening a file).
 
@@ -68,8 +79,9 @@ writes to your Downloads folder when you ask it to (via **Download**,
 | `scripting` | Injects the crawler script into the active tab on demand, to read the course page and find its files. |
 | `tabs` | Reads the active tab's URL to confirm it's a Moodle course page, and lets the popup and dashboard communicate with it. |
 | `downloads` | Saves fetched files — and full backup `.zip` exports, if you use that feature — to your Downloads folder. |
-| `downloads.open` | Lets you open a previously downloaded file straight from the extension's history view. |
-| `storage` | Keeps the progress of a running download in session storage (cleared when the browser closes), so the popup shows where things stand if you close and reopen it mid-download. |
+| `downloads.open` | Lets you open a previously downloaded file straight from the extension's history view. Chrome only: Firefox lets an extension open a download only right from the click, so there the file is left in Firefox's downloads instead, and the permission isn't requested. |
+| `storage` | Keeps the progress of a running download in session storage (cleared when the browser closes), so the popup shows where things stand if you close and reopen it mid-download, and the few settings the Moodle tab reads while downloading (language and simultaneous downloads) in local storage. |
+| `unlimitedStorage` | Lifts the size limit on the extension's local database and stops Chrome from clearing it on its own when the disk runs low, which would otherwise erase your version history without warning. Nothing is stored anywhere but on your device. |
 
 ### Data storage and retention
 
@@ -93,13 +105,15 @@ Questions about any of this can be raised as an issue on this repository.
 
 ## Installing
 
-There's no Chrome Web Store listing (yet) — install it unpacked from source:
+Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/fnhkaidabjeciifnkipdeodjdmheejpj),
+or from source:
 
 ```sh
 git clone https://github.com/slvdr510/moodle-archive.git
 cd moodle-archive
 npm install
-npm run build
+npm run build           # Chrome, into dist/
+npm run build:firefox   # Firefox (140 or later), into dist-firefox/
 ```
 
 Then in Chrome:
@@ -107,6 +121,13 @@ Then in Chrome:
 1. Go to `chrome://extensions`.
 2. Enable **Developer mode** (top right).
 3. Click **Load unpacked** and select the `dist/` folder produced by the build.
+
+Or in Firefox:
+
+1. Go to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…** and select `dist-firefox/manifest.json`.
+
+Firefox removes a temporary add-on when it closes, so this is for trying it out.
 
 ## Usage
 
@@ -118,12 +139,18 @@ Then in Chrome:
 Re-running **Download** on the same course later only stores what changed. The
 download keeps running if you close the popup; reopening it shows the current
 progress. If the Moodle tab is closed or navigates away mid-download, the
-download is reported as interrupted.
+download is reported as interrupted. Then — as when the connection stays down,
+or Moodle asks you to log in again — nothing from that download is saved, and
+the course stays as it was.
 
 To add a file yourself, open a course in the dashboard and drop the file onto
 the page (or choose **Add file…** from the course's menu), then pick its
 folder. Same name in the same folder = a new version of that file; a new name =
 a new file tagged **Manual**.
+
+Files the dashboard can't show itself (anything but PDFs, images and text) are
+downloaded and opened with your system's app. In Firefox they're only
+downloaded: open them from Firefox's downloads, in the toolbar.
 
 To back up your courses or move them to another browser, see
 [Exporting and importing courses](#exporting-and-importing-courses).
@@ -144,8 +171,8 @@ browser or in another one — brings it all back.
 
 Not included: whether a course is hidden (a backup always saves it as shown),
 and settings that belong to your browser rather than to any course — theme,
-language, card or row view, side margins, date format, download names and the
-recently opened settings.
+language, card or row view, side margins, date format, download names,
+simultaneous downloads and the recently opened settings.
 
 ### Exporting
 
@@ -198,18 +225,42 @@ course in one of them and import it into the others.
 ## Development
 
 ```sh
-npm run dev         # Vite dev server for the dashboard/popup UI
-npm run build        # Full production build into dist/
-npm run typecheck    # tsc, no emit
-npm test             # vitest
+npm run dev              # Vite dev server for the dashboard/popup UI
+npm run build            # Full production build into dist/
+npm run typecheck        # tsc, no emit
+npm test                 # vitest
+npm run package          # Production build, zipped for the Chrome Web Store
+npm run build:firefox    # Firefox build into dist-firefox/
+npm run package:firefox  # Firefox build, zipped for addons.mozilla.org
+npm run package:source   # The committed source, zipped for addons.mozilla.org's review
 ```
+
+`npm run dev` doesn't rebuild the content script: after changing `src/content/`,
+rebuild it with `npx vite build --config vite.content.config.ts`.
+
+### Building the Firefox version from source
+
+The Firefox package is bundled and minified, so addons.mozilla.org reviews it
+from this source. To build it:
+
+1. Install Node.js 24 (built with 24.12.0) and npm 11. Any operating system
+   works.
+2. In the source folder, run `npm ci` and then `npm run build:firefox`.
+
+The result, in `dist-firefox/`, is the content of the submitted package, file
+for file. The icons are committed as PNGs, so this build doesn't redraw them
+from `src/icons/icon.svg` (`npm run build` does, with `rsvg-convert`).
+
+The bundle includes, unmodified from npm: Preact, JSZip (with its
+`setimmediate` dependency), idb, diff and the Inter font.
 
 ### Project layout
 
 - `src/content/` — the content script that crawls and downloads a course's
   files from the Moodle page itself (it needs to run in that page's origin to
   reuse the user's session).
-- `src/background/` — the MV3 service worker: receives the crawled files,
+- `src/background/` — the background script (a service worker in Chrome, an
+  event page in Firefox): receives the crawled files,
   diffs them against what's already known, and stores new/changed versions in
   IndexedDB.
 - `src/dashboard/` — the full-page React UI for browsing courses, files, and

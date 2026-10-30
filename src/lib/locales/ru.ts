@@ -58,6 +58,7 @@ export const ru: Messages = {
     importCourses: 'Импортировать курсы',
     recentSettings: 'Настройки недавно открытых',
     downloadNameSettings: 'Настройки имён файлов при скачивании',
+    concurrentDownloads: 'Одновременные скачивания',
     sideMargin: 'Боковые поля',
     courseListStyle: 'Вид списка курсов',
     setInstitution: 'Задать учреждение для курсов',
@@ -127,8 +128,8 @@ export const ru: Messages = {
     couldNotAdd: (fileCount, error) =>
       `Не удалось добавить ${fileCount === 1 ? 'файл' : 'файлы'}: ${error}`,
     dropFiles: (name) => `Перетащите файлы, чтобы добавить их в «${name}»`,
-    searchPlaceholder: 'Поиск файлов по имени…',
-    noMatches: (query) => `Нет файлов, соответствующих «${query}».`,
+    searchPlaceholder: 'Начните печатать для поиска файлов и папок — нажимать сюда не нужно',
+    noMatches: (query) => `Нет файлов или папок, соответствующих «${query}».`,
     noFiles: 'Для этого курса ещё не скачано ни одного файла.'
   },
 
@@ -181,6 +182,14 @@ export const ru: Messages = {
     title: 'Имена при скачивании',
     description: 'Применяется ко всем курсам. Файлы курсов без метки скачиваются под собственным именем.',
     prefixCourseTag: 'Добавлять метку курса в начало имени скачиваемого файла (например, МЕТКА_файл.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Одновременные скачивания',
+    description:
+      'Сколько файлов курса скачивается одновременно. ' +
+      'При большем числе скачивание может закончиться быстрее на быстром соединении, но сильнее нагружает сервер Moodle вашего учреждения. ' +
+      'По умолчанию 2. Применяется со следующего скачивания.'
   },
 
   sideMargin: {
@@ -299,6 +308,7 @@ export const ru: Messages = {
     cannotScan: 'Эту страницу нельзя просканировать — сначала откройте вкладку с курсом Moodle.',
     filesDownloaded: (count) => `Скачано ${plural(count, 'файл', 'файла', 'файлов')}: ${count}`,
     downloading: 'Скачивание...',
+    retrying: 'Повторная попытка…',
     download: 'Скачать',
     history: 'История',
     addToQueue: 'Добавить в очередь',
@@ -312,9 +322,13 @@ export const ru: Messages = {
     processingLinks: 'Обработка ссылок...',
     processing: (url) => `Обработка ${url}`,
     downloadingFiles: 'Скачивание файлов...',
-    downloadingFile: (name) => `Скачивание ${name}`,
     cancelled: (name, reason) =>
       `Скачивание отменено: не удалось скачать «${name}» (${reason}). Ничего не сохранено — попробуйте снова.`,
+    sessionExpired:
+      'Скачивание отменено: Moodle просит войти (возможно, ваша сессия истекла). Войдите в Moodle и скачайте снова. Ничего не сохранено.',
+    retrying: (name) => `Повторная попытка: «${name}»…`,
+    ignoredSkipped: (count) => `Пропущено игнорируемых файлов: ${count}.`,
+    unavailable: (count) => `Не скачано файлов, которых больше нет в Moodle (ссылка выдаёт ошибку): ${count}.`,
     downloadFailed: 'ошибка скачивания',
     noResponse: 'Истекло время ожидания ответа',
     stalled: 'Зависло: данные не получены вовремя',

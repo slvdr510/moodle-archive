@@ -88,6 +88,22 @@ export function isIgnoredPath(relativePath: string, rootPath: string, ignoredPat
   return ignoreState(displayPath(relativePath, rootPath), ignoredPaths) !== 'none';
 }
 
+/** Whether everything in the folder at `relativePath` (a real path, without a
+ *  trailing slash) is ignored, by that folder or one it's in. The root never is. */
+export function isIgnoredFolder(relativePath: string, rootPath: string, ignoredPaths: readonly string[] | undefined): boolean {
+  if (relativePath === rootPath) return false;
+  return ignoreState(displayPath(relativePath, rootPath), ignoredPaths, true) !== 'none';
+}
+
+/** What a download needs to leave a course's ignored files out before fetching them:
+ *  the course's ignored paths, and the root they're relative to (see displayPath). */
+export interface IgnoreRules {
+  ignoredPaths: string[];
+  rootPath: string;
+}
+
+export const NO_IGNORE_RULES: IgnoreRules = { ignoredPaths: [], rootPath: '' };
+
 /** Whether `entry` (an ignored path) covers any of `filePaths` (files' paths from the
  *  course root) — false for one typed ahead of the file or folder existing. */
 export function ignoredPathMatchesAny(entry: string, filePaths: readonly string[]): boolean {

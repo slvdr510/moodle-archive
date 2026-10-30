@@ -1,6 +1,7 @@
 .directory
 node_modules/
 dist/
+dist-firefox/
 *.local
 *.tsbuildinfo
 *.zip

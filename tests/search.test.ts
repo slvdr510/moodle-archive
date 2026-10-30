@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { filterFilesByQuery } from '../src/lib/search';
+import { buildFileTree, type TreeNode } from '../src/lib/fileTree';
+import { filterFilesByQuery, searchFileTree } from '../src/lib/search';
 import type { FileRecord, FileStatus } from '../src/types';
 
 function makeFile(relativePath: string, currentStatus: FileStatus = 'unchanged'): FileRecord {
@@ -90,5 +91,69 @@ describe('filterFilesByQuery', () => {
 
   it('splits punctuation inside a term like a space, e.g. "tema-3" finds "TEMA_3.pdf"', () => {
     expect(filterFilesByQuery([makeFile('TEMA_3.pdf'), makeFile('TEMA_4.pdf')], 'tema-3')).toHaveLength(1);
+  });
+});
+
+/** A search's results, one line per row: a folder with whether it shows open, and
+ *  everything inside it (even closed, to show what opening it reveals). */
+function searchOutline(paths: string[], query: string): string[] {
+  const files = paths.map((path) => makeFile(path));
+  const { nodes, openFolders } = searchFileTree(buildFileTree(files), query);
+  function walk(list: TreeNode[], indent: string): string[] {
+    return list.flatMap((node) =>
+      node.kind === 'file'
+        ? [indent + node.name]
+        : [`${indent}${node.name}/ ${openFolders.has(node.path) ? 'open' : 'closed'}`, ...walk(node.children, indent + '  ')]
+    );
+  }
+  return walk(nodes, '');
+}
+
+describe('searchFileTree', () => {
+  // Each course has a file of its own at the top, so its folders aren't taken for the
+  // wrapper folder buildFileTree hides.
+  it('shows a folder whose name matches, with nothing found inside, closed and whole', () => {
+    expect(searchOutline(['Redes/guia.pdf', 'Redes/Practicas/enunciado.pdf', 'Redes/Practicas/datos.csv'], 'practicas')).toEqual([
+      'Practicas/ closed',
+      '  datos.csv',
+      '  enunciado.pdf'
+    ]);
+  });
+
+  it('shows what is found under a folder whose name does not match, open, as before', () => {
+    expect(searchOutline(['Redes/guia.pdf', 'Redes/Teoria/Tema_1.pdf', 'Redes/Teoria/intro.pdf'], 'tema')).toEqual([
+      'Teoria/ open',
+      '  Tema_1.pdf'
+    ]);
+  });
+
+  it('shows only what is found inside a folder whose name matches too', () => {
+    expect(searchOutline(['Redes/guia.pdf', 'Redes/Tema_1/Tema_1.pdf', 'Redes/Tema_1/ejercicios.pdf'], 'tema')).toEqual([
+      'Tema_1/ open',
+      '  Tema_1.pdf'
+    ]);
+  });
+
+  it('opens the way down to a matching folder deeper in, and leaves that one closed', () => {
+    expect(searchOutline(['Redes/guia.pdf', 'Redes/Teoria/Practicas/P1/a.pdf', 'Redes/Teoria/b.pdf'], 'practicas')).toEqual([
+      'Teoria/ open',
+      '  Practicas/ closed',
+      '    P1/ closed',
+      '      a.pdf'
+    ]);
+  });
+
+  it('matches folder names like file names: from the start of a word, any case or accent', () => {
+    const paths = ['Redes/guia.pdf', 'Redes/Prácticas_de_LAB/a.pdf'];
+    expect(searchOutline(paths, 'lab practica')).toEqual(['Prácticas_de_LAB/ closed', '  a.pdf']);
+    expect(searchOutline(paths, 'abs')).toEqual([]);
+  });
+
+  it("never finds the course's hidden top folder, named like the course", () => {
+    expect(searchOutline(['Redes/guia.pdf', 'Redes/Teoria/a.pdf'], 'redes')).toEqual([]);
+  });
+
+  it('finds nothing for a blank search', () => {
+    expect(searchOutline(['Redes/guia.pdf', 'Redes/Teoria/a.pdf'], '  ')).toEqual([]);
   });
 });

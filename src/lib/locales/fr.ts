@@ -49,6 +49,7 @@ export const fr: Messages = {
     importCourses: 'Importer des cours',
     recentSettings: 'Paramètres des fichiers récents',
     downloadNameSettings: 'Paramètres des noms de téléchargement',
+    concurrentDownloads: 'Téléchargements simultanés',
     sideMargin: 'Marges latérales',
     courseListStyle: 'Style de la liste des cours',
     setInstitution: 'Définir l’établissement de cours',
@@ -120,8 +121,8 @@ export const fr: Messages = {
     couldNotAdd: (fileCount, error) =>
       fileCount === 1 ? `Impossible d’ajouter le fichier : ${error}` : `Impossible d’ajouter les fichiers : ${error}`,
     dropFiles: (name) => `Déposez des fichiers pour les ajouter à « ${name} »`,
-    searchPlaceholder: 'Rechercher des fichiers par nom…',
-    noMatches: (query) => `Aucun fichier ne correspond à « ${query} ».`,
+    searchPlaceholder: 'Commencez à taper pour chercher des fichiers et des dossiers, sans cliquer ici',
+    noMatches: (query) => `Aucun fichier ni dossier ne correspond à « ${query} ».`,
     noFiles: 'Aucun fichier téléchargé pour ce cours pour l’instant.'
   },
 
@@ -176,6 +177,14 @@ export const fr: Messages = {
     description:
       'S’applique à tous les cours. Les cours sans étiquette sont téléchargés sous le nom d’origine du fichier.',
     prefixCourseTag: 'Ajouter l’étiquette du cours au début des noms de téléchargement (par ex. ETIQUETTE_fichier.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Téléchargements simultanés',
+    description:
+      'Combien de fichiers d’un cours sont téléchargés en même temps. ' +
+      'Avec davantage, le téléchargement peut se terminer plus tôt sur une connexion rapide, mais le serveur Moodle de votre établissement est plus sollicité. ' +
+      '2 par défaut. S’applique à partir du prochain téléchargement.'
   },
 
   sideMargin: {
@@ -294,6 +303,7 @@ export const fr: Messages = {
     cannotScan: 'Impossible d’analyser cette page : ouvrez d’abord un onglet de cours Moodle.',
     filesDownloaded: (count) => `${count} fichier(s) téléchargé(s)`,
     downloading: 'Téléchargement...',
+    retrying: 'Nouvelle tentative…',
     download: 'Télécharger',
     history: 'Historique',
     addToQueue: 'Ajouter à la file',
@@ -307,9 +317,15 @@ export const fr: Messages = {
     processingLinks: 'Traitement des liens...',
     processing: (url) => `Traitement de ${url}`,
     downloadingFiles: 'Téléchargement des fichiers...',
-    downloadingFile: (name) => `Téléchargement de ${name}`,
     cancelled: (name, reason) =>
       `Téléchargement annulé : impossible de télécharger « ${name} » (${reason}). Rien n’a été enregistré, réessayez.`,
+    sessionExpired:
+      'Téléchargement annulé : Moodle demande de vous connecter (votre session a peut-être expiré). Connectez-vous à Moodle et relancez le téléchargement. Rien n’a été enregistré.',
+    retrying: (name) => `Nouvelle tentative pour « ${name} »…`,
+    ignoredSkipped: (count) =>
+      count === 1 ? '1 fichier ignoré a été passé.' : `${count} fichiers ignorés ont été passés.`,
+    unavailable: (count) =>
+      count === 1 ? '1 fichier n’est plus disponible sur Moodle (son lien renvoie une erreur) et n’a pas été téléchargé.' : `${count} fichiers ne sont plus disponibles sur Moodle (leurs liens renvoient une erreur) et n’ont pas été téléchargés.`,
     downloadFailed: 'échec du téléchargement',
     noResponse: 'Délai d’attente de la réponse dépassé',
     stalled: 'Bloqué : aucune donnée reçue à temps',

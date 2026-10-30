@@ -81,6 +81,10 @@ export async function downloadVersion(content: Blob, filename: string): Promise<
 
 async function downloadAndOpenNatively(content: Blob, filename: string): Promise<void> {
   const downloadId = await saveToDownloads(content, filename);
+  // Firefox opens a download only from the click itself, and waiting for the download
+  // to exist already lost it: there the file is left in the browser's own downloads,
+  // a click away, rather than an error shown for it every time.
+  if (import.meta.env.MODE === 'firefox') return;
   try {
     await waitForDownloadComplete(downloadId);
     await chrome.downloads.open(downloadId);

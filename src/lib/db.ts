@@ -18,6 +18,19 @@ interface MoodleHistoryDB extends DBSchema {
     value: RecentOpenRecord;
     indexes: { 'by-course': string };
   };
+  staging: {
+    key: [string, string, number];
+    value: StagedPiece;
+  };
+}
+
+/** One piece of a file's content from a download still running (see stagingStore). */
+export interface StagedPiece {
+  downloadId: string;
+  relativePath: string;
+  /** Its place among the file's pieces, from 0. */
+  index: number;
+  content: Blob;
 }
 
 const DB_NAME = 'moodle-archive';
@@ -25,7 +38,7 @@ const DB_NAME = 'moodle-archive';
 // as a one-time migration source — see `migrateFromLegacyDatabase` — never
 // written to again.
 const LEGACY_DB_NAME = 'moodle-history';
-const DB_VERSION = 4;
+const DB_VERSION = 6;
 
 let dbPromise: Promise<IDBPDatabase<MoodleHistoryDB>> | undefined;
 
@@ -68,6 +81,20 @@ function getDb(): Promise<IDBPDatabase<MoodleHistoryDB>> {
             }
           }
         }
+        // Checked by presence, not by version: a development build caught halfway through
+        // adding it opened databases at version 5 without creating it.
+        if (!db.objectStoreNames.contains('staging')) {
+          db.createObjectStore('staging', { keyPath: ['downloadId', 'relativePath', 'index'] });
+        }
+      },
+      // Newer code needs this connection closed to upgrade the database: code of two
+      // versions can run at once (Chrome kept an unpacked extension's old service
+      // worker after its files changed, while its pages loaded the new ones). Held
+      // open, it left the newer dashboard waiting, blank, for good; closed, only this
+      // older code fails, on its next use of the database.
+      blocking(_currentVersion, _blockedVersion, event) {
+        (event.target as IDBDatabase).close();
+        dbPromise = undefined;
       }
     }).then(async (db) => {
       await migrateFromLegacyDatabase(db);
@@ -208,6 +235,32 @@ export const recentOpenStore = {
   },
   async remove(id: string): Promise<void> {
     await (await getDb()).delete('recentOpens', id);
+  }
+};
+
+/**
+ * A download's files, a piece at a time as they come down, kept apart from the archive
+ * until the whole course is in. A download that fails halfway must leave the archive
+ * as it was: the files it had already saved would otherwise read as unchanged on the
+ * retry, losing their New/Modified badges.
+ */
+export const stagingStore = {
+  async put(piece: StagedPiece): Promise<void> {
+    await (await getDb()).put('staging', piece);
+  },
+  /** A file's first `count` pieces, in order — fewer if any never arrived. */
+  async pieces(downloadId: string, relativePath: string, count: number): Promise<StagedPiece[]> {
+    if (count === 0) return [];
+    const range = IDBKeyRange.bound([downloadId, relativePath, 0], [downloadId, relativePath, count - 1]);
+    return (await getDb()).getAll('staging', range);
+  },
+  /** Every piece of a file, including any left over from a failed attempt at it. */
+  async removeFile(downloadId: string, relativePath: string): Promise<void> {
+    const range = IDBKeyRange.bound([downloadId, relativePath, 0], [downloadId, relativePath, Infinity]);
+    await (await getDb()).delete('staging', range);
+  },
+  async clear(): Promise<void> {
+    await (await getDb()).clear('staging');
   }
 };
 

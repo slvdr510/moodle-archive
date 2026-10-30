@@ -56,7 +56,9 @@
    longer needs the mid-download ellipsis truncation, so center it instead. */
 .popup-status-done {
   text-align: center;
-  white-space: normal;
+  /* A finished download's message can go on with notes on lines of their own: files
+     ignored, files Moodle no longer has. */
+  white-space: pre-line;
 }
 
 /* Why this tab's download didn't start or queue: apart from any running download's
@@ -155,7 +157,8 @@
   accent-color: var(--accent);
 }
 
-.popup-count {
+.popup-count,
+.popup-file {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -165,7 +168,8 @@
   color: var(--muted);
 }
 
-.popup-count > span:first-child {
+.popup-count > span:first-child,
+.popup-file > span:first-child {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

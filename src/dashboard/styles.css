@@ -125,6 +125,9 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  /* The room below the buttons stays what it was before the one above them shrank
+     to 16px (see h1): 22.5px. */
+  margin-bottom: 6.5px;
 }
 
 .app-header-title {
@@ -148,11 +151,13 @@ body {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  /* Equal top/bottom (same total as before) so the title's text sits at the
-     true vertical center of the header row, matching the language/theme/"⋮"
-     buttons on the right (which .app-header centers as a whole row). The
-     previous 26/22 split left the text a couple pixels off-center. */
-  padding: 24px 0;
+  /* Equal top/bottom so the title's text sits at the true vertical center of the
+     header row, matching the language/theme/"⋮" buttons on the right (which
+     .app-header centers as a whole row). The previous 26/22 split left the text a
+     couple pixels off-center. Its 33px line plus these put the 36px-tall buttons
+     16px from the window's top: the same as .app's side gutter, all the margin left
+     on either side of a window too narrow for any other (a half-screen one). */
+  padding: 17.5px 0;
   margin: 0;
 }
 
@@ -283,12 +288,13 @@ body {
   margin-top: 8px;
 }
 
-/* Cards: the list sits in the middle of the window — across (each row is centered)
-   and down, measured from the window's top, not the header's bottom: the space
-   below the list is made as tall as what's above it (the header, measured into
-   --app-header-height by App, plus this page's 8px top margin), so the auto
-   margins split the rest evenly. With more cards than fit, those margins come to
-   nothing and the list starts at the top, scrolling as usual. */
+/* Cards: the list sits in the middle of the room the header leaves, above a 24px
+   bottom margin (the spacer below) — across (each row is centered) and down, the
+   auto margins splitting what's left evenly. The cards are shrunk to fit that room
+   (see useCardListRoom), so on a short window they fill it, starting right below
+   the header, instead of keeping as much again empty below the list as the header
+   takes above it. With more cards than fit, those margins come to nothing and the
+   list starts at the top, scrolling as usual. */
 .courses-page.centered {
   flex: 1;
   display: flex;
@@ -307,8 +313,9 @@ body {
 .courses-page.centered::after {
   content: '';
   flex: none;
-  /* Less the last row's own bottom margin (--card-gap, 14px), already below it. */
-  height: max(24px, calc(var(--app-header-height, 0px) + 8px - 14px));
+  /* LIST_BOTTOM_ROOM (see useCardListRoom), less the last row's own bottom margin
+     (--card-gap, 14px), already below it. */
+  height: calc(24px - 14px);
 }
 
 .toolbar {
@@ -1075,9 +1082,13 @@ button.course-open-url {
    only show on hover anyway. What the centered name must leave clear for it, at the
    bottom — and so at the top too, to stay centered — is --footer-room: the footer's
    26px less the card's padding it overlaps (16px - its own 8px from the edge), plus
-   24px of breathing room between the two, on each side. */
+   24px of breathing room between the two, on each side. That at the card's full
+   size, and as a share of the name's room there (100cqh: the 190px less the padding
+   and border, 156px), so it shrinks along with a smaller card. A fixed 84px would
+   take ever more of a card shrunk to fit the window (or zoomed in), leaving a tag
+   next to nothing: 14px instead of 69px, at 70% of the card's size. */
 .course-card {
-  --footer-room: calc(2 * (26px - 8px + 24px));
+  --footer-room: calc(2 * (26 - 8 + 24) / 156 * 100cqh);
 }
 
 .course-list:not(.as-rows) .course-card-footer {
@@ -2171,7 +2182,8 @@ button.course-open-url {
   margin-top: 4px;
 }
 
-.course-list-style-option {
+.course-list-style-option,
+.concurrent-downloads-option {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2187,18 +2199,34 @@ button.course-open-url {
   cursor: pointer;
 }
 
-.course-list-style-option:hover {
+.course-list-style-option:hover,
+.concurrent-downloads-option:hover {
   /* Beats the generic button:hover's accent fill. */
   background: var(--surface);
   border-color: var(--border);
   color: var(--fg);
 }
 
-.course-list-style-option.active {
+.course-list-style-option.active,
+.concurrent-downloads-option.active {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 10%, var(--bg));
   color: var(--fg);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* A row of numbered choices, laid out like the course list styles'. */
+.concurrent-downloads-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.concurrent-downloads-option {
+  padding: 10px;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
 }
 
 .ignored-files-modal {

@@ -49,6 +49,7 @@ export const ha: Messages = {
     importCourses: 'Shigo da kwasa-kwasai',
     recentSettings: 'Saitunan waɗanda aka buɗe kwanan nan',
     downloadNameSettings: 'Saitunan sunayen saukewa',
+    concurrentDownloads: 'Saukewa a lokaci guda',
     sideMargin: 'Gefe-gefe',
     courseListStyle: 'Salon jerin kwasa-kwasai',
     setInstitution: 'Saita cibiya ga kwasa-kwasai',
@@ -120,8 +121,8 @@ export const ha: Messages = {
     couldNotAdd: (fileCount, error) =>
       `Ba a iya ƙara ${fileCount === 1 ? 'fayil ɗin' : 'fayilolin'} ba: ${error}`,
     dropFiles: (name) => `Jefa fayiloli don ƙara su zuwa "${name}"`,
-    searchPlaceholder: 'Nemi fayiloli da suna…',
-    noMatches: (query) => `Babu fayil da ya dace da "${query}".`,
+    searchPlaceholder: 'Fara rubutu don neman fayiloli da manyan fayiloli, ba sai ka danna nan ba',
+    noMatches: (query) => `Babu fayil ko babban fayil da ya dace da "${query}".`,
     noFiles: 'Ba a sauke wani fayil na wannan kwas ba tukuna.'
   },
 
@@ -174,6 +175,14 @@ export const ha: Messages = {
     title: 'Sunayen saukewa',
     description: 'Ya shafi duk kwasa-kwasai. Ana sauke fayilolin kwasa-kwasai marasa alama da ainihin sunan fayil ɗin.',
     prefixCourseTag: 'Ƙara alamar kwas a farkon sunayen saukewa (misali ALAMA_fayil.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Saukewa a lokaci guda',
+    description:
+      'Fayiloli nawa na kwas za a sauke a lokaci guda. ' +
+      'Idan sun fi yawa, saukewa na iya gamawa da wuri idan intanet na da sauri, amma sabar Moodle ta cibiyarka za ta fi ɗaukar nauyi. ' +
+      'Na asali: 2. Yana aiki daga saukewa ta gaba.'
   },
 
   sideMargin: {
@@ -292,6 +301,7 @@ export const ha: Messages = {
     cannotScan: 'Ba za a iya bincika wannan shafin ba — fara buɗe shafin kwas na Moodle.',
     filesDownloaded: (count) => `An sauke fayil ${count}`,
     downloading: 'Ana saukewa...',
+    retrying: 'Ana sake gwadawa…',
     download: 'Sauke',
     history: 'Tarihi',
     addToQueue: 'Ƙara zuwa layi',
@@ -305,9 +315,14 @@ export const ha: Messages = {
     processingLinks: 'Ana sarrafa hanyoyin haɗi...',
     processing: (url) => `Ana sarrafa ${url}`,
     downloadingFiles: 'Ana sauke fayiloli...',
-    downloadingFile: (name) => `Ana sauke ${name}`,
     cancelled: (name, reason) =>
       `An soke saukewa: ba a iya sauke "${name}" ba (${reason}). Ba a ajiye komai ba — sake gwadawa.`,
+    sessionExpired:
+      'An soke saukewa: Moodle ya nemi ka shiga (wataƙila zamanka ya ƙare). Shiga Moodle sannan ka sake saukewa. Ba a ajiye komai ba.',
+    retrying: (name) => `Ana sake gwada "${name}"…`,
+    ignoredSkipped: (count) => `An tsallake fayiloli ${count} da aka yi watsi da su.`,
+    unavailable: (count) =>
+      `Fayiloli ${count} ba sa samuwa a Moodle yanzu (mahaɗinsu na ba da kuskure), don haka ba a sauke su ba.`,
     downloadFailed: 'saukewa ta gaza',
     noResponse: 'Lokaci ya ƙare ana jiran amsa',
     stalled: 'Ya tsaya: ba a karɓi bayanai a kan lokaci ba',

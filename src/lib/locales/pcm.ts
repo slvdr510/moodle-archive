@@ -50,6 +50,7 @@ export const pcm: Messages = {
     importCourses: 'Import course(s)',
     recentSettings: 'Settings for di ones wey you open recently',
     downloadNameSettings: 'Settings for download name',
+    concurrentDownloads: 'Downloads wey dey run together',
     sideMargin: 'Side margin dem',
     courseListStyle: 'How di course list go look',
     setInstitution: 'Set institution for courses',
@@ -118,8 +119,8 @@ export const pcm: Messages = {
       `delete am, or e still dey download. Try again from one place wey no dey change. (${error})`,
     couldNotAdd: (fileCount, error) => `We no fit add di file${fileCount === 1 ? '' : 's'}: ${error}`,
     dropFiles: (name) => `Drop files here make we add dem to "${name}"`,
-    searchPlaceholder: 'Find files by name…',
-    noMatches: (query) => `No file match "${query}".`,
+    searchPlaceholder: 'Just start to type to find files and folders — you no need click here',
+    noMatches: (query) => `No file or folder match "${query}".`,
     noFiles: 'You never download any file for dis course yet.'
   },
 
@@ -172,6 +173,14 @@ export const pcm: Messages = {
     title: 'Download names',
     description: 'E dey work for every course. Courses wey no get tag go download with di file own name.',
     prefixCourseTag: 'Put di course tag for di front of download names (like TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Downloads wey dey run together',
+    description:
+      'How many files from one course go download at di same time. ' +
+      'If e plenty, download fit finish quick when your connection fast, but your institution Moodle server go carry more load. ' +
+      'Na 2 by default. E go start from di next download.'
   },
 
   sideMargin: {
@@ -290,6 +299,7 @@ export const pcm: Messages = {
     cannotScan: 'We no fit scan dis page — open one Moodle course tab first.',
     filesDownloaded: (count) => `${count} file(s) don download`,
     downloading: 'E dey download...',
+    retrying: 'We dey try again…',
     download: 'Download',
     history: 'History',
     addToQueue: 'Add am to queue',
@@ -303,9 +313,13 @@ export const pcm: Messages = {
     processingLinks: 'E dey process di links...',
     processing: (url) => `E dey process ${url}`,
     downloadingFiles: 'E dey download files...',
-    downloadingFile: (name) => `E dey download ${name}`,
     cancelled: (name, reason) =>
       `Download don cancel: we no fit download "${name}" (${reason}). Nothing save — try again.`,
+    sessionExpired:
+      'Download don cancel: Moodle wan make you log in (maybe your session don expire). Log in for Moodle come download again. Nothing save.',
+    retrying: (name) => `We dey try "${name}" again…`,
+    ignoredSkipped: (count) => `We skip ${count} file wey you ignore.`,
+    unavailable: (count) => `${count} file no dey Moodle again (dia link dey show error), so we no download am.`,
     downloadFailed: 'download no work',
     noResponse: 'Time don pass while we dey wait for answer',
     stalled: 'E don hang: no data reach on time',

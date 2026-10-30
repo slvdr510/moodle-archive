@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import type { FileRecord } from '../../types';
 import { deleteFiles } from '../../lib/db';
 import { collectFolderFiles, collectFolderStatuses, type FolderTreeNode } from '../../lib/fileTree';
@@ -22,7 +22,7 @@ export function FolderRow({
   onFileDeleted,
   onFolderDeleted,
   canDownload = false,
-  defaultExpanded = false
+  openFolders
 }: {
   node: FolderTreeNode;
   depth: number;
@@ -32,18 +32,25 @@ export function FolderRow({
   onFileOpened?: () => void;
   onFileDeleted?: (file: FileRecord) => void;
   /** Called once every file in the folder has been removed from the database. The
-   *  delete button is only offered when this is given — it has to be left out where
-   *  `node` is a filtered view (search results), since it would delete only the
-   *  files that happen to match, not the whole folder. */
+   *  delete button is only offered when this is given, and never for a folder showing
+   *  just part of what it holds (see openFolders): it would delete only that part. */
   onFolderDeleted?: (files: FileRecord[]) => void;
-  /** Offers a button to download the folder as a zip. Like deletion, it has to stay
-   *  off for a filtered view, where `node` holds only some of the folder's files. */
+  /** Offers a button to download the folder as a zip — like deletion, only for a
+   *  folder showing all it holds. */
   canDownload?: boolean;
-  /** Start expanded instead of collapsed — used to reveal search-result matches immediately. */
-  defaultExpanded?: boolean;
+  /** A search's results (see searchFileTree): the folders, this one or any inside it,
+   *  with something found in them, shown expanded instead of collapsed to reveal it.
+   *  They hold just what was found. Any other folder in the results was found by its
+   *  own name, and holds all it has. */
+  openFolders?: ReadonlySet<string>;
 }) {
   const t = useT();
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const startsOpen = openFolders?.has(node.path) ?? false;
+  const showsAll = !startsOpen;
+  const [expanded, setExpanded] = useState(startsOpen);
+  // Typing on in the search can open or close it (a file found inside it now, or no
+  // longer): follow the search over an earlier click.
+  useEffect(() => setExpanded(startsOpen), [startsOpen]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [zipping, setZipping] = useState(false);
   const statuses = collectFolderStatuses(node);
@@ -105,7 +112,7 @@ export function FolderRow({
             onToggle={() => ignoredFiles.toggleFolder(node.path)}
           />
         )}
-        {onFolderDeleted && (
+        {onFolderDeleted && showsAll && (
           <button
             className="icon-button row-action-button delete-button"
             title={t.folderRow.deleteTitle}
@@ -119,7 +126,7 @@ export function FolderRow({
             </svg>
           </button>
         )}
-        {canDownload && (
+        {canDownload && showsAll && (
           <button
             className="icon-button row-action-button"
             title={t.folderRow.downloadTitle}
@@ -163,7 +170,7 @@ export function FolderRow({
                 onFileDeleted={onFileDeleted}
                 onFolderDeleted={onFolderDeleted}
                 canDownload={canDownload}
-                defaultExpanded={defaultExpanded}
+                openFolders={openFolders}
               />
             ) : (
               <FileRow

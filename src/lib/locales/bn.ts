@@ -49,6 +49,7 @@ export const bn: Messages = {
     importCourses: 'কোর্স ইমপোর্ট করুন',
     recentSettings: 'সাম্প্রতিক খোলা ফাইলের সেটিংস',
     downloadNameSettings: 'ডাউনলোড নামের সেটিংস',
+    concurrentDownloads: 'একসাথে ডাউনলোড',
     sideMargin: 'পাশের মার্জিন',
     courseListStyle: 'কোর্স তালিকার ধরন',
     setInstitution: 'কোর্সগুলোর প্রতিষ্ঠান দিন',
@@ -116,8 +117,8 @@ export const bn: Messages = {
       `অথবা এখনও ডাউনলোড হচ্ছে। একটি স্থির জায়গা থেকে আবার চেষ্টা করুন। (${error})`,
     couldNotAdd: (fileCount, error) => `${fileCount === 1 ? 'ফাইলটি' : 'ফাইলগুলো'} যোগ করা যায়নি: ${error}`,
     dropFiles: (name) => `"${name}"-এ যোগ করতে ফাইল এখানে ছাড়ুন`,
-    searchPlaceholder: 'নাম দিয়ে ফাইল খুঁজুন…',
-    noMatches: (query) => `"${query}"-এর সাথে মেলে এমন কোনো ফাইল নেই।`,
+    searchPlaceholder: 'ফাইল ও ফোল্ডার খুঁজতে টাইপ করা শুরু করুন — এখানে ক্লিক করার দরকার নেই',
+    noMatches: (query) => `"${query}"-এর সাথে মেলে এমন কোনো ফাইল বা ফোল্ডার নেই।`,
     noFiles: 'এই কোর্সের এখনও কোনো ফাইল ডাউনলোড হয়নি।'
   },
 
@@ -170,6 +171,14 @@ export const bn: Messages = {
     title: 'ডাউনলোডের নাম',
     description: 'সব কোর্সে প্রযোজ্য। ট্যাগবিহীন কোর্সের ফাইল নিজের নামেই ডাউনলোড হয়।',
     prefixCourseTag: 'ডাউনলোডের নামের শুরুতে কোর্সের ট্যাগ যোগ করুন (যেমন TAG_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'একসাথে ডাউনলোড',
+    description:
+      'একটি কোর্সের কতগুলো ফাইল একসাথে ডাউনলোড হবে। ' +
+      'দ্রুত সংযোগে বেশি রাখলে ডাউনলোড আগে শেষ হতে পারে, তবে আপনার প্রতিষ্ঠানের Moodle সার্ভারের ওপর চাপ বাড়ে। ' +
+      'ডিফল্ট: 2। পরের ডাউনলোড থেকে প্রযোজ্য।'
   },
 
   sideMargin: {
@@ -288,6 +297,7 @@ export const bn: Messages = {
     cannotScan: 'এই পৃষ্ঠাটি স্ক্যান করা যায় না — আগে একটি Moodle কোর্সের ট্যাব খুলুন।',
     filesDownloaded: (count) => `${count}টি ফাইল ডাউনলোড হয়েছে`,
     downloading: 'ডাউনলোড হচ্ছে...',
+    retrying: 'আবার চেষ্টা করা হচ্ছে…',
     download: 'ডাউনলোড',
     history: 'ইতিহাস',
     addToQueue: 'সারিতে যোগ করুন',
@@ -301,9 +311,14 @@ export const bn: Messages = {
     processingLinks: 'লিংক প্রক্রিয়া করা হচ্ছে...',
     processing: (url) => `${url} প্রক্রিয়া করা হচ্ছে`,
     downloadingFiles: 'ফাইল ডাউনলোড হচ্ছে...',
-    downloadingFile: (name) => `${name} ডাউনলোড হচ্ছে`,
     cancelled: (name, reason) =>
       `ডাউনলোড বাতিল: "${name}" ডাউনলোড করা যায়নি (${reason})। কিছুই সংরক্ষিত হয়নি — আবার চেষ্টা করুন।`,
+    sessionExpired:
+      'ডাউনলোড বাতিল: Moodle লগ ইন করতে বলেছে (আপনার সেশনের মেয়াদ সম্ভবত শেষ হয়েছে)। Moodle-এ লগ ইন করে আবার ডাউনলোড করুন। কিছুই সংরক্ষিত হয়নি।',
+    retrying: (name) => `"${name}" আবার চেষ্টা করা হচ্ছে…`,
+    ignoredSkipped: (count) => `উপেক্ষিত ${count}টি ফাইল বাদ দেওয়া হয়েছে।`,
+    unavailable: (count) =>
+      `${count}টি ফাইল Moodle-এ আর পাওয়া যাচ্ছে না (লিংকে ত্রুটি দেখায়), তাই ডাউনলোড করা হয়নি।`,
     downloadFailed: 'ডাউনলোড ব্যর্থ হয়েছে',
     noResponse: 'উত্তরের অপেক্ষায় সময় শেষ হয়ে গেছে',
     stalled: 'আটকে গেছে: সময়মতো কোনো ডেটা আসেনি',

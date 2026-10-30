@@ -16,6 +16,7 @@ import { withoutTag } from '../../lib/courseNames';
 import { assignAutoCourseColors, assignCourseColors } from '../../lib/courseColors';
 import { courseStore, deleteCourse, resetTrackedData } from '../../lib/db';
 import type { Course } from '../../types';
+import { ConcurrentDownloadsModal } from '../components/ConcurrentDownloadsModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CourseCard } from '../components/CourseCard';
 import { CourseColorModal } from '../components/CourseColorModal';
@@ -36,11 +37,14 @@ type TransientMessage = { kind: 'info' | 'error'; text: string };
 type PendingExport = { kind: 'all' } | { kind: 'course'; course: Course };
 type PendingDelete = { kind: 'all' } | { kind: 'course'; course: Course };
 
+/** The room left empty below the card list, down to the window's bottom (see
+ *  .courses-page.centered::after). */
+const LIST_BOTTOM_ROOM = 24;
+
 /**
  * The height the card list can take without the page scrolling: the window's, less
- * the room above the list (the header, down to where this page starts) and as much
- * again below it — which is what keeps the list centered on the window (see
- * .courses-page.centered) — plus the last row's own bottom gap, which sits in that
+ * the room above the list (the header, down to where this page starts) and
+ * LIST_BOTTOM_ROOM below it, plus the last row's own bottom gap, which sits in that
  * room below. Kept up to date as the window resizes.
  */
 function useCardListRoom(pageRef: RefObject<HTMLElement | null>): number {
@@ -50,7 +54,7 @@ function useCardListRoom(pageRef: RefObject<HTMLElement | null>): number {
       const page = pageRef.current;
       if (!page) return;
       const top = page.getBoundingClientRect().top + window.scrollY;
-      setRoom(window.innerHeight - 2 * top + CARD_GAP);
+      setRoom(window.innerHeight - top - LIST_BOTTOM_ROOM + CARD_GAP);
     }
     measure();
     window.addEventListener('resize', measure);
@@ -95,6 +99,7 @@ export function CoursesPage({
   const [showHiddenModal, setShowHiddenModal] = useState(false);
   const [showRecentSettings, setShowRecentSettings] = useState(false);
   const [showDownloadNameSettings, setShowDownloadNameSettings] = useState(false);
+  const [showConcurrentDownloads, setShowConcurrentDownloads] = useState(false);
   const [showSideMargin, setShowSideMargin] = useState(false);
   const [showListStyle, setShowListStyle] = useState(false);
   const [showSetInstitution, setShowSetInstitution] = useState(false);
@@ -330,7 +335,8 @@ export function CoursesPage({
   const hiddenCourses = courses.filter((c) => c.hidden);
 
   return (
-    // As cards, the list is centered in the window vertically too (see .courses-page.centered).
+    // As cards, the list is centered vertically too, in the room below the header (see
+    // .courses-page.centered).
     <div ref={coursesPageRef} className={`courses-page${listStyle === 'cards' ? ' centered' : ''}`}>
       {headerMenuSlot &&
         createPortal(
@@ -345,6 +351,7 @@ export function CoursesPage({
               { label: t.courses.setInstitution, onClick: () => setShowSetInstitution(true) },
               { label: t.courses.recentSettings, onClick: () => setShowRecentSettings(true) },
               { label: t.courses.downloadNameSettings, onClick: () => setShowDownloadNameSettings(true) },
+              { label: t.courses.concurrentDownloads, onClick: () => setShowConcurrentDownloads(true) },
               { label: t.courses.sideMargin, onClick: () => setShowSideMargin(true) },
               { label: t.courses.courseListStyle, onClick: () => setShowListStyle(true) },
               { label: t.courses.hiddenCourses, onClick: () => setShowHiddenModal(true) },
@@ -428,6 +435,8 @@ export function CoursesPage({
       {showRecentSettings && <RecentSettingsModal onClose={() => setShowRecentSettings(false)} />}
 
       {showDownloadNameSettings && <DownloadNameSettingsModal onClose={() => setShowDownloadNameSettings(false)} />}
+
+      {showConcurrentDownloads && <ConcurrentDownloadsModal onClose={() => setShowConcurrentDownloads(false)} />}
 
       {showSideMargin && <SideMarginModal onClose={() => setShowSideMargin(false)} />}
 

@@ -49,6 +49,7 @@ export const it: Messages = {
     importCourses: 'Importa corso/i',
     recentSettings: 'Impostazioni degli aperti di recente',
     downloadNameSettings: 'Impostazioni dei nomi di download',
+    concurrentDownloads: 'Download simultanei',
     sideMargin: 'Margini laterali',
     courseListStyle: 'Stile dell’elenco dei corsi',
     setInstitution: 'Imposta l’istituzione dei corsi',
@@ -118,8 +119,8 @@ export const it: Messages = {
     couldNotAdd: (fileCount, error) =>
       fileCount === 1 ? `Impossibile aggiungere il file: ${error}` : `Impossibile aggiungere i file: ${error}`,
     dropFiles: (name) => `Rilascia i file per aggiungerli a "${name}"`,
-    searchPlaceholder: 'Cerca file per nome…',
-    noMatches: (query) => `Nessun file corrisponde a "${query}".`,
+    searchPlaceholder: 'Inizia a scrivere per cercare file e cartelle, senza cliccare qui',
+    noMatches: (query) => `Nessun file o cartella corrisponde a "${query}".`,
     noFiles: 'Nessun file ancora scaricato per questo corso.'
   },
 
@@ -173,6 +174,14 @@ export const it: Messages = {
     title: 'Nomi di download',
     description: 'Si applica a tutti i corsi. I corsi senza etichetta vengono scaricati con il nome originale del file.',
     prefixCourseTag: 'Aggiungi l’etichetta del corso all’inizio dei nomi di download (es. ETICHETTA_file.pdf)'
+  },
+
+  concurrentDownloads: {
+    title: 'Download simultanei',
+    description:
+      'Quanti file di un corso vengono scaricati contemporaneamente. ' +
+      'Con più file il download può finire prima su una connessione veloce, ma il server Moodle della tua istituzione viene caricato di più. ' +
+      'Predefinito: 2. Si applica dal prossimo download.'
   },
 
   sideMargin: {
@@ -291,6 +300,7 @@ export const it: Messages = {
     cannotScan: 'Impossibile analizzare questa pagina: apri prima una scheda con un corso Moodle.',
     filesDownloaded: (count) => `${count} file scaricati`,
     downloading: 'Download in corso...',
+    retrying: 'Nuovo tentativo…',
     download: 'Scarica',
     history: 'Cronologia',
     addToQueue: 'Aggiungi alla coda',
@@ -304,9 +314,15 @@ export const it: Messages = {
     processingLinks: 'Elaborazione dei link...',
     processing: (url) => `Elaborazione di ${url}`,
     downloadingFiles: 'Download dei file...',
-    downloadingFile: (name) => `Download di ${name}`,
     cancelled: (name, reason) =>
       `Download annullato: impossibile scaricare "${name}" (${reason}). Non è stato salvato nulla, riprova.`,
+    sessionExpired:
+      'Download annullato: Moodle chiede di accedere (la sessione potrebbe essere scaduta). Accedi a Moodle e scarica di nuovo. Non è stato salvato nulla.',
+    retrying: (name) => `Nuovo tentativo per "${name}"…`,
+    ignoredSkipped: (count) =>
+      count === 1 ? '1 file ignorato è stato saltato.' : `${count} file ignorati sono stati saltati.`,
+    unavailable: (count) =>
+      count === 1 ? '1 file non è più disponibile su Moodle (il suo link dà errore) e non è stato scaricato.' : `${count} file non sono più disponibili su Moodle (i loro link danno errore) e non sono stati scaricati.`,
     downloadFailed: 'download non riuscito',
     noResponse: 'Tempo scaduto in attesa di una risposta',
     stalled: 'Bloccato: nessun dato ricevuto in tempo',

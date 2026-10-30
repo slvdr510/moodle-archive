@@ -16,8 +16,9 @@ function watchContentScript(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [preact(), crx({ manifest }), watchContentScript()],
+// `--mode firefox` builds Firefox's version of the extension, into dist-firefox/.
+export default defineConfig(({ mode }) => ({
+  plugins: [preact(), crx({ manifest, browser: mode === 'firefox' ? 'firefox' : 'chrome' }), watchContentScript()],
   // Extension pages aren't served from the dev server's own origin, so Vite's HMR
   // client can't infer the port and tries `ws://localhost:undefined` — pin it.
   server: {
@@ -26,6 +27,7 @@ export default defineConfig({
     hmr: { port: 5173 }
   },
   build: {
+    outDir: mode === 'firefox' ? 'dist-firefox' : 'dist',
     rollupOptions: {
       input: {
         dashboard: 'src/dashboard/index.html',
@@ -34,4 +36,4 @@ export default defineConfig({
       }
     }
   }
-});
+}));
