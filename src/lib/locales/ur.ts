@@ -117,13 +117,12 @@ export const ur: Messages = {
       `ہو گئی ہو، یا ابھی ڈاؤن لوڈ ہو رہی ہو۔ کسی مستقل جگہ سے دوبارہ کوشش کریں۔ (${error})`,
     couldNotAdd: (fileCount, error) => `${fileCount === 1 ? 'فائل' : 'فائلیں'} شامل نہیں ہو سکیں: ${error}`,
     dropFiles: (name) => `"${name}" میں شامل کرنے کے لیے فائلیں یہاں چھوڑیں`,
-    searchPlaceholder: 'فائلیں اور فولڈر تلاش کرنے کے لیے ٹائپ کرنا شروع کریں — یہاں کلک کرنے کی ضرورت نہیں',
+    searchPlaceholder: 'تلاش کے لیے ٹائپ کریں…',
     noMatches: (query) => `"${query}" سے کوئی فائل یا فولڈر میل نہیں کھاتا۔`,
     noFiles: 'اس کورس کی ابھی کوئی فائل ڈاؤن لوڈ نہیں ہوئی۔'
   },
 
   fileRow: {
-    viewHistory: 'ورژن کی تاریخ دیکھیں',
     lastSaved: (date) => `آخری بار محفوظ: ${date}`,
     manual: 'دستی',
     manualTitle: 'ہاتھ سے شامل کی گئی، Moodle سے ڈاؤن لوڈ نہیں ہوئی',
@@ -193,6 +192,7 @@ export const ur: Messages = {
     title: 'کورس فہرست کا انداز',
     description: 'اس صفحے پر کورس کیسے دکھائے جائیں۔',
     cards: 'کارڈز',
+    grid: 'گرڈ',
     rows: 'قطاریں'
   },
 
@@ -253,12 +253,6 @@ export const ur: Messages = {
 
   versions: {
     whichVersion: 'کون سا ورژن؟',
-    downloadTitle: 'یہ ورژن اپنے ڈاؤن لوڈز فولڈر میں ڈاؤن لوڈ کریں',
-    diffVsPrevious: 'پچھلے سے موازنہ',
-    comparing: (from, to) => `موازنہ v${from} ← v${to}`,
-    loadingDiff: 'فرق لوڈ ہو رہا ہے…',
-    binaryChanged: 'بائنری فائل — مواد تبدیل ہو گیا۔',
-    size: (from, to, delta) => `سائز: ${from} ← ${to} (${delta})`,
     deleteTitle: 'یہ ورژن حذف کریں',
     deleteConfirmTitle: (label) => `${label} حذف کریں؟`,
     deleteConfirmMessage:

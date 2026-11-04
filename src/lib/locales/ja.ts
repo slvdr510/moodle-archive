@@ -117,13 +117,12 @@ export const ja: Messages = {
       `削除されたか、まだダウンロード中の可能性があります。安定した場所からもう一度お試しください。(${error})`,
     couldNotAdd: (_fileCount, error) => `ファイルを追加できませんでした: ${error}`,
     dropFiles: (name) => `ファイルをドロップして「${name}」に追加`,
-    searchPlaceholder: 'ここをクリックせずに入力するだけで、ファイルやフォルダを検索できます',
+    searchPlaceholder: '入力して検索…',
     noMatches: (query) => `「${query}」に一致するファイルやフォルダはありません。`,
     noFiles: 'このコースのファイルはまだダウンロードされていません。'
   },
 
   fileRow: {
-    viewHistory: 'バージョン履歴を表示',
     lastSaved: (date) => `最終保存: ${date}`,
     manual: '手動',
     manualTitle: 'Moodle からではなく手動で追加',
@@ -191,6 +190,7 @@ export const ja: Messages = {
     title: 'コース一覧の表示形式',
     description: 'このページでのコースの表示方法。',
     cards: 'カード',
+    grid: 'グリッド',
     rows: '行'
   },
 
@@ -251,12 +251,6 @@ export const ja: Messages = {
 
   versions: {
     whichVersion: 'どのバージョンですか？',
-    downloadTitle: 'このバージョンをダウンロード フォルダにダウンロード',
-    diffVsPrevious: '前のバージョンと比較',
-    comparing: (from, to) => `v${from} → v${to} を比較中`,
-    loadingDiff: '差分を読み込み中…',
-    binaryChanged: 'バイナリ ファイル — 内容が変更されました。',
-    size: (from, to, delta) => `サイズ: ${from} → ${to}（${delta}）`,
     deleteTitle: 'このバージョンを削除',
     deleteConfirmTitle: (label) => `${label} を削除しますか？`,
     deleteConfirmMessage:

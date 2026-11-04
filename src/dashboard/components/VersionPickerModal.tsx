@@ -29,7 +29,8 @@ export function VersionPickerModal({
         <ul className="version-picker-list">
           {newestFirst.map(({ version, label }, i) => (
             <li key={version.id} className="version-picker-row">
-              <button className="version-picker-item" onClick={() => onSelect(version)}>
+              {/* The latest version in focus as it opens (see useDialogKeys). */}
+              <button className="version-picker-item" data-autofocus={i === 0 || undefined} onClick={() => onSelect(version)}>
                 <span className="version-picker-index">{label}</span>
                 <span className="version-picker-date">{formatDateTime(version.timestamp, dateFormatPref)}</span>
                 <span className="version-picker-size">{version.size.toLocaleString()} B</span>
@@ -39,11 +40,7 @@ export function VersionPickerModal({
             </li>
           ))}
         </ul>
-        <div className="modal-actions">
-          <button className="secondary" onClick={onClose}>
-            {t.common.cancel}
-          </button>
-        </div>
+        {/* No Cancel: a click outside closes it, as does Escape (see useDialogKeys). */}
       </div>
     </div>
   );

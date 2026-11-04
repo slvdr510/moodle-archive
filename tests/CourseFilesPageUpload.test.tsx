@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { CourseFilesPage } from '../src/dashboard/pages/CourseFilesPage';
 import { courseStore, fileStore, versionStore } from '../src/lib/db';
 import { sha256 } from '../src/lib/hash';
@@ -13,6 +13,7 @@ afterEach(cleanup);
 
 // jsdom's File has no arrayBuffer(), which the upload path relies on (real browsers do).
 beforeAll(() => {
+  vi.stubGlobal('chrome', { runtime: { onMessage: { addListener: vi.fn(), removeListener: vi.fn() } } });
   File.prototype.arrayBuffer = function (this: File) {
     return new Promise<ArrayBuffer>((resolve) => {
       const reader = new FileReader();

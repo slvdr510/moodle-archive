@@ -3,14 +3,25 @@ import type { CourseListStyle } from '../../lib/courseListStyle';
 import { useCourseListStyle } from '../hooks/useCourseListStyle';
 import { useT } from '../hooks/useTranslation';
 
-/** A sketch of each style, so the choice reads at a glance. */
+/** A sketch of each style, so the choice reads at a glance: five cards, the last row
+ *  centered as cards and lined up under the first columns as a grid. */
 const ICONS: Record<CourseListStyle, ReactNode> = {
   cards: (
     <svg viewBox="0 0 48 36" width="48" height="36" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <rect x="2" y="2" width="20" height="14" rx="3" />
-      <rect x="26" y="2" width="20" height="14" rx="3" />
-      <rect x="2" y="20" width="20" height="14" rx="3" />
-      <rect x="26" y="20" width="20" height="14" rx="3" />
+      <rect x="2" y="2" width="12" height="13" rx="2.5" />
+      <rect x="18" y="2" width="12" height="13" rx="2.5" />
+      <rect x="34" y="2" width="12" height="13" rx="2.5" />
+      <rect x="10" y="21" width="12" height="13" rx="2.5" />
+      <rect x="26" y="21" width="12" height="13" rx="2.5" />
+    </svg>
+  ),
+  grid: (
+    <svg viewBox="0 0 48 36" width="48" height="36" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="2" y="2" width="12" height="13" rx="2.5" />
+      <rect x="18" y="2" width="12" height="13" rx="2.5" />
+      <rect x="34" y="2" width="12" height="13" rx="2.5" />
+      <rect x="2" y="21" width="12" height="13" rx="2.5" />
+      <rect x="18" y="21" width="12" height="13" rx="2.5" />
     </svg>
   ),
   rows: (
@@ -29,6 +40,7 @@ export function CourseListStyleModal({ onClose }: { onClose: () => void }) {
   const [original] = useState(style);
   const options: { value: CourseListStyle; label: string }[] = [
     { value: 'cards', label: t.courseListStyle.cards },
+    { value: 'grid', label: t.courseListStyle.grid },
     { value: 'rows', label: t.courseListStyle.rows }
   ];
 

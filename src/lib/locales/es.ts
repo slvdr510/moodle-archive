@@ -119,13 +119,12 @@ export const es: Messages = {
     couldNotAdd: (fileCount, error) =>
       fileCount === 1 ? `No se pudo añadir el archivo: ${error}` : `No se pudieron añadir los archivos: ${error}`,
     dropFiles: (name) => `Suelta archivos para añadirlos a "${name}"`,
-    searchPlaceholder: 'Empieza a escribir para buscar archivos y carpetas, sin hacer clic aquí',
+    searchPlaceholder: 'Escribe para buscar…',
     noMatches: (query) => `Ningún archivo ni carpeta coincide con "${query}".`,
     noFiles: 'Aún no se ha descargado ningún archivo de este curso.'
   },
 
   fileRow: {
-    viewHistory: 'Ver historial de versiones',
     lastSaved: (date) => `Guardado por última vez: ${date}`,
     manual: 'Manual',
     manualTitle: 'Añadido a mano, no descargado de Moodle',
@@ -196,6 +195,7 @@ export const es: Messages = {
     title: 'Estilo de la lista de cursos',
     description: 'Cómo se muestran los cursos en esta página.',
     cards: 'Tarjetas',
+    grid: 'Cuadrícula',
     rows: 'Filas'
   },
 
@@ -256,12 +256,6 @@ export const es: Messages = {
 
   versions: {
     whichVersion: '¿Qué versión?',
-    downloadTitle: 'Descargar esta versión en tu carpeta de Descargas',
-    diffVsPrevious: 'Comparar con la anterior',
-    comparing: (from, to) => `Comparando v${from} → v${to}`,
-    loadingDiff: 'Cargando diferencias…',
-    binaryChanged: 'Archivo binario: el contenido ha cambiado.',
-    size: (from, to, delta) => `Tamaño: ${from} → ${to} (${delta})`,
     deleteTitle: 'Eliminar esta versión',
     deleteConfirmTitle: (label) => `¿Eliminar ${label}?`,
     deleteConfirmMessage:

@@ -121,13 +121,12 @@ export const pt: Messages = {
         ? `Não foi possível adicionar o arquivo: ${error}`
         : `Não foi possível adicionar os arquivos: ${error}`,
     dropFiles: (name) => `Solte arquivos para adicioná-los a "${name}"`,
-    searchPlaceholder: 'Comece a digitar para pesquisar arquivos e pastas, sem clicar aqui',
+    searchPlaceholder: 'Digite para pesquisar…',
     noMatches: (query) => `Nenhum arquivo ou pasta corresponde a "${query}".`,
     noFiles: 'Nenhum arquivo baixado ainda para este curso.'
   },
 
   fileRow: {
-    viewHistory: 'Ver histórico de versões',
     lastSaved: (date) => `Salvo pela última vez: ${date}`,
     manual: 'Manual',
     manualTitle: 'Adicionado manualmente, não baixado do Moodle',
@@ -198,6 +197,7 @@ export const pt: Messages = {
     title: 'Estilo da lista de cursos',
     description: 'Como os cursos são mostrados nesta página.',
     cards: 'Cartões',
+    grid: 'Grade',
     rows: 'Linhas'
   },
 
@@ -258,12 +258,6 @@ export const pt: Messages = {
 
   versions: {
     whichVersion: 'Qual versão?',
-    downloadTitle: 'Baixar esta versão para a sua pasta Downloads',
-    diffVsPrevious: 'Comparar com a anterior',
-    comparing: (from, to) => `Comparando v${from} → v${to}`,
-    loadingDiff: 'Carregando diferenças…',
-    binaryChanged: 'Arquivo binário: o conteúdo mudou.',
-    size: (from, to, delta) => `Tamanho: ${from} → ${to} (${delta})`,
     deleteTitle: 'Excluir esta versão',
     deleteConfirmTitle: (label) => `Excluir ${label}?`,
     deleteConfirmMessage:

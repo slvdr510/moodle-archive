@@ -118,13 +118,12 @@ export const ar: Messages = {
       `أو لا يزال قيد التنزيل. أعد المحاولة من موقع ثابت. (${error})`,
     couldNotAdd: (fileCount, error) => `تعذّرت إضافة ${fileCount === 1 ? 'الملف' : 'الملفات'}: ${error}`,
     dropFiles: (name) => `أفلِت الملفات لإضافتها إلى «${name}»`,
-    searchPlaceholder: 'ابدأ الكتابة للبحث عن الملفات والمجلدات، دون الحاجة إلى النقر هنا',
+    searchPlaceholder: 'اكتب للبحث…',
     noMatches: (query) => `لا توجد ملفات أو مجلدات تطابق «${query}».`,
     noFiles: 'لم يُنزَّل أي ملف لهذا المقرر بعد.'
   },
 
   fileRow: {
-    viewHistory: 'عرض سجل الإصدارات',
     lastSaved: (date) => `آخر حفظ: ${date}`,
     manual: 'يدوي',
     manualTitle: 'أُضيف يدويًا، ولم يُنزَّل من Moodle',
@@ -194,6 +193,7 @@ export const ar: Messages = {
     title: 'نمط قائمة المقررات',
     description: 'طريقة عرض المقررات في هذه الصفحة.',
     cards: 'بطاقات',
+    grid: 'شبكة',
     rows: 'صفوف'
   },
 
@@ -254,12 +254,6 @@ export const ar: Messages = {
 
   versions: {
     whichVersion: 'أي إصدار؟',
-    downloadTitle: 'تنزيل هذا الإصدار إلى مجلد التنزيلات',
-    diffVsPrevious: 'المقارنة بالسابق',
-    comparing: (from, to) => `مقارنة v${from} ← v${to}`,
-    loadingDiff: 'جارٍ تحميل الفروق…',
-    binaryChanged: 'ملف ثنائي — تغيّر المحتوى.',
-    size: (from, to, delta) => `الحجم: ${from} ← ${to} (${delta})`,
     deleteTitle: 'حذف هذا الإصدار',
     deleteConfirmTitle: (label) => `حذف ${label}؟`,
     deleteConfirmMessage:

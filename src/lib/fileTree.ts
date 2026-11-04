@@ -140,9 +140,8 @@ const FOLDER_BADGE_ORDER: FileStatus[] = ['new', 'modified', 'deleted'];
 
 /**
  * Every distinct non-"unchanged" status found anywhere under this folder
- * (recursively), in a fixed display order. A folder holding both New and
- * Deleted files is shown as a single Modified instead: files added and
- * removed inside the same folder read as the folder itself having changed.
+ * (recursively), in a fixed display order: a folder with new, modified and deleted
+ * files in it shows all three.
  */
 export function collectFolderStatuses(node: FolderTreeNode): FileStatus[] {
   const found = new Set<FileStatus>();
@@ -155,12 +154,6 @@ export function collectFolderStatuses(node: FolderTreeNode): FileStatus[] {
     }
   }
   for (const child of node.children) walk(child);
-
-  if (found.has('new') && found.has('deleted')) {
-    found.delete('new');
-    found.delete('deleted');
-    found.add('modified');
-  }
 
   return FOLDER_BADGE_ORDER.filter((s) => found.has(s));
 }

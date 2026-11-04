@@ -28,9 +28,11 @@ import { RecentSettingsModal } from '../components/RecentSettingsModal';
 import { SetInstitutionModal } from '../components/SetInstitutionModal';
 import { SideMarginModal } from '../components/SideMarginModal';
 import { Spinner } from '../components/Spinner';
+import { useCourseGridKeys } from '../hooks/useCourseGridKeys';
 import { useCourseListStyle } from '../hooks/useCourseListStyle';
 import { useElementWidth } from '../hooks/useElementWidth';
 import { useFileDrop } from '../hooks/useFileDrop';
+import { focusItem } from '../hooks/keyboardNavigation';
 import { useT } from '../hooks/useTranslation';
 
 type TransientMessage = { kind: 'info' | 'error'; text: string };
@@ -78,11 +80,14 @@ function courseUrlOf(course: Course): string | undefined {
 
 export function CoursesPage({
   onOpenCourse,
-  headerMenuSlot
+  headerMenuSlot,
+  focusCourseId
 }: {
   onOpenCourse: (courseId: string, courseName: string, courseUrl: string | undefined) => void;
   /** DOM node in the app header to portal the "⋮" overflow menu into. */
   headerMenuSlot: HTMLDivElement | null;
+  /** A course to put the focus on once the list is in: the one just left with Escape. */
+  focusCourseId?: string | null;
 }) {
   const t = useT();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -110,6 +115,7 @@ export function CoursesPage({
   const courseListWidth = useElementWidth(courseListRef);
   const coursesPageRef = useRef<HTMLDivElement>(null);
   const courseListHeight = useCardListRoom(coursesPageRef);
+  useCourseGridKeys(courseListRef);
 
   async function reload() {
     const all = await Promise.all((await courseStore.all()).map(migrateUniversityField));
@@ -120,6 +126,12 @@ export function CoursesPage({
   useEffect(() => {
     void reload();
   }, []);
+
+  useEffect(() => {
+    if (!loaded || !focusCourseId) return;
+    const card = courseListRef.current?.querySelector<HTMLElement>(`[data-course-id="${CSS.escape(focusCourseId)}"]`);
+    if (card) focusItem(card);
+  }, [loaded, focusCourseId]);
 
   // A download in another tab (or this one, before the dashboard was opened)
   // notifies us via this message so the list refreshes without a manual reload.
@@ -316,28 +328,33 @@ export function CoursesPage({
   const courseColors = useMemo(() => assignCourseColors(courses), [courses]);
   const autoCourseColors = useMemo(() => assignAutoCourseColors(courses), [courses]);
   const visibleCourses = courses.filter((c) => !c.hidden);
-  // As cards, the courses go in balanced, centered rows (5 → 3 + 2, see cardLayout.ts):
+  // As cards, the courses go in balanced, centered rows (5 → 3 + 2, see cardLayout.ts);
+  // in a grid, in full rows but the last (5 → 3 + 2, the 2 under the first two columns):
   // the indexes of the cards each row but the last ends at, a line break after each.
   // Every card fits on the screen, with no scrolling: as many columns as leaves them
   // largest, and shrunk only if they have to be (see fitCardGrid).
-  const { rowEnds, cardGrid } = useMemo(() => {
-    const grid = fitCardGrid(visibleCourses.length, courseListWidth, courseListHeight);
+  const asCards = listStyle === 'cards' || listStyle === 'grid';
+  const { rowEnds, cardGrid, gridFillers } = useMemo(() => {
+    const grid = fitCardGrid(visibleCourses.length, courseListWidth, courseListHeight, listStyle === 'grid');
     const ends = new Set<number>();
-    if (listStyle === 'cards') {
+    if (asCards) {
       let index = -1;
       for (const size of grid.rows.slice(0, -1)) {
         index += size;
         ends.add(index);
       }
     }
-    return { rowEnds: ends, cardGrid: grid };
+    // A grid's last row, short of a full one, made up to it with empty places: centered
+    // like the full rows above, its cards then line up under theirs.
+    const fillers = listStyle === 'grid' && grid.rows.length > 1 ? grid.rows[0] - grid.rows[grid.rows.length - 1] : 0;
+    return { rowEnds: ends, cardGrid: grid, gridFillers: fillers };
   }, [listStyle, visibleCourses.length, courseListWidth, courseListHeight]);
   const hiddenCourses = courses.filter((c) => c.hidden);
 
   return (
     // As cards, the list is centered vertically too, in the room below the header (see
     // .courses-page.centered).
-    <div ref={coursesPageRef} className={`courses-page${listStyle === 'cards' ? ' centered' : ''}`}>
+    <div ref={coursesPageRef} className={`courses-page${asCards ? ' centered' : ''}`}>
       {headerMenuSlot &&
         createPortal(
           <DropdownMenu
@@ -501,6 +518,9 @@ export function CoursesPage({
             />
             {rowEnds.has(index) && <li className="course-list-break" aria-hidden="true" />}
           </Fragment>
+        ))}
+        {Array.from({ length: gridFillers }, (_, i) => (
+          <li key={`filler-${i}`} className="course-list-filler" aria-hidden="true" />
         ))}
         {loaded && visibleCourses.length === 0 && (
           <li className={courses.length === 0 ? 'empty empty-welcome' : 'empty'}>

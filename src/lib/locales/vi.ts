@@ -117,13 +117,12 @@ export const vi: Messages = {
       `hoặc vẫn đang được tải xuống. Hãy thử lại từ một vị trí ổn định. (${error})`,
     couldNotAdd: (_fileCount, error) => `Không thể thêm tệp: ${error}`,
     dropFiles: (name) => `Thả tệp để thêm vào "${name}"`,
-    searchPlaceholder: 'Bắt đầu gõ để tìm tệp và thư mục, không cần nhấp vào đây',
+    searchPlaceholder: 'Gõ để tìm kiếm…',
     noMatches: (query) => `Không có tệp hoặc thư mục nào khớp với "${query}".`,
     noFiles: 'Chưa tải xuống tệp nào cho khóa học này.'
   },
 
   fileRow: {
-    viewHistory: 'Xem lịch sử phiên bản',
     lastSaved: (date) => `Lưu lần cuối: ${date}`,
     manual: 'Thủ công',
     manualTitle: 'Được thêm thủ công, không tải từ Moodle',
@@ -193,6 +192,7 @@ export const vi: Messages = {
     title: 'Kiểu danh sách khóa học',
     description: 'Cách hiển thị các khóa học trên trang này.',
     cards: 'Thẻ',
+    grid: 'Lưới',
     rows: 'Hàng'
   },
 
@@ -253,12 +253,6 @@ export const vi: Messages = {
 
   versions: {
     whichVersion: 'Phiên bản nào?',
-    downloadTitle: 'Tải phiên bản này vào thư mục Tải xuống',
-    diffVsPrevious: 'So với bản trước',
-    comparing: (from, to) => `Đang so sánh v${from} → v${to}`,
-    loadingDiff: 'Đang tải khác biệt…',
-    binaryChanged: 'Tệp nhị phân — nội dung đã thay đổi.',
-    size: (from, to, delta) => `Kích thước: ${from} → ${to} (${delta})`,
     deleteTitle: 'Xóa phiên bản này',
     deleteConfirmTitle: (label) => `Xóa ${label}?`,
     deleteConfirmMessage:

@@ -6,6 +6,7 @@ import { buildFolderZip } from '../../lib/folderZip';
 import { downloadNameFor } from '../../lib/downloadNameSettings';
 import { downloadVersion } from '../../lib/openFile';
 import { ConfirmModal } from './ConfirmModal';
+import { FolderIcon } from './FileIcon';
 import { FileRow } from './FileRow';
 import { StatusBadges } from './StatusBadge';
 import { TreeGuides, rowPaddingLeft } from './TreeGuides';
@@ -77,6 +78,7 @@ export function FolderRow({
     }
   }
 
+
   return (
     // The folder's contents go inside its own row, so its header can stay stuck to the
     // top of the file list while they scroll past — and only while they do (see
@@ -84,11 +86,14 @@ export function FolderRow({
     <li className="folder-row">
       <div
         className="folder-row-header"
+        // Takes the focus from the arrow keys (see useFileListKeys).
+        tabIndex={-1}
         style={{ paddingLeft: rowPaddingLeft(depth), '--depth': depth } as CSSProperties}
         onClick={() => setExpanded((e) => !e)}
       >
         <TreeGuides depth={depth} guides={guides} isLast={isLast} />
-        <span className="folder-toggle">{expanded ? '▾' : '▸'}</span>
+        {/* Open or closed as the folder is: all that shows which, with no ▸/▾ beside it. */}
+        <FolderIcon open={expanded} />
         <span className="folder-name" title={node.name}>
           {node.name}
         </span>
@@ -103,7 +108,8 @@ export function FolderRow({
             </span>
           </span>
         ) : (
-          <StatusBadges statuses={statuses} />
+          // What changed inside, while that's out of sight: once open, its rows say.
+          !expanded && <StatusBadges statuses={statuses} />
         )}
         {canIgnore && (
           <IgnoreButton
@@ -128,7 +134,7 @@ export function FolderRow({
         )}
         {canDownload && showsAll && (
           <button
-            className="icon-button row-action-button"
+            className="icon-button row-action-button download-button"
             title={t.folderRow.downloadTitle}
             disabled={zipping}
             onClick={(e) => {

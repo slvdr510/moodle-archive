@@ -117,13 +117,12 @@ export const bn: Messages = {
       `অথবা এখনও ডাউনলোড হচ্ছে। একটি স্থির জায়গা থেকে আবার চেষ্টা করুন। (${error})`,
     couldNotAdd: (fileCount, error) => `${fileCount === 1 ? 'ফাইলটি' : 'ফাইলগুলো'} যোগ করা যায়নি: ${error}`,
     dropFiles: (name) => `"${name}"-এ যোগ করতে ফাইল এখানে ছাড়ুন`,
-    searchPlaceholder: 'ফাইল ও ফোল্ডার খুঁজতে টাইপ করা শুরু করুন — এখানে ক্লিক করার দরকার নেই',
+    searchPlaceholder: 'খুঁজতে টাইপ করুন…',
     noMatches: (query) => `"${query}"-এর সাথে মেলে এমন কোনো ফাইল বা ফোল্ডার নেই।`,
     noFiles: 'এই কোর্সের এখনও কোনো ফাইল ডাউনলোড হয়নি।'
   },
 
   fileRow: {
-    viewHistory: 'সংস্করণের ইতিহাস দেখুন',
     lastSaved: (date) => `শেষ সংরক্ষণ: ${date}`,
     manual: 'ম্যানুয়াল',
     manualTitle: 'হাতে যোগ করা, Moodle থেকে ডাউনলোড করা নয়',
@@ -193,6 +192,7 @@ export const bn: Messages = {
     title: 'কোর্স তালিকার ধরন',
     description: 'এই পৃষ্ঠায় কোর্সগুলো কীভাবে দেখানো হবে।',
     cards: 'কার্ড',
+    grid: 'গ্রিড',
     rows: 'সারি'
   },
 
@@ -253,12 +253,6 @@ export const bn: Messages = {
 
   versions: {
     whichVersion: 'কোন সংস্করণ?',
-    downloadTitle: 'এই সংস্করণটি আপনার ডাউনলোডস ফোল্ডারে ডাউনলোড করুন',
-    diffVsPrevious: 'আগেরটির সাথে তুলনা',
-    comparing: (from, to) => `তুলনা হচ্ছে v${from} → v${to}`,
-    loadingDiff: 'পার্থক্য লোড হচ্ছে…',
-    binaryChanged: 'বাইনারি ফাইল — বিষয়বস্তু বদলেছে।',
-    size: (from, to, delta) => `আকার: ${from} → ${to} (${delta})`,
     deleteTitle: 'এই সংস্করণটি মুছুন',
     deleteConfirmTitle: (label) => `${label} মুছবেন?`,
     deleteConfirmMessage:

@@ -8,7 +8,8 @@ import { defineConfig } from 'vite';
 // crxjs/Vite build (which produces ES modules) as one self-contained IIFE bundle.
 export default defineConfig(({ mode }) => ({
   build: {
-    outDir: mode === 'firefox' ? 'dist-firefox' : 'dist',
+    // Next to the rest of the extension (see vite.config.ts); the dev builds pass theirs.
+    outDir: mode === 'firefox' ? 'dist-firefox' : 'dist-chrome',
     emptyOutDir: false,
     lib: {
       entry: 'src/content/main.ts',

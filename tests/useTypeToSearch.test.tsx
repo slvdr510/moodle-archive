@@ -56,14 +56,33 @@ describe('useTypeToSearch', () => {
     expect(screen.getByLabelText('Search')).toHaveValue('');
   });
 
-  it('leaves shortcuts and the space bar alone', async () => {
+  it('leaves other shortcuts and the space bar alone', async () => {
     const user = userEvent.setup();
     render(<Page />);
 
-    await user.keyboard('{Control>}f{/Control}{Alt>}d{/Alt}{Meta>}k{/Meta} ');
+    await user.keyboard('{Control>}c{/Control}{Alt>}d{/Alt}{Meta>}k{/Meta} ');
 
     expect(screen.getByLabelText('Search')).not.toHaveFocus();
     expect(screen.getByLabelText('Search')).toHaveValue('');
+  });
+
+  it("goes to the search with Ctrl+F or ⌘F, what's in it selected, instead of the browser's find bar", async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+    const search = screen.getByLabelText<HTMLInputElement>('Search');
+    await user.keyboard('tema');
+    search.blur();
+
+    const ctrlF = new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true, cancelable: true });
+    document.body.dispatchEvent(ctrlF);
+    expect(ctrlF.defaultPrevented).toBe(true);
+    expect(search).toHaveFocus();
+    expect([search.selectionStart, search.selectionEnd]).toEqual([0, 4]);
+
+    search.blur();
+    await user.keyboard('{Meta>}f{/Meta}');
+    expect(search).toHaveFocus();
+    expect(search).toHaveValue('tema');
   });
 
   it('does nothing while a dialog is open', async () => {

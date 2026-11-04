@@ -20,14 +20,11 @@ export function useFileOpener(file: FileRecord, onOpened?: () => void) {
   const [versions, setVersions] = useState<VersionRecord[] | null>(preloaded ?? null);
   const [showPicker, setShowPicker] = useState(false);
 
+  // A new preload means the page read its files again: a download may have added a
+  // version to this one.
   useEffect(() => {
     void versionStore.byFile(file.id).then(setVersions);
-  }, [file.id]);
-
-  /** Re-reads the versions, e.g. after one was deleted somewhere else. */
-  function reload(): void {
-    void versionStore.byFile(file.id).then(setVersions);
-  }
+  }, [file.id, preloaded]);
 
   /** Deletes an older version (never the latest — see db.deleteVersion). */
   async function deleteVersion(version: VersionRecord): Promise<void> {
@@ -77,7 +74,6 @@ export function useFileOpener(file: FileRecord, onOpened?: () => void) {
     showPicker,
     closePicker: () => setShowPicker(false),
     selectVersion,
-    deleteVersion,
-    reload
+    deleteVersion
   };
 }

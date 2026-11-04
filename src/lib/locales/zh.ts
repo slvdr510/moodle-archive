@@ -112,13 +112,12 @@ export const zh: Messages = {
       `请从稳定的位置重试。（${error}）`,
     couldNotAdd: (_fileCount, error) => `无法添加文件：${error}`,
     dropFiles: (name) => `拖放文件以添加到“${name}”`,
-    searchPlaceholder: '直接输入即可搜索文件和文件夹，无需点击此处',
+    searchPlaceholder: '输入以搜索…',
     noMatches: (query) => `没有与“${query}”匹配的文件或文件夹。`,
     noFiles: '此课程尚未下载任何文件。'
   },
 
   fileRow: {
-    viewHistory: '查看版本历史',
     lastSaved: (date) => `上次保存：${date}`,
     manual: '手动',
     manualTitle: '手动添加，并非从 Moodle 下载',
@@ -182,6 +181,7 @@ export const zh: Messages = {
     title: '课程列表样式',
     description: '此页面上课程的显示方式。',
     cards: '卡片',
+    grid: '网格',
     rows: '行'
   },
 
@@ -242,12 +242,6 @@ export const zh: Messages = {
 
   versions: {
     whichVersion: '哪个版本？',
-    downloadTitle: '将此版本下载到“下载”文件夹',
-    diffVsPrevious: '与上一版本比较',
-    comparing: (from, to) => `正在比较 v${from} → v${to}`,
-    loadingDiff: '正在加载差异…',
-    binaryChanged: '二进制文件——内容已更改。',
-    size: (from, to, delta) => `大小：${from} → ${to}（${delta}）`,
     deleteTitle: '删除此版本',
     deleteConfirmTitle: (label) => `删除 ${label}？`,
     deleteConfirmMessage:

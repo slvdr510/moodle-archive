@@ -117,13 +117,12 @@ export const hi: Messages = {
       `खिसकाई गई हो, या अभी डाउनलोड हो रही हो। किसी स्थायी जगह से फिर से कोशिश करें। (${error})`,
     couldNotAdd: (fileCount, error) => `${fileCount === 1 ? 'फ़ाइल' : 'फ़ाइलें'} जोड़ी नहीं जा सकीं: ${error}`,
     dropFiles: (name) => `"${name}" में जोड़ने के लिए फ़ाइलें यहाँ छोड़ें`,
-    searchPlaceholder: 'फ़ाइलें और फ़ोल्डर खोजने के लिए टाइप करना शुरू करें — यहाँ क्लिक करने की ज़रूरत नहीं',
+    searchPlaceholder: 'खोजने के लिए टाइप करें…',
     noMatches: (query) => `"${query}" से मेल खाती कोई फ़ाइल या फ़ोल्डर नहीं।`,
     noFiles: 'इस कोर्स की अभी कोई फ़ाइल डाउनलोड नहीं हुई है।'
   },
 
   fileRow: {
-    viewHistory: 'संस्करण इतिहास देखें',
     lastSaved: (date) => `पिछली बार सहेजा गया: ${date}`,
     manual: 'मैन्युअल',
     manualTitle: 'हाथ से जोड़ी गई, Moodle से डाउनलोड नहीं हुई',
@@ -193,6 +192,7 @@ export const hi: Messages = {
     title: 'कोर्स सूची की शैली',
     description: 'इस पेज पर कोर्स कैसे दिखाए जाएँ।',
     cards: 'कार्ड',
+    grid: 'ग्रिड',
     rows: 'पंक्तियाँ'
   },
 
@@ -253,12 +253,6 @@ export const hi: Messages = {
 
   versions: {
     whichVersion: 'कौन-सा संस्करण?',
-    downloadTitle: 'यह संस्करण अपने डाउनलोड फ़ोल्डर में डाउनलोड करें',
-    diffVsPrevious: 'पिछले से तुलना',
-    comparing: (from, to) => `तुलना v${from} → v${to}`,
-    loadingDiff: 'अंतर लोड हो रहा है…',
-    binaryChanged: 'बाइनरी फ़ाइल — सामग्री बदल गई।',
-    size: (from, to, delta) => `आकार: ${from} → ${to} (${delta})`,
     deleteTitle: 'यह संस्करण हटाएँ',
     deleteConfirmTitle: (label) => `${label} हटाएँ?`,
     deleteConfirmMessage:

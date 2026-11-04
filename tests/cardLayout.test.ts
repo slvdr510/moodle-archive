@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CARD_GAP, CARD_HEIGHT, CARD_WIDTH, fitCardGrid, rowsFor } from '../src/lib/cardLayout';
+import { CARD_GAP, CARD_HEIGHT, CARD_WIDTH, filledRowsFor, fitCardGrid, rowsFor } from '../src/lib/cardLayout';
 
 describe('rowsFor', () => {
   it('spreads the cards evenly, the top rows taking one more', () => {
@@ -10,7 +10,31 @@ describe('rowsFor', () => {
   });
 });
 
+describe('filledRowsFor', () => {
+  it('fills every row but the last, which holds what is left', () => {
+    expect(filledRowsFor(5, 3)).toEqual([3, 2]);
+    expect(filledRowsFor(10, 4)).toEqual([4, 4, 2]);
+    expect(filledRowsFor(7, 3)).toEqual([3, 3, 1]);
+    expect(filledRowsFor(9, 3)).toEqual([3, 3, 3]);
+    expect(filledRowsFor(0, 3)).toEqual([]);
+  });
+});
+
 describe('fitCardGrid', () => {
+  it('as a grid, keeps the squarest number of columns, each row full but the last', () => {
+    for (const [count, rows] of [
+      [3, [2, 1]],
+      [5, [3, 2]],
+      [7, [3, 3, 1]],
+      [10, [4, 4, 2]],
+      [16, [4, 4, 4, 4]]
+    ] as const) {
+      expect(fitCardGrid(count, Infinity, Infinity, true).rows).toEqual(rows);
+    }
+    // The same size either way: rows as many, and as wide.
+    expect(fitCardGrid(10, 900, 500, true)).toEqual({ ...fitCardGrid(10, 900, 500), rows: [4, 4, 2] });
+  });
+
   it('lays cards out as close to a square as possible, full size when there is room', () => {
     for (const [count, rows] of [
       [1, [1]],

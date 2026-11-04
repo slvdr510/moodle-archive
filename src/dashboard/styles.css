@@ -13,6 +13,13 @@
   --unchanged: #6b7280;
   --radius: 10px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  /* What has the keyboard's focus (see keyboardNavigation.ts): in the text's own color
+     (black; white on the dark theme), tinted and edged with it, so it stands out on any
+     screen — where a hover's faint gray may not show at all. */
+  --focus: var(--fg);
+  --focus-bg: color-mix(in srgb, var(--focus) 10%, var(--bg));
+  /* The edge: a bar down a row's start. */
+  --focus-bar: inset 3px 0 0 var(--focus);
   font-family:
     'Inter',
     -apple-system,
@@ -32,6 +39,8 @@
     --muted: #9ca3af;
     --border: #2a2d34;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.24);
+    /* Tinting more, to stand out as much against a dark background. */
+    --focus-bg: color-mix(in srgb, var(--focus) 16%, var(--bg));
   }
 }
 
@@ -42,6 +51,12 @@
   --muted: #9ca3af;
   --border: #2a2d34;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.24);
+  --focus-bg: color-mix(in srgb, var(--focus) 16%, var(--bg));
+}
+
+/* A row's start is its right side in a right-to-left language. */
+:root[dir='rtl'] {
+  --focus-bar: inset -3px 0 0 var(--focus);
 }
 
 * {
@@ -87,6 +102,15 @@ body {
 .app:has(.course-files-page) {
   height: 100vh;
   padding-bottom: 16px;
+  /* The room between one row and the next, the same all the way down: header,
+     toolbar, notices, recently opened, search, file list. */
+  --page-row-gap: 8px;
+}
+
+/* The header's buttons already have 16px below them, inside its title's padding
+   (see .app-header h1). */
+.app:has(.course-files-page) .app-header {
+  margin-bottom: calc(var(--page-row-gap) - 16px);
 }
 
 .course-files-page {
@@ -94,29 +118,48 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* Between the rows shown, so a missing one (no notice, nothing recently opened)
+     leaves no extra room. The rows themselves have no margins here. */
+  gap: var(--page-row-gap);
+}
+
+.course-files-page > .busy-notice,
+.course-files-page > .status-message {
+  margin: 0;
 }
 
 .course-files-page > * {
   flex: none;
 }
 
-/* Only as tall as its rows, until they don't fit: then it fills the room left and
-   scrolls. */
-.course-files-page > .file-list {
-  flex: 0 1 auto;
+/* The room left below the rest of the page. The list in it is only as tall as its
+   rows, until they don't fit: then it fills it and scrolls. */
+.course-files-page > .file-list-room {
+  flex: 1 1 0;
   min-height: 0;
+}
+
+.file-list-room > .file-list {
+  box-sizing: border-box;
+  max-height: 100%;
   overflow-y: auto;
+}
+
+/* While searching, as tall as it is with every file (see useFullListHeight) however
+   little is found, rather than shrinking down to it — though never past the room. */
+.file-list-room > .file-list.searching {
+  min-height: min(var(--full-list-height, 0px), 100%);
 }
 
 /* Its scrollbar as unobtrusive as can be: thin, no track, and a faint thumb that
    only firms up a little while the pointer is over the list. */
-.course-files-page > .file-list {
+.file-list-room > .file-list {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--fg) 12%, transparent) transparent;
   transition: scrollbar-color 0.15s ease;
 }
 
-.course-files-page > .file-list:hover {
+.file-list-room > .file-list:hover {
   scrollbar-color: color-mix(in srgb, var(--fg) 26%, transparent) transparent;
 }
 
@@ -357,12 +400,10 @@ body {
   position: relative;
   justify-content: flex-start;
   border-bottom: none;
-  /* No border to pad away from here anymore, so drop the base toolbar's
-     18px padding + 20px margin (38px total) down to the same 18px gap used
-     elsewhere on this page (e.g. .search-input's margin-bottom before the
-     file list), instead of the larger, now-inconsistent-looking gap. */
+  /* No border to pad away from, and the room below it is the page's row gap (see
+     .course-files-page). */
   padding-bottom: 0;
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .course-files-toolbar h2,
@@ -410,7 +451,6 @@ body {
   display: block;
   width: 100%;
   padding: 10px 14px;
-  margin-bottom: 18px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
@@ -428,16 +468,6 @@ body {
 .recently-opened {
   /* For the "show all" panel, laid over the whole section. */
   position: relative;
-  margin-bottom: 20px;
-}
-
-.recently-opened h3 {
-  margin: 0 0 10px;
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
 }
 
 /* The list and, when it doesn't all fit, the button that shows the rest. */
@@ -480,6 +510,9 @@ body {
   line-height: 1.5;
 }
 
+/* Under the pointer (while the panel is still to open), or with the panel open: the
+   gray of a recent item under the pointer, not the generic button:hover blue. */
+.recently-opened-more-button:hover,
 .recently-opened.open .recently-opened-more-button {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
   border-color: var(--border);
@@ -505,19 +538,21 @@ body {
   justify-content: center;
 }
 
-/* While open (see RecentlyOpened): the whole section again — its title, then every
-   item, all aligned to the start — in a panel laid over it, the button hidden under it. Exactly as
-   wide as the section (and so as the search box and file list below); only its top
-   reaches out by its padding and border (13px), so the title stays at its height. */
+/* While open (see RecentlyOpened): every item, all aligned to the start, in a panel
+   laid over the section, the button hidden under it. Exactly as wide as the section
+   (and so as the search box and file list below); only its top reaches out, up to
+   the row above (the page's row gap), with its padding and border filling that, so
+   its first items stay at the row's height. */
 .recently-opened-panel {
   display: none;
   position: absolute;
   z-index: 40;
-  top: -13px;
+  top: calc(-1 * var(--page-row-gap));
   inset-inline: 0;
   max-height: 50vh;
   overflow-y: auto;
   padding: 12px;
+  padding-top: calc(var(--page-row-gap) - 1px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
@@ -529,7 +564,7 @@ body {
   display: block;
 }
 
-/* Aligned to the start, like the title above them and the row it opens from. */
+/* Aligned to the start, like the row it opens from. */
 .recently-opened-panel-items {
   display: flex;
   flex-wrap: wrap;
@@ -548,8 +583,9 @@ body {
   border-radius: 999px;
   /* The remove "×" is positioned absolutely (see .recent-file-remove) so it
      overlays the text on hover instead of reserving its own flex space —
-     the pill's width is just the text plus this padding. */
-  padding: 6px 14px;
+     the pill's width is just the text plus this padding. Less of it before the file's
+     icon than after the name, so the icon doesn't look set in. */
+  padding: 6px 14px 6px 10px;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -560,6 +596,8 @@ body {
 
 .recent-file-open {
   display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
   max-width: 100%;
   appearance: none;
@@ -574,6 +612,14 @@ body {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Smaller than a row's, and reaching 1px into the pill's padding above and below, so
+   the pill keeps the height its name alone gives it. */
+.recent-file-open .file-icon {
+  width: 18px;
+  height: 18px;
+  margin-block: -1px;
 }
 
 .recent-file-open:hover,
@@ -758,6 +804,17 @@ button:disabled {
   height: 0;
 }
 
+/* An empty place in a grid's last row (see CoursesPage), the size of a card, so the
+   row is as wide as the full ones and its cards line up under theirs. */
+.course-list-filler {
+  width: var(--card-width);
+  max-width: 100%;
+  height: var(--card-height);
+  margin-bottom: var(--card-gap);
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* The "no courses" messages span the whole width, boxed like a card. */
 .course-list > .empty {
   flex-basis: 100%;
@@ -816,7 +873,8 @@ button:disabled {
 }
 
 .course-card:hover,
-.course-card.menu-open {
+.course-card.menu-open,
+.course-card:focus-visible {
   background: color-mix(in srgb, var(--course-color) 12%, var(--bg));
   border-color: color-mix(in srgb, var(--course-color) 45%, var(--border));
 }
@@ -913,7 +971,9 @@ button:disabled {
 .course-list:not(.as-rows) .course-card:hover .course-card-names.has-tag,
 .course-list:not(.as-rows) .course-card:hover .course-card-names.has-full-name,
 .course-list:not(.as-rows) .course-card.menu-open .course-card-names.has-tag,
-.course-list:not(.as-rows) .course-card.menu-open .course-card-names.has-full-name {
+.course-list:not(.as-rows) .course-card.menu-open .course-card-names.has-full-name,
+.course-list:not(.as-rows) .course-card:focus-visible .course-card-names.has-tag,
+.course-list:not(.as-rows) .course-card:focus-visible .course-card-names.has-full-name {
   transform: translateY(calc(-1 * (26px + 8px) / 2));
 }
 
@@ -993,7 +1053,8 @@ button:disabled {
 }
 
 .course-list:not(.as-rows) .course-card:hover .course-institution,
-.course-list:not(.as-rows) .course-card.menu-open .course-institution {
+.course-list:not(.as-rows) .course-card.menu-open .course-institution,
+.course-list:not(.as-rows) .course-card:focus-visible .course-institution {
   opacity: 1;
 }
 
@@ -1004,7 +1065,8 @@ button:disabled {
 }
 
 .course-list:not(.as-rows) .course-card:hover .course-last-synced,
-.course-list:not(.as-rows) .course-card.menu-open .course-last-synced {
+.course-list:not(.as-rows) .course-card.menu-open .course-last-synced,
+.course-list:not(.as-rows) .course-card:focus-visible .course-last-synced {
   opacity: 1;
 }
 
@@ -1037,7 +1099,8 @@ button.course-open-url {
 }
 
 .course-card:hover .course-open-url,
-.course-card.menu-open .course-open-url {
+.course-card.menu-open .course-open-url,
+.course-card:focus-visible .course-open-url {
   opacity: 0.75;
 }
 
@@ -1126,7 +1189,8 @@ button.course-open-url {
 }
 
 .course-list.as-rows .course-card:hover,
-.course-list.as-rows .course-card.menu-open {
+.course-list.as-rows .course-card.menu-open,
+.course-list.as-rows .course-card:focus-visible {
   background: var(--surface);
 }
 
@@ -1205,7 +1269,8 @@ button.course-open-url {
   opacity: 0;
 }
 
-.course-card:hover .menu-button {
+.course-card:hover .menu-button,
+.course-card:focus-visible .menu-button {
   opacity: 0.55;
 }
 
@@ -1248,12 +1313,21 @@ button.course-open-url {
   border-bottom: none;
 }
 
+/* The item in focus (moving through the menu with the keyboard) as if under the
+   pointer, rather than with a ring. */
 .dropdown-menu button:hover {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
+.dropdown-menu button:focus-visible {
+  background: var(--focus-bg);
+  box-shadow: var(--focus-bar);
+  outline: none;
+}
+
 /* Destructive items look like the rest until hovered, so the menu doesn't shout. */
-.dropdown-menu button.danger-item:hover {
+.dropdown-menu button.danger-item:hover,
+.dropdown-menu button.danger-item:focus-visible {
   color: var(--deleted);
 }
 
@@ -1509,6 +1583,38 @@ button.course-open-url {
   min-height: calc(var(--row-mid) * 2);
 }
 
+/* In focus from the arrow keys (see keyboardNavigation.ts): a course just as it is
+   under the pointer, with nothing around it; a file's or folder's row, tinted and edged
+   in the focus color instead (see .file-row-header). */
+.course-card:focus-visible,
+.file-row-header:focus-visible,
+.folder-row-header:focus-visible {
+  outline: none;
+}
+
+/* Moving around with the arrow keys (see useKeyboardMode), the lists ignore the
+   pointer: only what's in focus shows as under it, until the mouse moves. The wheel
+   still scrolls them (see useScrollFromAnywhere). */
+:root[data-keyboard-nav] .file-list,
+:root[data-keyboard-nav] .course-list {
+  pointer-events: none;
+}
+
+/* With the focus moving through them that way, no fades: a held-down arrow goes from
+   one to the next faster than a fade takes, so the one in focus would barely show,
+   behind a trail of the ones it left still fading out. Shown and gone at once. */
+.file-list:has(:focus-visible) .file-row-header,
+.file-list:has(:focus-visible) .folder-row-header,
+.file-list:has(:focus-visible) .row-action-button,
+.course-list:has(:focus-visible) .course-card,
+.course-list:has(:focus-visible) .course-card *,
+/* As specific as the rules that give these their fades. */
+.course-list:has(:focus-visible) .course-card .course-card-names,
+.course-list:has(:focus-visible) .course-card .course-institution,
+.course-list:has(:focus-visible) .course-card .course-last-synced {
+  transition: none;
+}
+
 /* Tree connectors (see TreeGuides.tsx): a gutter of 20px columns, one per nesting
    level, stretched over the row's bottom border so the lines never break between rows. */
 .tree-guides {
@@ -1525,26 +1631,27 @@ button.course-open-url {
   flex: 0 0 20px;
 }
 
-/* An ancestor's line, passing straight through this row. The line sits under that
-   ancestor's ▸/▾ toggle: 7px is the middle of the toggle's 14px width. */
+/* An ancestor's line, passing straight through this row. The line comes down from
+   that ancestor's folder icon: 11px is the middle of its 22px width (see .file-icon). */
 .tree-guide.through::before,
 .tree-guide.elbow::before {
   content: '';
   position: absolute;
-  inset-inline-start: 7px;
+  inset-inline-start: 11px;
   top: 0;
   bottom: 0;
   width: 1px;
   background: var(--guide);
 }
 
-/* The connector into this row: a tee (├) when siblings follow, ... */
+/* The connector into this row, ending 2px short of its icon: a tee (├) when siblings
+   follow, ... */
 .tree-guide.elbow::after {
   content: '';
   position: absolute;
-  inset-inline-start: 7px;
+  inset-inline-start: 11px;
   top: calc(var(--row-mid) - 1px);
-  width: 11px;
+  width: 7px;
   height: 1px;
   background: var(--guide);
 }
@@ -1552,7 +1659,7 @@ button.course-open-url {
 /* ... or a rounded corner (└) on the last child, where the line ends. */
 .tree-guide.elbow.last::before {
   bottom: auto;
-  width: 11px;
+  width: 7px;
   height: var(--row-mid);
   background: none;
   border-inline-start: 1px solid var(--guide);
@@ -1577,6 +1684,14 @@ button.course-open-url {
   background: var(--surface);
 }
 
+/* In focus from the keyboard, itself or through one of its buttons: unlike under the
+   pointer, in the focus color, so it shows on any screen. */
+.file-row-header:focus-visible,
+.file-row-header:has(:focus-visible) {
+  background: var(--focus-bg);
+  box-shadow: var(--focus-bar);
+}
+
 /* Takes whatever room the meta column leaves; the name inside truncates (see
    .file-name) instead of wrapping or pushing the meta column, so that stays put. */
 .file-path-group {
@@ -1585,6 +1700,15 @@ button.course-open-url {
   gap: 8px;
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* What kind of file it is, at the start of its row (see FileIcon): the Material Icon
+   Theme's, in its own colors. */
+.file-icon {
+  display: block;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
 }
 
 .file-path {
@@ -1689,6 +1813,15 @@ button.course-open-url {
   background: color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
+/* In focus from the keyboard: ringed in the focus color, on a row already tinted with
+   it (see .file-row-header). */
+.icon-button:focus-visible {
+  opacity: 1;
+  background: var(--bg);
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+
 .row-action-button {
   display: inline-flex;
   align-items: center;
@@ -1701,12 +1834,18 @@ button.course-open-url {
 }
 
 .file-row-header:hover .row-action-button,
-.folder-row-header:hover .row-action-button {
+.folder-row-header:hover .row-action-button,
+.file-row-header:focus-visible .row-action-button,
+.folder-row-header:focus-visible .row-action-button,
+.file-row-header:has(:focus-visible) .row-action-button,
+.folder-row-header:has(:focus-visible) .row-action-button {
   opacity: 0.75;
 }
 
 .file-row-header:hover .row-action-button:hover,
-.folder-row-header:hover .row-action-button:hover {
+.folder-row-header:hover .row-action-button:hover,
+.file-row-header .row-action-button:focus-visible,
+.folder-row-header .row-action-button:focus-visible {
   opacity: 1;
 }
 
@@ -1723,11 +1862,17 @@ button.course-open-url {
   cursor: progress;
 }
 
-.delete-button:hover {
+.delete-button:hover,
+.delete-button:focus-visible {
   color: var(--deleted);
 }
 
+/* How many versions a file has, when it's more than one: just a number, not a control. */
 .version-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg);
   line-height: 1;
   min-width: 20px;
   height: 20px;
@@ -1737,11 +1882,6 @@ button.course-open-url {
   font-size: 11.5px;
   font-weight: 700;
   opacity: 0.85;
-}
-
-.version-count:hover {
-  opacity: 1;
-  background: color-mix(in srgb, var(--fg) 16%, transparent);
 }
 
 .folder-row-header {
@@ -1772,10 +1912,11 @@ button.course-open-url {
   background: var(--surface);
 }
 
-.folder-toggle {
-  color: var(--muted);
-  font-size: 16px;
-  width: 14px;
+/* As a file's row (see .file-row-header). Opaque still, being stuck over the rows. */
+.folder-row-header:focus-visible,
+.folder-row-header:has(:focus-visible) {
+  background: var(--focus-bg);
+  box-shadow: var(--focus-bar);
 }
 
 .folder-name {
@@ -1849,12 +1990,19 @@ button.course-open-url {
   color: var(--muted);
 }
 
-.version-delete-button:hover {
+.version-delete-button:hover,
+.version-delete-button:focus-visible {
   color: var(--deleted);
 }
 
 .version-picker-item:hover {
   background: var(--surface);
+}
+
+.version-picker-item:focus-visible {
+  background: var(--focus-bg);
+  box-shadow: var(--focus-bar);
+  outline: none;
 }
 
 .version-picker-index {
@@ -1944,75 +2092,6 @@ button.course-open-url {
 /* Left as it is by downloads — see Course.ignoredPaths. */
 .status-badge.status-ignored {
   background: var(--unchanged);
-}
-
-.version-timeline {
-  padding: 10px 18px 18px;
-  background: var(--surface);
-}
-
-.version-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 7px 0;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.version-index {
-  font-weight: 700;
-  color: var(--fg);
-}
-
-.diff-panel {
-  margin-top: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.diff-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 9px 14px;
-  background: color-mix(in srgb, var(--fg) 5%, transparent);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.diff-text {
-  margin: 0;
-  padding: 14px;
-  overflow-x: auto;
-  font-size: 12.5px;
-  white-space: pre-wrap;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.diff-added {
-  background: color-mix(in srgb, var(--new) 25%, transparent);
-  display: inline-block;
-  width: 100%;
-}
-
-.diff-removed {
-  background: color-mix(in srgb, var(--deleted) 25%, transparent);
-  display: inline-block;
-  width: 100%;
-}
-
-.diff-binary {
-  padding: 18px;
-  font-size: 13.5px;
-}
-
-.diff-status {
-  padding: 14px;
-  color: var(--muted);
-  font-size: 13.5px;
 }
 
 .folder-row-header .row-action-button {
@@ -2177,7 +2256,8 @@ button.course-open-url {
 
 .course-list-style-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* One column per style, side by side. */
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 4px;
 }

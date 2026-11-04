@@ -117,13 +117,12 @@ export const te: Messages = {
       `లేదా ఇంకా డౌన్‌లోడ్ అవుతూ ఉండవచ్చు. స్థిరమైన స్థానం నుంచి మళ్లీ ప్రయత్నించండి. (${error})`,
     couldNotAdd: (fileCount, error) => `${fileCount === 1 ? 'ఫైల్‌ను' : 'ఫైళ్లను'} జోడించలేకపోయాం: ${error}`,
     dropFiles: (name) => `"${name}"కి జోడించడానికి ఫైళ్లను ఇక్కడ వదలండి`,
-    searchPlaceholder: 'ఫైళ్లు, ఫోల్డర్‌లను వెతకడానికి టైప్ చేయడం మొదలుపెట్టండి — ఇక్కడ క్లిక్ చేయాల్సిన అవసరం లేదు',
+    searchPlaceholder: 'వెతకడానికి టైప్ చేయండి…',
     noMatches: (query) => `"${query}"కి సరిపోయే ఫైళ్లు లేదా ఫోల్డర్‌లు లేవు.`,
     noFiles: 'ఈ కోర్సుకు ఇంకా ఏ ఫైలూ డౌన్‌లోడ్ కాలేదు.'
   },
 
   fileRow: {
-    viewHistory: 'వెర్షన్ చరిత్ర చూడండి',
     lastSaved: (date) => `చివరిగా సేవ్ చేసింది: ${date}`,
     manual: 'మాన్యువల్',
     manualTitle: 'చేతితో జోడించినది, Moodle నుంచి డౌన్‌లోడ్ చేసింది కాదు',
@@ -193,6 +192,7 @@ export const te: Messages = {
     title: 'కోర్సుల జాబితా శైలి',
     description: 'ఈ పేజీలో కోర్సులు ఎలా చూపించాలి.',
     cards: 'కార్డులు',
+    grid: 'గ్రిడ్',
     rows: 'వరుసలు'
   },
 
@@ -253,12 +253,6 @@ export const te: Messages = {
 
   versions: {
     whichVersion: 'ఏ వెర్షన్?',
-    downloadTitle: 'ఈ వెర్షన్‌ను మీ డౌన్‌లోడ్‌ల ఫోల్డర్‌కు డౌన్‌లోడ్ చేయి',
-    diffVsPrevious: 'మునుపటిదానితో పోల్చు',
-    comparing: (from, to) => `పోలుస్తోంది v${from} → v${to}`,
-    loadingDiff: 'తేడాలు లోడ్ అవుతున్నాయి…',
-    binaryChanged: 'బైనరీ ఫైల్ — కంటెంట్ మారింది.',
-    size: (from, to, delta) => `పరిమాణం: ${from} → ${to} (${delta})`,
     deleteTitle: 'ఈ వెర్షన్‌ను తొలగించు',
     deleteConfirmTitle: (label) => `${label}ని తొలగించాలా?`,
     deleteConfirmMessage:

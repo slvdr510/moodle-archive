@@ -20,6 +20,8 @@ import { UploadFilesModal } from '../components/UploadFilesModal';
 import { useDateColumnWidth } from '../hooks/useDateColumnWidth';
 import { PreloadedVersionsContext } from '../hooks/useFileOpener';
 import { useFileDrop } from '../hooks/useFileDrop';
+import { useFileListKeys } from '../hooks/useFileListKeys';
+import { useFullListHeight } from '../hooks/useFullListHeight';
 import { IgnoredFilesContext, type IgnoredFiles } from '../hooks/useIgnoredFiles';
 import { useScrollFromAnywhere } from '../hooks/useScrollFromAnywhere';
 import { useTypeToSearch } from '../hooks/useTypeToSearch';
@@ -72,13 +74,17 @@ export function CourseFilesPage({
   useDateColumnWidth(fileListRef);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useScrollFromAnywhere(fileListRef, searchInputRef);
+  useFileListKeys(fileListRef, searchInputRef);
   useTypeToSearch(searchInputRef);
 
   // Everything the page shows is read first — the course, its files, recently opened,
   // and every file's versions — and the page only shown once it all is, so it
-  // appears whole and in place instead of its parts popping in and shifting it.
+  // appears whole and in place instead of its parts popping in and shifting it. Read
+  // again when a download of this course is saved, with the page staying as it is
+  // (open folders, search, scroll) until the new contents are in.
   const [loaded, setLoaded] = useState(false);
   const [preloadedVersions, setPreloadedVersions] = useState<Map<string, VersionRecord[]> | null>(null);
+  const [savedDownloads, setSavedDownloads] = useState(0);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -98,6 +104,18 @@ export function CourseFilesPage({
     return () => {
       cancelled = true;
     };
+  }, [courseId, savedDownloads]);
+
+  // The background sends this once a download is saved in full, so one that failed or
+  // was cancelled changes nothing here (see handleCourseSnapshotChunk).
+  useEffect(() => {
+    function onMessage(message: unknown) {
+      if (typeof message !== 'object' || message === null) return;
+      const { topic, courseId: updatedCourseId } = message as { topic?: string; courseId?: string };
+      if (topic === 'course-updated' && updatedCourseId === courseId) setSavedDownloads((n) => n + 1);
+    }
+    chrome.runtime.onMessage.addListener(onMessage);
+    return () => chrome.runtime.onMessage.removeListener(onMessage);
   }, [courseId]);
 
   // The bytes are read the moment a file is picked or dropped, not later when the user
@@ -229,6 +247,7 @@ export function CourseFilesPage({
   const filesById = useMemo(() => new Map(files.map((f) => [f.id, f])), [files]);
 
   const isSearching = query.trim().length > 0;
+  useFullListHeight(fileListRef, isSearching);
   const fullTree = useMemo(() => buildFileTree(files), [files]);
   // Search results are the same tree cut down to what's found, so they keep the real
   // folder structure instead of a flat list of full paths — see searchFileTree.
@@ -453,35 +472,37 @@ export function CourseFilesPage({
             }}
           />
 
-          <ul className="file-list" ref={fileListRef}>
-            {tree.map((node) =>
-              node.kind === 'folder' ? (
-                <FolderRow
-                  key={`${isSearching}:${node.path}`}
-                  node={node}
-                  depth={0}
-                  onFileOpened={refreshRecentOpens}
-                  onFileDeleted={handleFileDeleted}
-                  onFolderDeleted={handleFilesDeleted}
-                  canDownload
-                  openFolders={openFolders}
-                />
-              ) : (
-                <FileRow
-                  key={`${isSearching}:${node.file.id}`}
-                  file={node.file}
-                  depth={0}
-                  onFileOpened={refreshRecentOpens}
-                  onFileDeleted={handleFileDeleted}
-                />
-              )
-            )}
-            {tree.length === 0 && (
-              <li className="empty">
-                {isSearching ? t.courseFiles.noMatches(query) : t.courseFiles.noFiles}
-              </li>
-            )}
-          </ul>
+          <div className="file-list-room">
+            <ul className={isSearching ? 'file-list searching' : 'file-list'} ref={fileListRef}>
+              {tree.map((node) =>
+                node.kind === 'folder' ? (
+                  <FolderRow
+                    key={`${isSearching}:${node.path}`}
+                    node={node}
+                    depth={0}
+                    onFileOpened={refreshRecentOpens}
+                    onFileDeleted={handleFileDeleted}
+                    onFolderDeleted={handleFilesDeleted}
+                    canDownload
+                    openFolders={openFolders}
+                  />
+                ) : (
+                  <FileRow
+                    key={`${isSearching}:${node.file.id}`}
+                    file={node.file}
+                    depth={0}
+                    onFileOpened={refreshRecentOpens}
+                    onFileDeleted={handleFileDeleted}
+                  />
+                )
+              )}
+              {tree.length === 0 && (
+                <li className="empty">
+                  {isSearching ? t.courseFiles.noMatches(query) : t.courseFiles.noFiles}
+                </li>
+              )}
+            </ul>
+          </div>
         </div>
       </IgnoredFilesContext.Provider>
     </PreloadedVersionsContext.Provider>

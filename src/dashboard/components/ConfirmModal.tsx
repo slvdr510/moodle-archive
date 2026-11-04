@@ -26,11 +26,13 @@ export function ConfirmModal({
           {title}
         </h2>
         <p>{message}</p>
+        {/* In focus as it opens (see useDialogKeys): the confirm button, or for something
+            that can't be undone, the cancel one, so a stray Enter doesn't do it. */}
         <div className="modal-actions">
-          <button className="secondary" onClick={onCancel}>
+          <button className="secondary" data-autofocus={danger || undefined} onClick={onCancel}>
             {cancelLabel ?? t.common.cancel}
           </button>
-          <button className={danger ? 'danger' : undefined} onClick={onConfirm}>
+          <button className={danger ? 'danger' : undefined} data-autofocus={!danger || undefined} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </div>

@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
+import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FolderRow } from '../src/dashboard/components/FolderRow';
 import type { FolderTreeNode } from '../src/lib/fileTree';
+import type { FileStatus } from '../src/types';
 
 afterEach(cleanup);
 
@@ -25,6 +27,34 @@ function makeFolderTree(): FolderTreeNode {
 }
 
 describe('FolderRow', () => {
+  it("shows what changed inside while closed, and leaves it to the rows once open", async () => {
+    const file = (name: string, currentStatus: FileStatus) => ({
+      kind: 'file' as const,
+      name,
+      file: { id: name, courseId: 'c', relativePath: `Tema/${name}`, filename: name, currentStatus }
+    });
+    const { container } = render(
+      <ul>
+        <FolderRow
+          node={{ kind: 'folder', name: 'Tema', path: 'Tema', children: [file('a.pdf', 'new'), file('b.pdf', 'modified'), file('c.pdf', 'deleted')] }}
+          depth={0}
+        />
+      </ul>
+    );
+    const header = container.querySelector('.folder-row-header')!;
+    const badges = (root: Element) => [...root.querySelectorAll('.status-badge')].map((b) => b.textContent);
+
+    expect(badges(header)).toEqual(['New', 'Modified', 'Deleted']);
+
+    await userEvent.click(screen.getByText('Tema'));
+    expect(badges(header)).toEqual([]);
+    // Each file says it itself.
+    expect(badges(container.querySelector('.folder-children')!)).toEqual(['New', 'Modified', 'Deleted']);
+
+    await userEvent.click(screen.getByText('Tema'));
+    expect(badges(header)).toEqual(['New', 'Modified', 'Deleted']);
+  });
+
   it('starts collapsed by default, revealing children only after a click', async () => {
     render(
       <ul>

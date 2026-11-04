@@ -128,13 +128,12 @@ export const ru: Messages = {
     couldNotAdd: (fileCount, error) =>
       `Не удалось добавить ${fileCount === 1 ? 'файл' : 'файлы'}: ${error}`,
     dropFiles: (name) => `Перетащите файлы, чтобы добавить их в «${name}»`,
-    searchPlaceholder: 'Начните печатать для поиска файлов и папок — нажимать сюда не нужно',
+    searchPlaceholder: 'Начните печатать для поиска…',
     noMatches: (query) => `Нет файлов или папок, соответствующих «${query}».`,
     noFiles: 'Для этого курса ещё не скачано ни одного файла.'
   },
 
   fileRow: {
-    viewHistory: 'Показать историю версий',
     lastSaved: (date) => `Последнее сохранение: ${date}`,
     manual: 'Вручную',
     manualTitle: 'Добавлен вручную, а не скачан из Moodle',
@@ -204,6 +203,7 @@ export const ru: Messages = {
     title: 'Вид списка курсов',
     description: 'Как курсы показываются на этой странице.',
     cards: 'Карточки',
+    grid: 'Сетка',
     rows: 'Строки'
   },
 
@@ -264,12 +264,6 @@ export const ru: Messages = {
 
   versions: {
     whichVersion: 'Какая версия?',
-    downloadTitle: 'Скачать эту версию в папку «Загрузки»',
-    diffVsPrevious: 'Сравнить с предыдущей',
-    comparing: (from, to) => `Сравнение v${from} → v${to}`,
-    loadingDiff: 'Загрузка различий…',
-    binaryChanged: 'Двоичный файл — содержимое изменилось.',
-    size: (from, to, delta) => `Размер: ${from} → ${to} (${delta})`,
     deleteTitle: 'Удалить эту версию',
     deleteConfirmTitle: (label) => `Удалить ${label}?`,
     deleteConfirmMessage:

@@ -19,6 +19,13 @@ describe('courseListStyle', () => {
     expect(getCourseListStyle()).toBe('cards');
     setCourseListStyle('rows');
     expect(getCourseListStyle()).toBe('rows');
+    setCourseListStyle('grid');
+    expect(getCourseListStyle()).toBe('grid');
+  });
+
+  it('offers cards, a grid and rows, in that order', () => {
+    render(<CourseListStyleModal onClose={() => {}} />);
+    expect(screen.getAllByRole('radio').map((option) => option.textContent)).toEqual(['Cards', 'Grid', 'Rows']);
   });
 
   it('applies the choice live, and Cancel restores the previous one', async () => {

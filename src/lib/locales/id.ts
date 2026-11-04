@@ -117,13 +117,12 @@ export const id: Messages = {
       `dipindahkan atau dihapus, atau masih diunduh. Coba lagi dari lokasi yang stabil. (${error})`,
     couldNotAdd: (_fileCount, error) => `Tidak dapat menambahkan file: ${error}`,
     dropFiles: (name) => `Letakkan file untuk menambahkannya ke "${name}"`,
-    searchPlaceholder: 'Mulai mengetik untuk mencari file dan folder, tanpa perlu mengeklik di sini',
+    searchPlaceholder: 'Ketik untuk mencari…',
     noMatches: (query) => `Tidak ada file atau folder yang cocok dengan "${query}".`,
     noFiles: 'Belum ada file yang diunduh untuk kursus ini.'
   },
 
   fileRow: {
-    viewHistory: 'Lihat riwayat versi',
     lastSaved: (date) => `Terakhir disimpan: ${date}`,
     manual: 'Manual',
     manualTitle: 'Ditambahkan secara manual, tidak diunduh dari Moodle',
@@ -193,6 +192,7 @@ export const id: Messages = {
     title: 'Gaya daftar kursus',
     description: 'Cara kursus ditampilkan di halaman ini.',
     cards: 'Kartu',
+    grid: 'Kisi',
     rows: 'Baris'
   },
 
@@ -253,12 +253,6 @@ export const id: Messages = {
 
   versions: {
     whichVersion: 'Versi yang mana?',
-    downloadTitle: 'Unduh versi ini ke folder Unduhan Anda',
-    diffVsPrevious: 'Bandingkan dengan sebelumnya',
-    comparing: (from, to) => `Membandingkan v${from} → v${to}`,
-    loadingDiff: 'Memuat perbedaan…',
-    binaryChanged: 'File biner — isinya berubah.',
-    size: (from, to, delta) => `Ukuran: ${from} → ${to} (${delta})`,
     deleteTitle: 'Hapus versi ini',
     deleteConfirmTitle: (label) => `Hapus ${label}?`,
     deleteConfirmMessage:

@@ -121,13 +121,12 @@ export const ha: Messages = {
     couldNotAdd: (fileCount, error) =>
       `Ba a iya ƙara ${fileCount === 1 ? 'fayil ɗin' : 'fayilolin'} ba: ${error}`,
     dropFiles: (name) => `Jefa fayiloli don ƙara su zuwa "${name}"`,
-    searchPlaceholder: 'Fara rubutu don neman fayiloli da manyan fayiloli, ba sai ka danna nan ba',
+    searchPlaceholder: 'Fara rubutu don nema…',
     noMatches: (query) => `Babu fayil ko babban fayil da ya dace da "${query}".`,
     noFiles: 'Ba a sauke wani fayil na wannan kwas ba tukuna.'
   },
 
   fileRow: {
-    viewHistory: 'Duba tarihin sigogi',
     lastSaved: (date) => `An ajiye na ƙarshe: ${date}`,
     manual: 'Da hannu',
     manualTitle: 'An ƙara da hannu, ba a sauke daga Moodle ba',
@@ -197,6 +196,7 @@ export const ha: Messages = {
     title: 'Salon jerin kwasa-kwasai',
     description: 'Yadda ake nuna kwasa-kwasai a wannan shafin.',
     cards: 'Katuna',
+    grid: 'Jadawali',
     rows: 'Layuka'
   },
 
@@ -257,12 +257,6 @@ export const ha: Messages = {
 
   versions: {
     whichVersion: 'Wace siga?',
-    downloadTitle: 'Sauke wannan siga zuwa babban fayil ɗin Abubuwan da aka sauke',
-    diffVsPrevious: 'Kwatanta da ta baya',
-    comparing: (from, to) => `Ana kwatanta v${from} → v${to}`,
-    loadingDiff: 'Ana loda bambance-bambance…',
-    binaryChanged: 'Fayil na binary — abin ciki ya canza.',
-    size: (from, to, delta) => `Girma: ${from} → ${to} (${delta})`,
     deleteTitle: 'Share wannan siga',
     deleteConfirmTitle: (label) => `A share ${label}?`,
     deleteConfirmMessage:

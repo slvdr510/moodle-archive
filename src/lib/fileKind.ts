@@ -45,22 +45,3 @@ export function getRenderKind(filename: string): RenderKind {
 export function guessMimeType(filename: string): string {
   return EXTENSION_INFO[getExtension(filename)]?.mime ?? 'application/octet-stream';
 }
-
-function formatTimestamp(ms: number): string {
-  const d = new Date(ms);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`
-  );
-}
-
-/** Inserts a version's timestamp before the extension, e.g. "notes.pdf" -> "notes__2026-01-01_10-00-00.pdf". */
-export function datedFilename(filename: string, timestampMs: number): string {
-  const stamp = formatTimestamp(timestampMs);
-  const dotIndex = filename.lastIndexOf('.');
-  if (dotIndex <= 0) {
-    return `${filename}__${stamp}`;
-  }
-  return `${filename.slice(0, dotIndex)}__${stamp}${filename.slice(dotIndex)}`;
-}

@@ -261,11 +261,13 @@ async function main(): Promise<void> {
 
   switch (getRenderKind(filename)) {
     case 'pdf': {
-      // Chrome's PDF viewer, with its own toolbar and no header of ours. Its download
-      // button saves the blob under its UUID, so that download is swapped for one under
-      // the real name. (A URL of our own the background serves doesn't work: Chrome's
-      // download manager fetches it without the service worker, and the download fails.)
-      const frameUrl = contentUrl();
+      // The browser's PDF viewer, with its own toolbar and no header of ours. Chrome's
+      // download button saves the blob under its UUID, so that download is swapped for
+      // one under the real name. (A URL of our own the background serves doesn't work:
+      // Chrome's download manager fetches it without the service worker, and the
+      // download fails.) Firefox's asks where to save it, suggesting the name of the
+      // File behind the URL — "document.pdf" if it were a bare Blob.
+      const frameUrl = URL.createObjectURL(new File([content], await downloadName, { type: content.type }));
       chrome.downloads.onCreated.addListener((item) => {
         if ((item.finalUrl || item.url).split('#')[0] !== frameUrl) return;
         void chrome.downloads

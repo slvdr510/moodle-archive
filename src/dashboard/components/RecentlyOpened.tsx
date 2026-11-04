@@ -1,10 +1,11 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { recentOpenStore } from '../../lib/db';
 import { applyRecentSettings } from '../../lib/recentSettings';
 import type { FileRecord, RecentOpenRecord } from '../../types';
 import { useFileOpener } from '../hooks/useFileOpener';
 import { useRecentSettings } from '../hooks/useRecentSettings';
+import { FileIcon } from './FileIcon';
 import { FileName } from './FileName';
 import { VersionPickerModal } from './VersionPickerModal';
 import { useT } from '../hooks/useTranslation';
@@ -12,6 +13,10 @@ import { useT } from '../hooks/useTranslation';
 /** How far the "+N" button's hover area reaches past the button, above and below —
  *  matches the CSS's --more-hover-margin. */
 const MORE_HOVER_MARGIN = 4;
+
+/** How long the pointer has to stay on the "+N" button for the panel to open, so
+ *  just passing over it on the way somewhere else doesn't. */
+const PANEL_OPEN_DELAY_MS = 250;
 
 function RecentFileItem({
   record,
@@ -31,6 +36,7 @@ function RecentFileItem({
           keyboard/screen-reader access — its clicks bubble up to this handler. */}
       <div className="recent-file-item" onClick={handleClick}>
         <button className="recent-file-open">
+          <FileIcon filename={file.filename} />
           <FileName name={file.filename} />
         </button>
         <button
@@ -41,7 +47,7 @@ function RecentFileItem({
             void recentOpenStore.remove(record.id).then(onChange);
           }}
         >
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
@@ -85,10 +91,14 @@ export function RecentlyOpened({
   // Where the last item that fits on the row ends: the "+N" button takes the rest of
   // the row from there, so the whole of it keeps the panel open.
   const [lastItemEnd, setLastItemEnd] = useState(0);
-  // Whether the "show all" panel is open: from the pointer (or focus) entering the
-  // button's area until it really leaves — not CSS :hover, which can drop when an
-  // item removed from under the pointer reshuffles the panel.
+  // Whether the "show all" panel is open: from the pointer staying on the button's
+  // area for a moment (see PANEL_OPEN_DELAY_MS), or the focus entering it, until it
+  // really leaves — not CSS :hover, which can drop when an item removed from under the
+  // pointer reshuffles the panel.
   const [panelOpen, setPanelOpen] = useState(false);
+  const openTimer = useRef<number | undefined>(undefined);
+  const cancelOpening = () => window.clearTimeout(openTimer.current);
+  useEffect(() => cancelOpening, []);
   useLayoutEffect(() => {
     const list = listRef.current;
     if (!list) return;
@@ -122,17 +132,17 @@ export function RecentlyOpened({
   const hasMore = hiddenCount > 0 || panelOpen;
 
   return (
-    // While the "show all" panel is open, it lays over this whole section — title
-    // included, in its very place — with every item; it closes once the pointer
-    // (or focus) leaves the section.
+    // While the "show all" panel is open, it lays over this whole section, its items
+    // where the row's are, with every item; it closes once the pointer (or focus)
+    // leaves the section. No title shown: the name is only for screen readers.
     <section
       className={`recently-opened${panelOpen ? ' open' : ''}`}
+      aria-label={t.recentlyOpened.title}
       onMouseLeave={() => setPanelOpen(false)}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPanelOpen(false);
       }}
     >
-      <h3>{t.recentlyOpened.title}</h3>
       <div className="recently-opened-row">
         <div className="recently-opened-list" ref={listRef}>
           {renderItems(items)}
@@ -140,13 +150,22 @@ export function RecentlyOpened({
         {/* Kept while open even once nothing is left hidden (items removed from the
             panel), so it doesn't vanish from under the pointer. */}
         {hasMore && (
-          // Entering the button's area (or focusing it) opens the panel. That area
+          // Staying on the button's area (or focusing it) opens the panel. That area
           // starts right at the last item (the gap before the button is padding, see
           // .recently-opened-more), and reaches a little above and below the button.
           <div
             className="recently-opened-more"
-            onMouseEnter={() => setPanelOpen(true)}
-            onFocus={() => setPanelOpen(true)}
+            onMouseEnter={() => {
+              cancelOpening();
+              openTimer.current = window.setTimeout(() => setPanelOpen(true), PANEL_OPEN_DELAY_MS);
+            }}
+            // Once open, the panel lays over this, so the pointer leaves it right
+            // away: that only cancels an opening still to come.
+            onMouseLeave={cancelOpening}
+            onFocus={() => {
+              cancelOpening();
+              setPanelOpen(true);
+            }}
             style={{ insetInlineStart: lastItemEnd, height: itemHeight === undefined ? undefined : itemHeight + 2 * MORE_HOVER_MARGIN }}
           >
             <button
@@ -163,7 +182,6 @@ export function RecentlyOpened({
           picker opened from one of its items isn't unmounted when it closes. */}
       {hasMore && (
         <div className="recently-opened-panel">
-          <h3>{t.recentlyOpened.title}</h3>
           <div className="recently-opened-panel-items">{renderItems(items)}</div>
         </div>
       )}

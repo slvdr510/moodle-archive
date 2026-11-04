@@ -3,21 +3,22 @@ import preact from '@preact/preset-vite';
 import { build, defineConfig, type Plugin } from 'vite';
 import manifest from './manifest.config';
 
-// The crawler (dist/content/main.js) is built separately by vite.content.config.ts —
-// see there for why — so the dev server never serves or rebuilds it. Run that build in
-// watch mode alongside the dev server, so crawler changes land in dist/ as well.
+// The crawler (content/main.js) is built separately by vite.content.config.ts — see
+// there for why — so the dev server never serves or rebuilds it. Run that build in
+// watch mode alongside the dev server, so crawler changes land next to the rest.
 function watchContentScript(): Plugin {
   return {
     name: 'watch-content-script',
     apply: 'serve',
-    async configureServer() {
-      await build({ configFile: 'vite.content.config.ts', build: { watch: {} } });
+    async configureServer(server) {
+      await build({ configFile: 'vite.content.config.ts', build: { outDir: server.config.build.outDir, watch: {} } });
     }
   };
 }
 
-// `--mode firefox` builds Firefox's version of the extension, into dist-firefox/.
-export default defineConfig(({ mode }) => ({
+// The dev server (`npm run dev:chrome`) writes Chrome's version into dist-chrome-dev/;
+// `vite build` into dist-chrome/, and with `--mode firefox` Firefox's into dist-firefox/.
+export default defineConfig(({ command, mode }) => ({
   plugins: [preact(), crx({ manifest, browser: mode === 'firefox' ? 'firefox' : 'chrome' }), watchContentScript()],
   // Extension pages aren't served from the dev server's own origin, so Vite's HMR
   // client can't infer the port and tries `ws://localhost:undefined` — pin it.
@@ -27,7 +28,7 @@ export default defineConfig(({ mode }) => ({
     hmr: { port: 5173 }
   },
   build: {
-    outDir: mode === 'firefox' ? 'dist-firefox' : 'dist',
+    outDir: mode === 'firefox' ? 'dist-firefox' : command === 'serve' ? 'dist-chrome-dev' : 'dist-chrome',
     rollupOptions: {
       input: {
         dashboard: 'src/dashboard/index.html',

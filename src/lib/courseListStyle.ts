@@ -1,11 +1,13 @@
-/** How the course list shows each course: as a grid of cards, or as rows of a list. */
-export type CourseListStyle = 'cards' | 'rows';
+/** How the course list shows each course: as cards, in balanced rows each centered on
+ *  its own; as cards in a grid, lined up in columns as well as rows; or as rows of a
+ *  list. */
+export type CourseListStyle = 'cards' | 'grid' | 'rows';
 
 const STORAGE_KEY = 'moodle-archive-course-list-style';
 export const DEFAULT_COURSE_LIST_STYLE: CourseListStyle = 'cards';
 
 function isValid(value: unknown): value is CourseListStyle {
-  return value === 'cards' || value === 'rows';
+  return value === 'cards' || value === 'grid' || value === 'rows';
 }
 
 export function getCourseListStyle(): CourseListStyle {

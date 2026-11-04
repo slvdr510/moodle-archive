@@ -27,6 +27,7 @@ vi.mock('../src/lib/backup', () => ({
 }));
 
 import { CoursesPage } from '../src/dashboard/pages/CoursesPage';
+import { setCourseListStyle } from '../src/lib/courseListStyle';
 
 function makeCourse(overrides: Partial<Course> = {}): Course {
   return {
@@ -130,6 +131,29 @@ describe('CoursesPage drag-and-drop reordering', () => {
 
     await Promise.resolve();
     expect(putMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('CoursesPage as a grid', () => {
+  it("makes the last row up to a full one with empty places, so its cards line up under the others'", async () => {
+    setCourseListStyle('grid');
+    allMock.mockResolvedValue(['A', 'B', 'C', 'D', 'E'].map((name, order) => makeCourse({ id: name, name: `Course ${name}`, order })));
+
+    const { container } = renderCoursesPage();
+    await screen.findByText('Course E');
+
+    // 5 courses in 3 columns: 3 + 2, and one empty place after the 2.
+    const items = [...container.querySelectorAll('.course-list > li')].map((li) => li.className.split(' ')[0]);
+    expect(items).toEqual(['course-card', 'course-card', 'course-card', 'course-list-break', 'course-card', 'course-card', 'course-list-filler']);
+    expect(container.querySelector('.course-list-filler')).toHaveAttribute('aria-hidden', 'true');
+    setCourseListStyle('cards');
+  });
+
+  it('as cards, keeps the last row as it is, centered on its own', async () => {
+    allMock.mockResolvedValue(['A', 'B', 'C', 'D', 'E'].map((name, order) => makeCourse({ id: name, name: `Course ${name}`, order })));
+    const { container } = renderCoursesPage();
+    await screen.findByText('Course E');
+    expect(container.querySelector('.course-list-filler')).toBeNull();
   });
 });
 

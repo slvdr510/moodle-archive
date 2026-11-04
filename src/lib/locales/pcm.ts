@@ -119,13 +119,12 @@ export const pcm: Messages = {
       `delete am, or e still dey download. Try again from one place wey no dey change. (${error})`,
     couldNotAdd: (fileCount, error) => `We no fit add di file${fileCount === 1 ? '' : 's'}: ${error}`,
     dropFiles: (name) => `Drop files here make we add dem to "${name}"`,
-    searchPlaceholder: 'Just start to type to find files and folders — you no need click here',
+    searchPlaceholder: 'Type make you search…',
     noMatches: (query) => `No file or folder match "${query}".`,
     noFiles: 'You never download any file for dis course yet.'
   },
 
   fileRow: {
-    viewHistory: 'See version history',
     lastSaved: (date) => `Last time wey e save: ${date}`,
     manual: 'By hand',
     manualTitle: 'You add am by hand, e no come from Moodle',
@@ -195,6 +194,7 @@ export const pcm: Messages = {
     title: 'How di course list go look',
     description: 'How courses go show for dis page.',
     cards: 'Cards',
+    grid: 'Grid',
     rows: 'Lines'
   },
 
@@ -255,12 +255,6 @@ export const pcm: Messages = {
 
   versions: {
     whichVersion: 'Which version?',
-    downloadTitle: 'Download dis version go your Downloads folder',
-    diffVsPrevious: 'Compare am with di one before',
-    comparing: (from, to) => `E dey compare v${from} → v${to}`,
-    loadingDiff: 'E dey load di difference…',
-    binaryChanged: 'Binary file — di content don change.',
-    size: (from, to, delta) => `Size: ${from} → ${to} (${delta})`,
     deleteTitle: 'Comot dis version',
     deleteConfirmTitle: (label) => `Make we comot ${label}?`,
     deleteConfirmMessage:

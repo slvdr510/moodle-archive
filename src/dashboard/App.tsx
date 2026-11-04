@@ -5,6 +5,10 @@ import { CoursesPage } from './pages/CoursesPage';
 import { CourseFilesPage } from './pages/CourseFilesPage';
 import { useT } from './hooks/useTranslation';
 import { useContentWidth } from './hooks/useSideMargin';
+import { useDialogKeys } from './hooks/useDialogKeys';
+import { useKeyboardMode } from './hooks/useKeyboardMode';
+import { useOptionsKey } from './hooks/useOptionsKey';
+import { dialogOpen, isTypingField } from './hooks/useScrollFromAnywhere';
 
 type View =
   | { name: 'courses' }
@@ -28,6 +32,11 @@ export function App() {
   // lifting all of that state up. The slot only exists while the courses view
   // is mounted, so the menu disappears on its own when navigating away.
   const [headerMenuSlot, setHeaderMenuSlot] = useState<HTMLDivElement | null>(null);
+  // The course just left with Escape, to give it the focus back on the courses list.
+  const [returnFocusCourseId, setReturnFocusCourseId] = useState<string | null>(null);
+  useDialogKeys();
+  useKeyboardMode();
+  useOptionsKey();
 
   // Pushing a history entry when opening a course means the browser's own
   // back/forward — including mouse side buttons — navigates between the two
@@ -44,6 +53,7 @@ export function App() {
   function openCourse(courseId: string, courseName: string, courseUrl: string | undefined) {
     const nextView: View = { name: 'course-files', courseId, courseName, courseUrl };
     history.pushState(nextView, '');
+    setReturnFocusCourseId(null);
     setView(nextView);
   }
 
@@ -57,6 +67,22 @@ export function App() {
       setView({ name: 'courses' });
     }
   }
+
+  // Escape goes back from a course's page to the courses, unless something on it takes
+  // the key first: a dialog or a menu (closing), a field being typed in (the search box
+  // clearing itself, a name being edited).
+  useEffect(() => {
+    if (view.name !== 'course-files') return;
+    const { courseId } = view;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape' || e.defaultPrevented || dialogOpen() || isTypingField(e.target)) return;
+      e.preventDefault();
+      setReturnFocusCourseId(courseId);
+      backToCourses();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [view]);
 
   return (
     <div className="app" style={{ width: contentWidth }}>
@@ -83,7 +109,7 @@ export function App() {
       </header>
       <main>
         {view.name === 'courses' ? (
-          <CoursesPage headerMenuSlot={headerMenuSlot} onOpenCourse={openCourse} />
+          <CoursesPage headerMenuSlot={headerMenuSlot} onOpenCourse={openCourse} focusCourseId={returnFocusCourseId} />
         ) : (
           <CourseFilesPage
             courseId={view.courseId}

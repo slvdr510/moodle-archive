@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { datedFilename, getRenderKind, guessMimeType } from '../src/lib/fileKind';
+import { getRenderKind, guessMimeType } from '../src/lib/fileKind';
 
 describe('getRenderKind', () => {
   it('classifies images, pdf, video, audio and text extensions', () => {
@@ -32,17 +32,5 @@ describe('guessMimeType', () => {
   it('falls back to application/octet-stream for unknown extensions', () => {
     expect(guessMimeType('archive.zip')).toBe('application/octet-stream');
     expect(guessMimeType('no-extension')).toBe('application/octet-stream');
-  });
-});
-
-describe('datedFilename', () => {
-  it('inserts the timestamp before the extension', () => {
-    const ms = new Date(2026, 0, 5, 10, 30, 0).getTime(); // months are 0-indexed
-    expect(datedFilename('notes.pdf', ms)).toBe('notes__2026-01-05_10-30-00.pdf');
-  });
-
-  it('appends the timestamp when there is no extension', () => {
-    const ms = new Date(2026, 0, 5, 10, 30, 0).getTime();
-    expect(datedFilename('README', ms)).toBe('README__2026-01-05_10-30-00');
   });
 });

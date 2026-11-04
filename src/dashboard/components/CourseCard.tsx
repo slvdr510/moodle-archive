@@ -104,6 +104,10 @@ export function CourseCard({
     <li
       className={`course-card${isDragging ? ' dragging' : ''}${isDragOver ? ' drag-over' : ''}${menuOpen ? ' menu-open' : ''}`}
       style={color ? ({ '--course-color': color } as CSSProperties) : undefined}
+      // Takes the focus from the arrow keys (see useCourseGridKeys), and gets it back on
+      // returning from the course with Escape.
+      tabIndex={-1}
+      data-course-id={course.id}
       draggable={editing === null}
       onDragStart={onDragStart}
       onDragOver={onDragOver}

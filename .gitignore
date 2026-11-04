@@ -1,7 +1,10 @@
 .directory
 node_modules/
 dist/
+dist-chrome/
+dist-chrome-dev/
 dist-firefox/
+dist-firefox-dev/
 *.local
 *.tsbuildinfo
 *.zip

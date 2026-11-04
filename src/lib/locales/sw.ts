@@ -119,13 +119,12 @@ export const sw: Messages = {
     couldNotAdd: (fileCount, error) =>
       `Imeshindwa kuongeza ${fileCount === 1 ? 'faili' : 'faili hizo'}: ${error}`,
     dropFiles: (name) => `Dondosha faili ili kuziongeza kwenye "${name}"`,
-    searchPlaceholder: 'Anza kuandika ili kutafuta faili na folda, bila kubofya hapa',
+    searchPlaceholder: 'Andika ili kutafuta…',
     noMatches: (query) => `Hakuna faili wala folda zinazolingana na "${query}".`,
     noFiles: 'Bado hakuna faili zilizopakuliwa kwa kozi hii.'
   },
 
   fileRow: {
-    viewHistory: 'Tazama historia ya matoleo',
     lastSaved: (date) => `Ilihifadhiwa mwisho: ${date}`,
     manual: 'Kwa mkono',
     manualTitle: 'Imeongezwa kwa mkono, haikupakuliwa kutoka Moodle',
@@ -195,6 +194,7 @@ export const sw: Messages = {
     title: 'Mtindo wa orodha ya kozi',
     description: 'Jinsi kozi zinavyoonyeshwa kwenye ukurasa huu.',
     cards: 'Kadi',
+    grid: 'Gridi',
     rows: 'Mistari'
   },
 
@@ -255,12 +255,6 @@ export const sw: Messages = {
 
   versions: {
     whichVersion: 'Toleo lipi?',
-    downloadTitle: 'Pakua toleo hili kwenye folda yako ya Vipakuliwa',
-    diffVsPrevious: 'Linganisha na lililotangulia',
-    comparing: (from, to) => `Inalinganisha v${from} → v${to}`,
-    loadingDiff: 'Inapakia tofauti…',
-    binaryChanged: 'Faili la binary — maudhui yamebadilika.',
-    size: (from, to, delta) => `Ukubwa: ${from} → ${to} (${delta})`,
     deleteTitle: 'Futa toleo hili',
     deleteConfirmTitle: (label) => `Futa ${label}?`,
     deleteConfirmMessage:

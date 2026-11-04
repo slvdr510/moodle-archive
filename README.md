@@ -1,6 +1,6 @@
 # Moodle Archive
 
-[Chrome web store link](https://chromewebstore.google.com/detail/fnhkaidabjeciifnkipdeodjdmheejpj?utm_source=item-share-cb)
+## Get the extension in [Chrome](https://chromewebstore.google.com/detail/fnhkaidabjeciifnkipdeodjdmheejpj?utm_source=item-share-cb)  or  [Firefox](https://addons.mozilla.org/en-US/firefox/addon/moodle-archive/)
 
 A browser extension for Chrome and Firefox (Manifest V3) that downloads the files from a Moodle course
 and keeps a full version history of them — entirely inside the browser, with no
@@ -28,7 +28,6 @@ everything else is deduplicated by content hash.
   name; a folder whose name matches shows with everything in it.
 - **Version history per file** — every time a file's content changes, a new
   version is kept; unchanged files aren't re-stored.
-- **Diff viewer** — compare any two versions of a text file side by side.
 - **Open or download any version** — preview images/PDFs/text inline, or send
   any file straight to your Downloads folder, current or historical. Previews
   live at a stable extension URL per version, so a restored tab still works
@@ -112,7 +111,7 @@ or from source:
 git clone https://github.com/slvdr510/moodle-archive.git
 cd moodle-archive
 npm install
-npm run build           # Chrome, into dist/
+npm run build:chrome    # Chrome, into dist-chrome/
 npm run build:firefox   # Firefox (140 or later), into dist-firefox/
 ```
 
@@ -120,7 +119,7 @@ Then in Chrome:
 
 1. Go to `chrome://extensions`.
 2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and select the `dist/` folder produced by the build.
+3. Click **Load unpacked** and select the `dist-chrome/` folder produced by the build.
 
 Or in Firefox:
 
@@ -225,18 +224,31 @@ course in one of them and import it into the others.
 ## Development
 
 ```sh
-npm run dev              # Vite dev server for the dashboard/popup UI
-npm run build            # Full production build into dist/
+npm run dev              # Asks: Chrome (Enter) or Firefox (↓, Enter), then runs one of:
+npm run dev:chrome       #   Vite dev server, into dist-chrome-dev/
+npm run dev:firefox      #   Firefox build into dist-firefox-dev/, rebuilt on change
+npm run build            # Asks: both (Enter), Chrome (↓) or Firefox (↓↓), then runs:
+npm run build:chrome     #   Chrome production build into dist-chrome/
+npm run build:firefox    #   Firefox production build into dist-firefox/
 npm run typecheck        # tsc, no emit
 npm test                 # vitest
-npm run package          # Production build, zipped for the Chrome Web Store
-npm run build:firefox    # Firefox build into dist-firefox/
-npm run package:firefox  # Firefox build, zipped for addons.mozilla.org
-npm run package:source   # The committed source, zipped for addons.mozilla.org's review
+npm run package          # Asks the same as build, then runs:
+npm run package:chrome   #   Chrome build, zipped for the Chrome Web Store: moodle-archive-chrome.zip
+npm run package:firefox  #   Firefox build, zipped for addons.mozilla.org: moodle-archive-firefox.zip
+npm run package:source   # The committed source, for addons.mozilla.org's review: moodle-archive-firefox-source-code.zip
 ```
 
-`npm run dev` doesn't rebuild the content script: after changing `src/content/`,
-rebuild it with `npx vite build --config vite.content.config.ts`.
+`npm run dev:chrome` writes the extension into `dist-chrome-dev/`, for Chrome's
+**Load unpacked**, and also rebuilds the content script there as `src/content/`
+changes, in watch mode alongside the dev server.
+
+`npm run dev:firefox` builds the Firefox version into `dist-firefox-dev/` and
+rebuilds it on every change. Load it in Firefox from
+`about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** →
+`dist-firefox-dev/manifest.json`, and press **Reload** there after a rebuild.
+Flatpak's Firefox can only read the file picked, not the rest of the folder: give
+it access to the project first, then restart it —
+`flatpak override --user --filesystem="$PWD:ro" org.mozilla.firefox`.
 
 ### Building the Firefox version from source
 
@@ -249,10 +261,10 @@ from this source. To build it:
 
 The result, in `dist-firefox/`, is the content of the submitted package, file
 for file. The icons are committed as PNGs, so this build doesn't redraw them
-from `src/icons/icon.svg` (`npm run build` does, with `rsvg-convert`).
+from `src/icons/icon.svg` (`npm run build:chrome` does, with `rsvg-convert`).
 
 The bundle includes, unmodified from npm: Preact, JSZip (with its
-`setimmediate` dependency), idb, diff and the Inter font.
+`setimmediate` dependency), idb and the Inter font.
 
 ### Project layout
 
@@ -277,3 +289,8 @@ The bundle includes, unmodified from npm: Preact, JSZip (with its
 [PolyForm Noncommercial 1.0.0](LICENSE) — free to use, modify, and share for
 any noncommercial purpose. Selling it, or using it as part of a paid product
 or service, is not permitted.
+
+The file and folder icons come from the
+[Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme)
+for VS Code, under the MIT License — see
+[THIRD_PARTY_NOTICES.txt](public/THIRD_PARTY_NOTICES.txt).

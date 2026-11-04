@@ -117,27 +117,27 @@ describe('collectFolderStatuses', () => {
     expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual([]);
   });
 
-  it('shows a single Modified when a folder has both new and deleted files', () => {
+  it('shows both New and Deleted when a folder has new and deleted files', () => {
     const tree = buildFileTree([
       makeFile('f/a.pdf', 'deleted'),
       makeFile('f/b.pdf', 'new'),
       makeFile('f/d.pdf', 'unchanged'),
       makeFile('_sibling.pdf', 'unchanged')
     ]);
-    expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['modified']);
+    expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['new', 'deleted']);
   });
 
-  it('does not duplicate Modified when the folder also has modified files', () => {
+  it('shows all three when a folder has new, modified and deleted files', () => {
     const tree = buildFileTree([
       makeFile('f/a.pdf', 'deleted'),
       makeFile('f/b.pdf', 'new'),
       makeFile('f/c.pdf', 'modified'),
       makeFile('_sibling.pdf', 'unchanged')
     ]);
-    expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['modified']);
+    expect(collectFolderStatuses(tree[0] as FolderTreeNode)).toEqual(['new', 'modified', 'deleted']);
   });
 
-  it('keeps new + modified, or modified + deleted, as separate badges — only new + deleted merge', () => {
+  it('shows new + modified, or modified + deleted, as separate badges', () => {
     const newAndModified = buildFileTree([
       makeFile('f/a.pdf', 'new'),
       makeFile('f/b.pdf', 'modified'),

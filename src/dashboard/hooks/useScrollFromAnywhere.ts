@@ -1,8 +1,6 @@
 import { useEffect, type RefObject } from 'react';
 
-// What one press of an arrow key moves, and a page key's share of the list's height:
-// the browser's own.
-const ARROW_STEP = 40;
+// A page key's share of the list's height: the browser's own.
 const PAGE_SHARE = 0.875;
 
 /** Whether `el` or something it's in scrolls by itself, and so takes the wheel or the
@@ -27,16 +25,17 @@ export function isTypingField(el: EventTarget | null): boolean {
 }
 
 /**
- * Lets the mouse wheel and the keyboard (arrows, page keys, Home/End, space) scroll
+ * Lets the mouse wheel and the keyboard (page keys, Home/End, space) scroll
  * `listRef`'s list from anywhere on the window, not only with the pointer over it or
  * the focus in it. A course's page doesn't scroll itself, only its file list does (see
  * .course-files-page), so over the toolbar or the margins they'd otherwise do nothing.
+ * The arrow keys move from row to row instead (see useFileListKeys).
  *
  * Left alone: whatever scrolls on its own under the pointer or the focus (the list
  * itself, an open menu that overflows), typing in a field, and all of it while a
- * dialog is open. But in `searchRef`'s box, the list's search, the up/down and page
- * keys still scroll it: there they'd do next to nothing to the one line of text, and
- * the results come right after typing the search.
+ * dialog is open. But in `searchRef`'s box, the list's search, the page keys still
+ * scroll it: there they'd do next to nothing to the one line of text, and the results
+ * come right after typing the search.
  */
 export function useScrollFromAnywhere(
   listRef: RefObject<HTMLElement | null>,
@@ -96,18 +95,12 @@ export function useScrollFromAnywhere(
       if (!list || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || dialogOpen()) return;
       const focused = e.target instanceof Element ? e.target : null;
       const inSearch = focused !== null && focused === searchRef?.current;
-      if (inSearch ? !['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.key) : isTypingField(focused) || inScroller(focused)) {
+      if (inSearch ? !['PageUp', 'PageDown'].includes(e.key) : isTypingField(focused) || inScroller(focused)) {
         return;
       }
 
       const page = list.clientHeight * PAGE_SHARE;
       switch (e.key) {
-        case 'ArrowUp':
-          scrollBy(list, -ARROW_STEP);
-          break;
-        case 'ArrowDown':
-          scrollBy(list, ARROW_STEP);
-          break;
         case 'PageUp':
           scrollBy(list, -page);
           break;

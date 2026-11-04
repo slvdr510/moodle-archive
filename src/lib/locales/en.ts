@@ -124,13 +124,12 @@ export const en = {
       `deleted, or it is still being downloaded. Try again from a stable location. (${error})`,
     couldNotAdd: (fileCount: number, error: string) => `Could not add the file${fileCount === 1 ? '' : 's'}: ${error}`,
     dropFiles: (name: string) => `Drop files to add them to "${name}"`,
-    searchPlaceholder: 'Start typing to search files and folders — no need to click here',
+    searchPlaceholder: 'Type to search…',
     noMatches: (query: string) => `No files or folders match "${query}".`,
     noFiles: 'No files downloaded yet for this course.'
   },
 
   fileRow: {
-    viewHistory: 'View version history',
     lastSaved: (date: string) => `Last saved: ${date}`,
     manual: 'Manual',
     manualTitle: 'Added by hand, not downloaded from Moodle',
@@ -200,6 +199,7 @@ export const en = {
     title: 'Course list style',
     description: 'How courses are shown on this page.',
     cards: 'Cards',
+    grid: 'Grid',
     rows: 'Rows'
   },
 
@@ -262,12 +262,6 @@ export const en = {
 
   versions: {
     whichVersion: 'Which version?',
-    downloadTitle: 'Download this version to your Downloads folder',
-    diffVsPrevious: 'Diff vs previous',
-    comparing: (from: number, to: number) => `Comparing v${from} → v${to}`,
-    loadingDiff: 'Loading diff…',
-    binaryChanged: 'Binary file — content changed.',
-    size: (from: string, to: string, delta: string) => `Size: ${from} → ${to} (${delta})`,
     deleteTitle: 'Delete this version',
     deleteConfirmTitle: (label: string) => `Delete ${label}?`,
     deleteConfirmMessage:

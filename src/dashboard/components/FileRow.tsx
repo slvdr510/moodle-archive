@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { formatDate } from '../../lib/dateFormat';
 import { deleteFile } from '../../lib/db';
 import { downloadNameFor } from '../../lib/downloadNameSettings';
@@ -10,12 +10,12 @@ import { useFileOpener } from '../hooks/useFileOpener';
 import { useIgnoredFiles } from '../hooks/useIgnoredFiles';
 import { useT } from '../hooks/useTranslation';
 import { ConfirmModal } from './ConfirmModal';
+import { FileIcon } from './FileIcon';
 import { FileName } from './FileName';
 import { IgnoreButton } from './IgnoreButton';
 import { StatusBadge } from './StatusBadge';
 import { TreeGuides, rowPaddingLeft } from './TreeGuides';
 import { VersionPickerModal } from './VersionPickerModal';
-import { VersionTimeline } from './VersionTimeline';
 
 export function FileRow({
   file,
@@ -34,45 +34,39 @@ export function FileRow({
   /** Called once the file has been removed from the database. */
   onFileDeleted?: (file: FileRecord) => void;
 }) {
-  const { versions, latestVersion, handleClick, showPicker, closePicker, selectVersion, deleteVersion, reload } =
-    useFileOpener(file, onFileOpened);
+  const { versions, latestVersion, handleClick, showPicker, closePicker, selectVersion, deleteVersion } = useFileOpener(
+    file,
+    onFileOpened
+  );
   const t = useT();
-  const [historyExpanded, setHistoryExpanded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [dateFormatPref] = useDateFormat();
   const ignoredFiles = useIgnoredFiles();
   const ignoreState = ignoredFiles?.fileState(file) ?? 'none';
   const ignored = ignoreState !== 'none';
-  // Bumped when a version is deleted from the picker, so an open history re-reads them.
-  const [versionsChanged, setVersionsChanged] = useState(0);
 
-  // With older versions deleted down to one, the history toggle (the version count)
-  // goes away, so the history mustn't stay open with no way to close it.
-  const singleVersion = versions !== null && versions.length <= 1;
-  useEffect(() => {
-    if (singleVersion) setHistoryExpanded(false);
-  }, [singleVersion]);
+  function download(): void {
+    if (!latestVersion) return;
+    const content = latestVersion.content;
+    void downloadNameFor(file.courseId, file.filename).then((name) => downloadVersion(content, name));
+  }
 
   return (
     <li className={`file-row status-${file.currentStatus}`}>
       <TreeGuides depth={depth} guides={guides} isLast={isLast} />
-      <div className="file-row-header" style={{ paddingLeft: rowPaddingLeft(depth) }} onClick={handleClick}>
+      {/* Takes the focus from the arrow keys (see useFileListKeys). */}
+      <div
+        className="file-row-header"
+        tabIndex={-1}
+        style={{ paddingLeft: rowPaddingLeft(depth) }}
+        onClick={handleClick}
+      >
         {/* The filename takes the remaining space, with the version count (if there's
             more than one version) right after it, even when the name is cut off. */}
         <div className="file-path-group">
+          <FileIcon filename={file.filename} />
           <FileName name={file.filename} className="file-path" />
-          {versions && versions.length > 1 && (
-            <button
-              className="icon-button version-count"
-              title={t.fileRow.viewHistory}
-              onClick={(e) => {
-                e.stopPropagation();
-                setHistoryExpanded((v) => !v);
-              }}
-            >
-              {versions.length}
-            </button>
-          )}
+          {versions && versions.length > 1 && <span className="version-count">{versions.length}</span>}
         </div>
         {/* Right-hand columns, left to right: status tag, time since scanned, delete,
             download. The date column has the same width on every row (see
@@ -88,7 +82,7 @@ export function FileRow({
               >
                 {t.fileRow.ignored}
               </span>
-            ) : file.currentStatus === 'new' || file.currentStatus === 'deleted' ? (
+            ) : file.currentStatus !== 'unchanged' ? (
               <StatusBadge status={file.currentStatus} />
             ) : (
               file.manual && <span className="status-badge status-manual" title={t.fileRow.manualTitle}>{t.fileRow.manual}</span>
@@ -124,15 +118,12 @@ export function FileRow({
             </svg>
           </button>
           <button
-            className="icon-button row-action-button"
+            className="icon-button row-action-button download-button"
             title={t.fileRow.downloadTitle}
             disabled={!latestVersion}
             onClick={(e) => {
               e.stopPropagation();
-              if (latestVersion) {
-                const content = latestVersion.content;
-                void downloadNameFor(file.courseId, file.filename).then((name) => downloadVersion(content, name));
-              }
+              download();
             }}
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -141,16 +132,6 @@ export function FileRow({
           </button>
         </div>
       </div>
-
-      {historyExpanded && (
-        <VersionTimeline
-          key={versionsChanged}
-          fileId={file.id}
-          courseId={file.courseId}
-          filename={file.filename}
-          onVersionDeleted={reload}
-        />
-      )}
 
       {confirmingDelete && (
         <ConfirmModal
@@ -170,10 +151,7 @@ export function FileRow({
         <VersionPickerModal
           versions={versions}
           onSelect={selectVersion}
-          onDelete={async (version) => {
-            await deleteVersion(version);
-            setVersionsChanged((n) => n + 1);
-          }}
+          onDelete={deleteVersion}
           onClose={closePicker}
         />
       )}

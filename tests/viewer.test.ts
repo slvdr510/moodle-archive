@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fileStore, versionStore } from '../src/lib/db';
+import { courseStore, fileStore, versionStore } from '../src/lib/db';
 import type { FileRecord, VersionRecord } from '../src/types';
 
 async function seedVersion(filename: string, content: Blob): Promise<string> {
@@ -54,6 +54,33 @@ describe('viewer page', () => {
     expect(document.querySelector('header')).toBeNull();
     const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
     expect(blob.type).toBe('application/pdf');
+    vi.unstubAllGlobals();
+  });
+
+  it("names the PDF's blob as it would be downloaded, so Firefox's viewer suggests that name, not document.pdf", async () => {
+    vi.stubGlobal('chrome', { downloads: { onCreated: { addListener: vi.fn() } } });
+    await courseStore.put({
+      id: 'course',
+      name: 'PCD',
+      url: 'https://moodle.example/course/view.php?id=1',
+      matchedUrls: [],
+      createdAt: 0,
+      lastSyncedAt: 0,
+      order: 0,
+      firstSyncCompleted: true,
+      hidden: false,
+      tagged: true
+    });
+    const versionId = await seedVersion('Tema 2 - Introducción.pdf', new Blob(['%PDF-1.4']));
+
+    await loadViewer(versionId);
+
+    await vi.waitFor(() => expect(document.querySelector('iframe')?.src).toBe('blob:fake'));
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as File;
+    expect(blob).toBeInstanceOf(File);
+    expect(blob.name).toBe('PCD_Tema 2 - Introducción.pdf');
+    expect(blob.type).toBe('application/pdf');
+    await courseStore.remove('course');
     vi.unstubAllGlobals();
   });
 

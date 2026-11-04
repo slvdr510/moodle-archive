@@ -21,12 +21,6 @@ vi.mock('../src/lib/openFile', () => ({
   openVersionInBrowser: openVersionInBrowserMock,
   downloadVersion: downloadVersionMock
 }));
-// VersionTimeline has its own DB/diff wiring already covered elsewhere; stub it here
-// so this file's tests stay focused on FileRow's own open/picker/history logic.
-vi.mock('../src/dashboard/components/VersionTimeline', () => ({
-  VersionTimeline: ({ fileId }: { fileId: string }) => <div data-testid="version-timeline">{fileId}</div>
-}));
-
 import { FileRow } from '../src/dashboard/components/FileRow';
 import { PreloadedVersionsContext } from '../src/dashboard/hooks/useFileOpener';
 import { IgnoredFilesContext, type IgnoredFiles } from '../src/dashboard/hooks/useIgnoredFiles';
@@ -159,27 +153,28 @@ describe('FileRow', () => {
     expect(await screen.findByTitle('Last saved: 05/03/2026')).toHaveClass('file-date');
   });
 
-  it('hides the history button when the file only has a single version', async () => {
+  it('shows no version count when the file only has a single version', async () => {
     byFileMock.mockResolvedValue([makeVersion()]);
 
-    renderFileRow(makeFile());
+    const { container } = renderFileRow(makeFile());
     await screen.findByTitle('notes.pdf');
 
-    expect(screen.queryByTitle('View version history')).not.toBeInTheDocument();
+    expect(container.querySelector('.version-count')).toBeNull();
   });
 
-  it('the history button toggles the version timeline without opening the file, when there is more than one version', async () => {
+  it('shows how many versions there are as a plain number, which a click goes through to the row', async () => {
     byFileMock.mockResolvedValue([makeVersion({ id: 'v1', timestamp: 1000 }), makeVersion({ id: 'v2', timestamp: 2000 })]);
 
-    renderFileRow(makeFile());
+    const { container } = renderFileRow(makeFile());
     await screen.findByTitle('notes.pdf');
 
-    await userEvent.click(screen.getByTitle('View version history'));
-    expect(screen.getByTestId('version-timeline')).toBeInTheDocument();
-    expect(openVersionInBrowserMock).not.toHaveBeenCalled();
+    const count = container.querySelector<HTMLElement>('.version-count')!;
+    expect(count).toHaveTextContent('2');
+    expect(count.closest('button')).toBeNull();
 
-    await userEvent.click(screen.getByTitle('View version history'));
-    expect(screen.queryByTestId('version-timeline')).not.toBeInTheDocument();
+    // Like anywhere else on the row: the version picker, to open one.
+    await userEvent.click(count);
+    expect(screen.getByText('Which version?')).toBeInTheDocument();
   });
 
   it('the download button saves the latest version to Downloads without opening it', async () => {
@@ -207,12 +202,12 @@ describe('FileRow', () => {
     expect(await screen.findByText('Deleted')).toBeInTheDocument();
   });
 
-  it('shows no status badge for a modified file — the version-count number covers that instead', async () => {
+  it('shows a "Modified" badge for a modified file', async () => {
     byFileMock.mockResolvedValue([makeVersion({ id: 'v1', timestamp: 1000 }), makeVersion({ id: 'v2', timestamp: 2000 })]);
     renderFileRow(makeFile({ currentStatus: 'modified' }));
     await screen.findByTitle('notes.pdf');
 
-    expect(screen.queryByText('Modified')).not.toBeInTheDocument();
+    expect(screen.getByText('Modified')).toHaveClass('status-badge', 'status-modified');
   });
 
   it('shows no status badge for an unchanged file', async () => {

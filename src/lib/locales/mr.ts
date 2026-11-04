@@ -117,13 +117,12 @@ export const mr: Messages = {
       `असेल, किंवा अजून डाउनलोड होत असेल. स्थिर ठिकाणाहून पुन्हा प्रयत्न करा. (${error})`,
     couldNotAdd: (fileCount, error) => `${fileCount === 1 ? 'फाइल' : 'फाइल्स'} जोडता आल्या नाहीत: ${error}`,
     dropFiles: (name) => `"${name}" मध्ये जोडण्यासाठी फाइल्स इथे सोडा`,
-    searchPlaceholder: 'फाइल्स आणि फोल्डर्स शोधण्यासाठी टाइप करायला सुरुवात करा — इथे क्लिक करायची गरज नाही',
+    searchPlaceholder: 'शोधण्यासाठी टाइप करा…',
     noMatches: (query) => `"${query}" शी जुळणारी कोणतीही फाइल किंवा फोल्डर नाही.`,
     noFiles: 'या कोर्सची अजून कोणतीही फाइल डाउनलोड झालेली नाही.'
   },
 
   fileRow: {
-    viewHistory: 'आवृत्ती इतिहास पाहा',
     lastSaved: (date) => `शेवटचे जतन: ${date}`,
     manual: 'हाताने',
     manualTitle: 'हाताने जोडलेली, Moodle मधून डाउनलोड केलेली नाही',
@@ -193,6 +192,7 @@ export const mr: Messages = {
     title: 'कोर्स यादीची शैली',
     description: 'या पानावर कोर्स कसे दाखवायचे.',
     cards: 'कार्ड',
+    grid: 'ग्रिड',
     rows: 'ओळी'
   },
 
@@ -253,12 +253,6 @@ export const mr: Messages = {
 
   versions: {
     whichVersion: 'कोणती आवृत्ती?',
-    downloadTitle: 'ही आवृत्ती तुमच्या डाउनलोड्स फोल्डरमध्ये डाउनलोड करा',
-    diffVsPrevious: 'आधीच्याशी तुलना',
-    comparing: (from, to) => `तुलना v${from} → v${to}`,
-    loadingDiff: 'फरक लोड होत आहे…',
-    binaryChanged: 'बायनरी फाइल — मजकूर बदलला आहे.',
-    size: (from, to, delta) => `आकार: ${from} → ${to} (${delta})`,
     deleteTitle: 'ही आवृत्ती हटवा',
     deleteConfirmTitle: (label) => `${label} हटवायची?`,
     deleteConfirmMessage:

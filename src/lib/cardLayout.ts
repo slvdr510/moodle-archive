@@ -22,6 +22,15 @@ export function rowsFor(count: number, columns: number): number[] {
   return Array.from({ length: rows }, (_, i) => base + (i < extra ? 1 : 0));
 }
 
+/** `count` cards in `columns` columns, each row full but the last, which holds what's
+ *  left (10 in 4 columns → 4 + 4 + 2): a grid, its columns lined up. */
+export function filledRowsFor(count: number, columns: number): number[] {
+  if (count <= 0) return [];
+  const perRow = Math.max(1, columns);
+  const rows = Math.ceil(count / perRow);
+  return Array.from({ length: rows }, (_, i) => (i < rows - 1 ? perRow : count - perRow * (rows - 1)));
+}
+
 /** Below this share of their full size, cards would be too small to read: the
  *  squarest layout gives way to whichever one leaves them largest. */
 export const MIN_CARD_SCALE = 0.4;
@@ -42,8 +51,11 @@ function scaleFor(count: number, columns: number, width: number, height: number)
  * columns, rounded up (4 cards → 2 + 2, 5 → 3 + 2, 10 → 4 + 3 + 3) — the cards shrunk
  * as far as that takes. Only if that would leave them too small to read (under
  * MIN_CARD_SCALE) does it go for whichever number of columns leaves them largest.
+ *
+ * The cards are spread evenly over the rows (see rowsFor) — or, `aligned`, each row is
+ * full but the last (see filledRowsFor), so they line up in columns too.
  */
-export function fitCardGrid(count: number, width: number, height: number): CardGrid {
+export function fitCardGrid(count: number, width: number, height: number, aligned = false): CardGrid {
   if (count <= 0) return { rows: [], width: CARD_WIDTH, height: CARD_HEIGHT };
   let columns = Math.ceil(Math.sqrt(count));
   let scale = scaleFor(count, columns, width, height);
@@ -59,7 +71,7 @@ export function fitCardGrid(count: number, width: number, height: number): CardG
   }
 
   return {
-    rows: rowsFor(count, columns),
+    rows: aligned ? filledRowsFor(count, columns) : rowsFor(count, columns),
     width: Math.floor(CARD_WIDTH * scale),
     height: Math.floor(CARD_HEIGHT * scale)
   };

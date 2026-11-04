@@ -119,13 +119,12 @@ export const arz: Messages = {
       `أو لسه بيتنزّل. جرّب تاني من مكان ثابت. (${error})`,
     couldNotAdd: (fileCount, error) => `مقدرناش نضيف ${fileCount === 1 ? 'الملف' : 'الملفات'}: ${error}`,
     dropFiles: (name) => `سيب الملفات هنا علشان تضيفها لـ«${name}»`,
-    searchPlaceholder: 'ابدأ اكتب عشان تدوّر على ملفات وفولدرات، من غير ما تدوس هنا',
+    searchPlaceholder: 'اكتب عشان تدوّر…',
     noMatches: (query) => `مفيش ملفات ولا فولدرات شبه «${query}».`,
     noFiles: 'لسه مفيش ملفات اتنزّلت للكورس ده.'
   },
 
   fileRow: {
-    viewHistory: 'شوف تاريخ النسخ',
     lastSaved: (date) => `آخر حفظ: ${date}`,
     manual: 'يدوي',
     manualTitle: 'اتضاف باليد، مش متنزّل من Moodle',
@@ -195,6 +194,7 @@ export const arz: Messages = {
     title: 'شكل قايمة الكورسات',
     description: 'الكورسات تتعرض إزاي في الصفحة دي.',
     cards: 'كروت',
+    grid: 'شبكة',
     rows: 'صفوف'
   },
 
@@ -255,12 +255,6 @@ export const arz: Messages = {
 
   versions: {
     whichVersion: 'أنهي نسخة؟',
-    downloadTitle: 'نزّل النسخة دي في فولدر التنزيلات',
-    diffVsPrevious: 'قارن باللي قبلها',
-    comparing: (from, to) => `بنقارن v${from} ← v${to}`,
-    loadingDiff: 'بيحمّل الفروق…',
-    binaryChanged: 'ملف باينري — المحتوى اتغيّر.',
-    size: (from, to, delta) => `الحجم: ${from} ← ${to} (${delta})`,
     deleteTitle: 'امسح النسخة دي',
     deleteConfirmTitle: (label) => `تمسح ${label}؟`,
     deleteConfirmMessage:
