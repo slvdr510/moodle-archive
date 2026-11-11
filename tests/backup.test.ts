@@ -566,6 +566,7 @@ describe('mergeImportedCourse', () => {
       tagged: true,
       fullName: 'Sistemas Operativos II',
       institution: 'UHU',
+      academicYear: '25-26',
       color: '#123456',
       ignoredPaths: ['Tema_1/'],
       hidden: false,
@@ -577,6 +578,7 @@ describe('mergeImportedCourse', () => {
       tagged: true,
       fullName: 'Sistemas Operativos II',
       institution: 'UHU',
+      academicYear: '25-26',
       color: '#123456',
       ignoredPaths: ['Tema_1/'],
       hidden: true, // local
@@ -591,6 +593,7 @@ describe('mergeImportedCourse', () => {
       tagged: true,
       fullName: 'Mi nombre',
       institution: 'US',
+      academicYear: '2024-2025',
       color: '#abcdef',
       ignoredPaths: ['a.pdf', 'Tema 1/']
     };
@@ -600,12 +603,20 @@ describe('mergeImportedCourse', () => {
       tagged: true,
       fullName: 'Otro nombre',
       institution: 'UHU',
+      academicYear: '25-26',
       color: '#123456',
       ignoredPaths: ['tema_1/', 'b.pdf'],
       lastSyncedAt: 500
     };
     const merged = mergeImportedCourse(local, imported);
-    expect(merged).toMatchObject({ name: 'SSOO', fullName: 'Mi nombre', institution: 'US', color: '#abcdef', lastSyncedAt: 500 });
+    expect(merged).toMatchObject({
+      name: 'SSOO',
+      fullName: 'Mi nombre',
+      institution: 'US',
+      academicYear: '2024-2025',
+      color: '#abcdef',
+      lastSyncedAt: 500
+    });
     expect(merged.ignoredPaths).toEqual(['a.pdf', 'Tema 1/', 'b.pdf']);
   });
 });

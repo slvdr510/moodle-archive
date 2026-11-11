@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { assignAcademicYearColors } from '../../lib/academicYearColors';
 import { exportCourse } from '../../lib/backup';
 import { courseStore, deleteCourse, deleteFiles, fileStore, recentOpenStore, versionStore } from '../../lib/db';
 import { buildFileTree, getRootFolderPath, listFolders } from '../../lib/fileTree';
@@ -14,9 +15,10 @@ import { FileRow } from '../components/FileRow';
 import { FolderRow } from '../components/FolderRow';
 import { IgnoredFilesModal } from '../components/IgnoredFilesModal';
 import { RecentlyOpened } from '../components/RecentlyOpened';
-import { Spinner } from '../components/Spinner';
+import { StatusToasts, type StatusMessage } from '../components/StatusToasts';
 import { joinPath } from '../../lib/uploadPath';
 import { UploadFilesModal } from '../components/UploadFilesModal';
+import { useAcademicYearColors } from '../hooks/useAcademicYearColors';
 import { useDateColumnWidth } from '../hooks/useDateColumnWidth';
 import { PreloadedVersionsContext } from '../hooks/useFileOpener';
 import { useFileDrop } from '../hooks/useFileDrop';
@@ -53,15 +55,27 @@ export function CourseFilesPage({
   // record, which this view isn't handed by App.tsx (only id/name/url) — so
   // it's fetched here, same as `files`/`recentOpens` already are.
   const [course, setCourse] = useState<Course | null>(null);
+  const yearColors = useAcademicYearColors();
+  // Opened straight to it (the courses list never shown), its year may have none yet.
+  useEffect(() => assignAcademicYearColors([course?.academicYear]), [course?.academicYear]);
   const [name, setName] = useState(courseName);
   const [editing, setEditing] = useState(false);
   // Set by Escape, so the blur that can follow the input's removal doesn't save anyway.
   const renameCancelled = useRef(false);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+  // The tag's field takes the focus as it opens, what's in it selected to type over —
+  // not with autoFocus, which browsers only honor for what's there as the page loads —
+  // and as soon as it's there, so a key pressed right away already lands in it.
+  useLayoutEffect(() => {
+    if (!editing) return;
+    tagInputRef.current?.focus();
+    tagInputRef.current?.select();
+  }, [editing]);
   const [draft, setDraft] = useState(courseName);
   const [pendingExport, setPendingExport] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<StatusMessage | null>(null);
   const [showIgnoredFiles, setShowIgnoredFiles] = useState(false);
   // Files just ignored that are in the course: asked whether to delete them as well.
   const [justIgnored, setJustIgnored] = useState<FileRecord[] | null>(null);
@@ -129,7 +143,7 @@ export function CourseFilesPage({
         await Promise.all(files.map(async (file) => ({ name: file.name, content: new Uint8Array(await file.arrayBuffer()) })))
       );
     } catch (err) {
-      setMessage(t.courseFiles.couldNotRead(files.length, files[0]?.name ?? '', String(err)));
+      setMessage({ kind: 'error', text: t.courseFiles.couldNotRead(files.length, files[0]?.name ?? '', String(err)) });
     }
   }
 
@@ -164,7 +178,7 @@ export function CourseFilesPage({
       setPendingUpload(null);
     } catch (err) {
       setPendingUpload(null);
-      setMessage(t.courseFiles.couldNotAdd(pendingUpload.length, String(err)));
+      setMessage({ kind: 'error', text: t.courseFiles.couldNotAdd(pendingUpload.length, String(err)) });
     } finally {
       setUploading(false);
     }
@@ -200,9 +214,9 @@ export function CourseFilesPage({
     setBusy(true);
     try {
       await exportCourse(courseId);
-      setMessage(t.common.savedToDownloads(name));
+      setMessage({ kind: 'info', text: t.common.savedToDownloads(name) });
     } catch (err) {
-      setMessage(t.common.couldNotExport(name, String(err)));
+      setMessage({ kind: 'error', text: t.common.couldNotExport(name, String(err)) });
     } finally {
       setBusy(false);
     }
@@ -308,9 +322,9 @@ export function CourseFilesPage({
 
             {editing ? (
               <input
+                ref={tagInputRef}
                 className="course-name-input"
                 value={draft}
-                autoFocus
                 onChange={(e) => setDraft(e.currentTarget.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') commitRename();
@@ -324,7 +338,22 @@ export function CourseFilesPage({
               />
             ) : (
               // The name it was opened with, until the full course record has loaded.
-              <h2>{course ? coursePageTitle(course) : name}</h2>
+              // Then the academic year after it, if set, as a label of its own: whole,
+              // beside the name however many lines that takes (neither is cut short).
+              <h2>
+                <span className="course-page-title">{course ? coursePageTitle(course) : name}</span>
+                {/* Its label, in its color; the space before it, for what's read out. */}
+                {course?.academicYear && ' '}
+                {course?.academicYear && (
+                  <span
+                    className="course-page-academic-year"
+                    title={`${t.courseRow.academicYear}: ${course.academicYear}`}
+                    style={yearColors[course.academicYear] ? ({ '--year-color': yearColors[course.academicYear] } as CSSProperties) : undefined}
+                  >
+                    {course.academicYear}
+                  </span>
+                )}
+              </h2>
             )}
 
             <div className="course-files-toolbar-actions">
@@ -348,27 +377,23 @@ export function CourseFilesPage({
                 items={[
                   {
                     label: t.courseRow.setTagName,
+                    icon: 'tag',
                     onClick: () => {
                       setDraft(name);
                       renameCancelled.current = false;
                       setEditing(true);
                     }
                   },
-                  { label: t.courseFiles.addFile, onClick: () => fileInputRef.current?.click() },
-                  { label: t.courseFiles.ignoredFiles, onClick: () => setShowIgnoredFiles(true) },
-                  { label: t.common.export, onClick: () => setPendingExport(true) },
-                  { label: t.courseRow.hideCourse, onClick: () => void handleHide() },
-                  { label: t.courseRow.deleteCourse, onClick: () => setPendingDelete(true), danger: true }
+                  { label: t.courseFiles.addFile, icon: 'addFile', onClick: () => fileInputRef.current?.click() },
+                  { label: t.courseFiles.ignoredFiles, icon: 'ignore', onClick: () => setShowIgnoredFiles(true) },
+                  { label: t.common.export, icon: 'export', onClick: () => setPendingExport(true) },
+                  { label: t.courseRow.hideCourse, icon: 'hide', onClick: () => void handleHide() },
+                  { label: t.courseRow.deleteCourse, icon: 'delete', onClick: () => setPendingDelete(true), danger: true }
                 ]}
               />
             </div>
           </div>
 
-          {busy && (
-            <div className="busy-notice">
-              <Spinner label={t.common.exporting} />
-            </div>
-          )}
 
           <input
             ref={fileInputRef}
@@ -453,7 +478,7 @@ export function CourseFilesPage({
             />
           )}
 
-          {message && <p className="hint-text status-message">{message}</p>}
+          <StatusToasts busy={busy ? t.common.exporting : null} message={message} onDismiss={() => setMessage(null)} />
 
           <RecentlyOpened records={recentOpens} filesById={filesById} onChange={refreshRecentOpens} />
 
@@ -464,12 +489,8 @@ export function CourseFilesPage({
             placeholder={t.courseFiles.searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              // Esc clears the search; with nothing left to clear, it leaves the box.
-              if (e.key !== 'Escape') return;
-              if (query) setQuery('');
-              else e.currentTarget.blur();
-            }}
+            // Esc in it goes straight back to the courses, as on the rest of the page (see App).
+            data-passes-escape
           />
 
           <div className="file-list-room">

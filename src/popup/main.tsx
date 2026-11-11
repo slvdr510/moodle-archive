@@ -5,6 +5,7 @@ import '@fontsource/inter/latin-500.css';
 import '@fontsource/inter/latin-600.css';
 import '@fontsource/inter/latin-700.css';
 import { applyTheme, getStoredTheme } from '../lib/theme';
+import { applyAppearance } from '../lib/appearance';
 import { applyDocumentLanguage, ensureMessages } from '../lib/i18n';
 import { App } from './App';
 import '../dashboard/styles.css';
@@ -15,6 +16,8 @@ import './popup.css';
 // stays consistent everywhere rather than the popup only ever following the
 // OS's setting regardless of an explicit override.
 applyTheme(getStoredTheme());
+// And its colors, as set in Appearance.
+applyAppearance();
 // Same for the language.
 applyDocumentLanguage();
 

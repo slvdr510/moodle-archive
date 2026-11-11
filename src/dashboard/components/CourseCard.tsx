@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type CSSProperties, type DragEvent } from 'react';
+import { useState, type CSSProperties, type DragEvent } from 'react';
 import { courseDisplayNames } from '../../lib/courseNames';
 import { hasCourseTag } from '../../lib/downloadNameSettings';
 import { formatRelativeTime } from '../../lib/relativeTime';
@@ -6,17 +6,12 @@ import type { Course } from '../../types';
 import { DropdownMenu } from './DropdownMenu';
 import { useT } from '../hooks/useTranslation';
 
-type EditMode = 'tag' | 'fullName' | 'institution';
-
 export function CourseCard({
   course,
   color,
+  academicYearColor,
   onOpen,
-  onRename,
-  onSetFullName,
-  onSetInstitution,
-  onChangeColor,
-  institutionSuggestions = [],
+  onEditInfo,
   onDelete,
   onExport,
   onHide,
@@ -30,17 +25,12 @@ export function CourseCard({
   course: Course;
   /** The card's accent color — see courseColors.ts. */
   color?: string;
+  /** Its academic year's color — see academicYearColors.ts. */
+  academicYearColor?: string;
   onOpen: () => void;
-  /** Undefined to remove the tag, going back to the name from Moodle. */
-  onRename: (name: string | undefined) => void;
-  /** Undefined to go back to the name from Moodle. */
-  onSetFullName: (fullName: string | undefined) => void;
-  /** Undefined to remove it. */
-  onSetInstitution: (institution: string | undefined) => void;
-  /** Opens the color picker for this course. */
-  onChangeColor: () => void;
-  /** Institutions already set on other courses, offered while typing one. */
-  institutionSuggestions?: string[];
+  /** Opens "Edit course info" on this course: its tag, full name, institution,
+   *  academic year, URL and color. */
+  onEditInfo: () => void;
   onDelete: () => void;
   onExport: () => void;
   onHide: () => void;
@@ -52,52 +42,9 @@ export function CourseCard({
   isDragOver: boolean;
 }) {
   const t = useT();
-  // Which name is being edited in place: the tag (an abbreviation), the full name, or
-  // the institution's abbreviation.
-  const [editing, setEditing] = useState<EditMode | null>(null);
-  const institutionListId = useId();
-  const [draft, setDraft] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
-  // Set by Escape, so the blur that can follow the input's removal doesn't save anyway.
-  const cancelled = useRef(false);
   const { title, subtitle } = courseDisplayNames(course);
   const tagged = hasCourseTag(course);
-
-  function commit() {
-    const mode = editing;
-    setEditing(null);
-    if (cancelled.current) {
-      cancelled.current = false;
-      return;
-    }
-    const trimmed = draft.trim();
-    if (mode === 'tag') {
-      if (trimmed && (trimmed !== course.name || !course.tagged)) onRename(trimmed);
-      // Emptied: no tag any more.
-      else if (!trimmed && tagged) onRename(undefined);
-    } else if (mode === 'fullName') {
-      // Emptied: back to the name from Moodle.
-      const fullName = trimmed || undefined;
-      if (fullName !== course.fullName) onSetFullName(fullName);
-    } else if (mode === 'institution') {
-      // Emptied: no institution.
-      const institution = trimmed || undefined;
-      if (institution !== course.institution) onSetInstitution(institution);
-    }
-  }
-
-  function startEditing(mode: EditMode) {
-    cancelled.current = false;
-    setDraft(mode === 'tag' ? course.name : mode === 'fullName' ? (course.fullName ?? '') : (course.institution ?? ''));
-    setEditing(mode);
-  }
-
-  const editLabels: Record<EditMode, { label: string; placeholder: string }> = {
-    tag: { label: t.courseRow.setTagName, placeholder: t.courseRow.tagPlaceholder },
-    fullName: { label: t.courseRow.setFullName, placeholder: t.courseRow.fullNamePlaceholder },
-    institution: { label: t.courseRow.setInstitution, placeholder: t.courseRow.institutionPlaceholder }
-  };
-
   const courseUrl = course.url || course.matchedUrls[0];
 
   return (
@@ -108,7 +55,7 @@ export function CourseCard({
       // returning from the course with Escape.
       tabIndex={-1}
       data-course-id={course.id}
-      draggable={editing === null}
+      draggable
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={(e) => {
@@ -116,52 +63,33 @@ export function CourseCard({
         onDrop();
       }}
       onDragEnd={onDragEnd}
-      onClick={() => editing === null && onOpen()}
+      onClick={onOpen}
     >
-      {editing !== null ? (
-        <input
-          className="course-name-input"
-          value={draft}
-          placeholder={editLabels[editing].placeholder}
-          aria-label={editLabels[editing].label}
-          list={editing === 'institution' ? institutionListId : undefined}
-          autoFocus
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => setDraft(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit();
-            if (e.key === 'Escape') {
-              cancelled.current = true;
-              setEditing(null);
-            }
-          }}
-          onBlur={commit}
-        />
-      ) : (
-        // With a tag, the card shows only the tag, as large as fits (sized from its
-        // length — see .course-card-names.has-tag); the full name is left to the
-        // tooltip there, and shown beneath it only as a row.
-        <div
-          className={`course-card-names ${tagged ? 'has-tag' : 'has-full-name'}`}
-          title={subtitle ? `${title}\n${subtitle}` : title}
-          style={
-            (tagged
-              ? { '--tag-length': Math.max(2, [...title].length) }
-              : { '--name-length': Math.max(10, [...title].length) }) as CSSProperties
-          }
-        >
-          <span className={`course-name${subtitle ? ' with-subtitle' : ''}`}>{title}</span>
-          {subtitle && <span className="course-full-name">{subtitle}</span>}
-        </div>
-      )}
-
-      {editing === 'institution' && (
-        <datalist id={institutionListId}>
-          {institutionSuggestions.map((institution) => (
-            <option key={institution} value={institution} />
-          ))}
-        </datalist>
-      )}
+      {/* With a tag, the card shows only the tag, as large as fits (sized from its
+          length — see .course-card-names.has-tag); the full name is left to the
+          tooltip there, and shown beneath it only as a row. The academic year goes
+          right under it on a card, always shown; at the end of a row. */}
+      <div
+        className={`course-card-names ${tagged ? 'has-tag' : 'has-full-name'}${course.academicYear ? ' has-academic-year' : ''}`}
+        title={subtitle ? `${title}\n${subtitle}` : title}
+        style={
+          (tagged
+            ? { '--tag-length': Math.max(2, [...title].length) }
+            : { '--name-length': Math.max(10, [...title].length) }) as CSSProperties
+        }
+      >
+        <span className={`course-name${subtitle ? ' with-subtitle' : ''}`}>{title}</span>
+        {subtitle && <span className="course-full-name">{subtitle}</span>}
+        {course.academicYear && (
+          <span
+            className="course-academic-year"
+            title={`${t.courseRow.academicYear}: ${course.academicYear}`}
+            style={academicYearColor ? ({ '--year-color': academicYearColor } as CSSProperties) : undefined}
+          >
+            {course.academicYear}
+          </span>
+        )}
+      </div>
 
       <div className="course-card-footer">
         <span className="course-card-meta">
@@ -195,13 +123,10 @@ export function CourseCard({
           <DropdownMenu
             onOpenChange={setMenuOpen}
             items={[
-              { label: t.courseRow.setTagName, onClick: () => startEditing('tag') },
-              { label: t.courseRow.setFullName, onClick: () => startEditing('fullName') },
-              { label: t.courseRow.setInstitution, onClick: () => startEditing('institution') },
-              { label: t.courseRow.changeColor, onClick: onChangeColor },
-              { label: t.common.export, onClick: onExport },
-              { label: t.courseRow.hideCourse, onClick: onHide },
-              { label: t.courseRow.deleteCourse, onClick: onDelete, danger: true }
+              { label: t.courseRow.editInfo, icon: 'edit', onClick: onEditInfo },
+              { label: t.common.export, icon: 'export', onClick: onExport },
+              { label: t.courseRow.hideCourse, icon: 'hide', onClick: onHide },
+              { label: t.courseRow.deleteCourse, icon: 'delete', onClick: onDelete, danger: true }
             ]}
           />
         </div>

@@ -53,7 +53,8 @@ export const arz: Messages = {
     concurrentDownloads: 'التنزيلات في نفس الوقت',
     sideMargin: 'الهوامش اللي على الجناب',
     courseListStyle: 'شكل قايمة الكورسات',
-    setInstitution: 'حط المؤسسة لكورسات',
+    appearance: 'المظهر',
+    editInfo: 'عدّل بيانات الكورسات',
     hiddenCourses: 'الكورسات المستخبية',
     deleteAll: 'امسح كل الكورسات',
     backupSaved: 'النسخة الاحتياطية اتحفظت في فولدر التنزيلات.',
@@ -93,13 +94,17 @@ export const arz: Messages = {
     lastDownloaded: 'آخر تنزيل',
     openInMoodle: 'افتح الكورس على Moodle',
     setTagName: 'حط تاج (اختصار)',
-    setFullName: 'حط الاسم الكامل',
     tagPlaceholder: 'اختصار، زي OS',
     fullNamePlaceholder: 'الاسم الكامل (فاضي: اسم Moodle)',
-    setInstitution: 'حط المؤسسة (اختصار)',
-    institutionPlaceholder: 'اختصار المؤسسة، زي UHU',
+    tag: 'التاج (اختصار)',
+    fullName: 'الاسم الكامل',
+    institutionPlaceholder: 'زي UHU',
     institution: 'المؤسسة',
-    changeColor: 'غيّر اللون',
+    academicYearPlaceholder: '⁦26-27⁩',
+    academicYear: 'السنة الدراسية',
+    editInfo: 'عدّل بيانات الكورس',
+    addOption: (value) => `ضيف "${value}"`,
+    showOptions: 'اعرض الاختيارات',
     hideCourse: 'خبّي الكورس',
     deleteCourse: 'امسح الكورس'
   },
@@ -199,21 +204,67 @@ export const arz: Messages = {
   },
 
   courseColor: {
-    title: (name) => `لون "${name}"`,
-    palette: 'الألوان',
     custom: 'لون على مزاجك',
     automatic: 'استخدم اللون التلقائي'
   },
 
-  setInstitution: {
-    title: 'حط المؤسسة',
-    description: 'اختار الكورسات اللي هتاخد المؤسسة دي. سيبها فاضية عشان تشيلها منهم.',
-    courses: (count) => (count === 0 ? 'الكورسات' : `الكورسات (${count} متختارين)`),
-    selectAll: 'اختار الكل',
-    selectNone: 'ولا حاجة',
+  colorMenu: {
+    code: 'كود اللون (hex)',
+    codeHint: 'ست أرقام، زي FFFFFF',
+    more: 'ألوان تانية…'
+  },
+
+  appearance: {
+    title: 'المظهر',
+    palettes: 'باليتات',
+    paletteNames: {
+      default: 'الأصلية',
+      ocean: 'المحيط',
+      forest: 'الغابة',
+      lavender: 'لافندر',
+      warm: 'دافية',
+      contrast: 'تباين عالي'
+    },
+    replaceTitle: 'تبدّل ألوانك؟',
+    replaceMessage: 'الألوان اللي حطيتها في الثيم ده هتتبدل بألوان الباليتة.',
+    replace: 'بدّل',
+    colors: {
+      bg: 'الخلفية',
+      surface: 'خلفية تانية',
+      fg: 'الكلام',
+      muted: 'الكلام الثانوي',
+      border: 'الحدود',
+      accent: 'الزراير واللينكات',
+      focus: 'تركيز الكيبورد',
+      new: 'الملفات الجديدة',
+      modified: 'الملفات اللي اتغيرت',
+      deleted: 'الملفات اللي اتمسحت والحاجات الخطيرة',
+      unchanged: 'الملفات اللي ما اتغيرتش'
+    },
+    reset: 'رجّع اللون الأصلي',
+    resetAll: 'رجّع الألوان',
+    resetTitle: { light: 'ترجّع ألوان الثيم الفاتح؟', dark: 'ترجّع ألوان الثيم الغامق؟' },
+    resetMessage: 'كل الألوان اللي غيرتها هترجع زي الأول.'
+  },
+
+  courseUrl: {
+    label: 'الـ URL بتاع الكورس',
+    invalid:
+      'ده مش URL صفحة كورس على Moodle. بيخلص بـ ⁦/course/view.php?id=⁩ ورقم الكورس.',
+    taken: (name) => `"${name}" عنده الـ URL ده خلاص.`,
+    previousKept:
+      'الـ URLs القديمة هتفضل معروفة: التنزيلات منها هتروح للكورس ده برضه.'
+  },
+
+  courseInfo: {
+    title: 'عدّل بيانات الكورسات',
     hidden: 'مخفي',
-    apply: (count) => (count === 1 ? 'طبّق على كورس واحد' : `طبّق على ${count} كورسات`),
-    remove: (count) => (count === 1 ? 'شيلها من كورس واحد' : `شيلها من ${count} كورسات`)
+    color: 'اللون',
+    academicYearColor: 'لون السنة الدراسية',
+    deleteOption: (value) => `امسح "${value}"`,
+    deleteOptionTitle: (value) => `تمسح "${value}"؟`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `مفيش كورس عنده: بس مش هيظهر كاختيار تاني.` : count === 1 ? `هيتشال من الكورس اللي عنده.` : `هيتشال من الكورسات اللي عندها (${count}).`
   },
 
   ignoredFiles: {

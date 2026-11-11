@@ -52,7 +52,8 @@ export const ha: Messages = {
     concurrentDownloads: 'Saukewa a lokaci guda',
     sideMargin: 'Gefe-gefe',
     courseListStyle: 'Salon jerin kwasa-kwasai',
-    setInstitution: 'Saita cibiya ga kwasa-kwasai',
+    appearance: 'Kamanni',
+    editInfo: 'Gyara bayanan kwas-kwas',
     hiddenCourses: 'Kwasa-kwasan da aka ɓoye',
     deleteAll: 'Share duk kwasa-kwasai',
     backupSaved: 'An ajiye ajiyar a cikin babban fayil ɗin Abubuwan da aka sauke.',
@@ -94,13 +95,17 @@ export const ha: Messages = {
     lastDownloaded: 'Saukewa ta ƙarshe',
     openInMoodle: 'Buɗe kwas ɗin a Moodle',
     setTagName: 'Saita tag (gajarta)',
-    setFullName: 'Saita cikakken suna',
     tagPlaceholder: 'Gajarta, misali OS',
     fullNamePlaceholder: 'Cikakken suna (babu komai: na Moodle)',
-    setInstitution: 'Saita cibiya (gajarta)',
-    institutionPlaceholder: 'Gajartar cibiya, misali UHU',
+    tag: 'Tag (gajarta)',
+    fullName: 'Cikakken suna',
+    institutionPlaceholder: 'misali UHU',
     institution: 'Cibiya',
-    changeColor: 'Canza launi',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Shekarar karatu',
+    editInfo: 'Gyara bayanan kwas',
+    addOption: (value) => `Ƙara "${value}"`,
+    showOptions: 'Nuna zaɓuɓɓuka',
     hideCourse: 'Ɓoye kwas',
     deleteCourse: 'Share kwas'
   },
@@ -201,21 +206,67 @@ export const ha: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Launin "${name}"`,
-    palette: 'Jerin launuka',
     custom: 'Launi na musamman',
     automatic: 'Yi amfani da launi na atomatik'
   },
 
-  setInstitution: {
-    title: 'Saita cibiya',
-    description: 'Zaɓi kwasa-kwasan da za a ba wannan cibiya. Bar shi babu komai don cire ta daga gare su.',
-    courses: (count) => (count === 0 ? 'Kwasa-kwasai' : `Kwasa-kwasai (an zaɓi ${count})`),
-    selectAll: 'Zaɓi duka',
-    selectNone: 'Babu',
+  colorMenu: {
+    code: 'Lambar hex',
+    codeHint: 'Lambobi shida, kamar FFFFFF',
+    more: 'Ƙarin launuka…'
+  },
+
+  appearance: {
+    title: 'Kamanni',
+    palettes: 'Tarin launuka',
+    paletteNames: {
+      default: 'Na asali',
+      ocean: 'Teku',
+      forest: 'Daji',
+      lavender: 'Lavender',
+      warm: 'Mai ɗumi',
+      contrast: 'Babban bambanci'
+    },
+    replaceTitle: 'A maye launukanka?',
+    replaceMessage: 'Launukan da ka saita a wannan jigon za a maye su da na tarin.',
+    replace: 'Maye',
+    colors: {
+      bg: 'Bango',
+      surface: 'Bango na biyu',
+      fg: 'Rubutu',
+      muted: 'Ƙarin rubutu',
+      border: 'Iyakoki',
+      accent: 'Maɓallai da hanyoyin haɗi',
+      focus: 'Mayar da hankalin madannai',
+      new: 'Sababbin fayiloli',
+      modified: 'Fayilolin da suka canza',
+      deleted: 'Fayilolin da aka goge da ayyuka masu haɗari',
+      unchanged: 'Fayilolin da ba su canza ba'
+    },
+    reset: 'Dawo da launin asali',
+    resetAll: 'Sake saita launuka',
+    resetTitle: { light: 'Sake saita launukan jigon haske?', dark: 'Sake saita launukan jigon duhu?' },
+    resetMessage: 'Duk launukan da ka canza a ciki za su koma na asali.'
+  },
+
+  courseUrl: {
+    label: 'URL na kwas',
+    invalid:
+      'Wannan ba URL na shafin kwas na Moodle ba ne. Yana ƙarewa da /course/view.php?id= da lambar kwas ɗin.',
+    taken: (name) => `"${name}" tuni yana da wannan URL ɗin.`,
+    previousKept:
+      'Za a ci gaba da gane URL ɗinsa na da: saukarwa daga can za su ci gaba da shiga wannan kwas ɗin.'
+  },
+
+  courseInfo: {
+    title: 'Gyara bayanan kwas-kwas',
     hidden: 'A ɓoye',
-    apply: (count) => (count === 1 ? 'Yi amfani a kwas 1' : `Yi amfani a kwasa-kwasai ${count}`),
-    remove: (count) => (count === 1 ? 'Cire daga kwas 1' : `Cire daga kwasa-kwasai ${count}`)
+    color: 'Launi',
+    academicYearColor: 'Launin shekarar karatu',
+    deleteOption: (value) => `Goge "${value}"`,
+    deleteOptionTitle: (value) => `A goge "${value}"?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Babu kwas da ke da shi: kawai ba za a ƙara nuna shi a matsayin zaɓi ba.` : count === 1 ? `Za a cire shi daga kwas ɗin da ke da shi.` : `Za a cire shi daga kwas ${count} da ke da shi.`
   },
 
   ignoredFiles: {

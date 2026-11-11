@@ -52,7 +52,8 @@ export const ja: Messages = {
     concurrentDownloads: '同時ダウンロード数',
     sideMargin: '左右の余白',
     courseListStyle: 'コース一覧の表示形式',
-    setInstitution: 'コースに機関を設定',
+    appearance: '外観',
+    editInfo: 'コース情報を編集',
     hiddenCourses: '非表示のコース',
     deleteAll: 'すべてのコースを削除',
     backupSaved: 'バックアップをダウンロード フォルダに保存しました。',
@@ -91,13 +92,17 @@ export const ja: Messages = {
     lastDownloaded: '最終ダウンロード',
     openInMoodle: 'Moodle でコースを開く',
     setTagName: 'タグ（略称）を設定',
-    setFullName: '正式名称を設定',
     tagPlaceholder: '略称（例：OS）',
     fullNamePlaceholder: '正式名称（空欄で Moodle の名前）',
-    setInstitution: '機関（略称）を設定',
-    institutionPlaceholder: '機関の略称（例：UHU）',
+    tag: 'タグ（略称）',
+    fullName: '正式名称',
+    institutionPlaceholder: '例：UHU',
     institution: '機関',
-    changeColor: '色を変更',
+    academicYearPlaceholder: '26-27',
+    academicYear: '学年度',
+    editInfo: 'コース情報を編集',
+    addOption: (value) => `「${value}」を追加`,
+    showOptions: '候補を表示',
     hideCourse: 'コースを非表示',
     deleteCourse: 'コースを削除'
   },
@@ -195,21 +200,67 @@ export const ja: Messages = {
   },
 
   courseColor: {
-    title: (name) => `「${name}」の色`,
-    palette: 'パレット',
     custom: 'カスタムカラー',
     automatic: '自動の色を使う'
   },
 
-  setInstitution: {
-    title: '機関を設定',
-    description: 'この機関を設定するコースを選んでください。空欄にすると機関を外します。',
-    courses: (count) => (count === 0 ? 'コース' : `コース（${count} 件選択）`),
-    selectAll: 'すべて選択',
-    selectNone: '選択解除',
+  colorMenu: {
+    code: '16進コード',
+    codeHint: '6桁（例：FFFFFF）',
+    more: 'その他の色…'
+  },
+
+  appearance: {
+    title: '外観',
+    palettes: 'パレット',
+    paletteNames: {
+      default: '既定',
+      ocean: 'オーシャン',
+      forest: 'フォレスト',
+      lavender: 'ラベンダー',
+      warm: 'ウォーム',
+      contrast: 'ハイコントラスト'
+    },
+    replaceTitle: '色を置き換えますか？',
+    replaceMessage: 'このテーマで設定した色がパレットの色に置き換わります。',
+    replace: '置き換える',
+    colors: {
+      bg: '背景',
+      surface: '補助の背景',
+      fg: '文字',
+      muted: '補助の文字',
+      border: '枠線',
+      accent: 'ボタンとリンク',
+      focus: 'キーボードのフォーカス',
+      new: '新しいファイル',
+      modified: '変更されたファイル',
+      deleted: '削除されたファイルと危険な操作',
+      unchanged: '変更のないファイル'
+    },
+    reset: '既定の色に戻す',
+    resetAll: '色をリセット',
+    resetTitle: { light: 'ライトテーマの色をリセットしますか？', dark: 'ダークテーマの色をリセットしますか？' },
+    resetMessage: '変更した色はすべて既定に戻ります。'
+  },
+
+  courseUrl: {
+    label: 'コースの URL',
+    invalid:
+      'Moodle のコースページの URL ではありません。/course/view.php?id= とコース番号で終わります。',
+    taken: (name) => `「${name}」がすでにこの URL を使っています。`,
+    previousKept:
+      '以前の URL も引き続き認識され、そこからのダウンロードもこのコースに入ります。'
+  },
+
+  courseInfo: {
+    title: 'コース情報を編集',
     hidden: '非表示',
-    apply: (count) => (count === 1 ? '1 件のコースに適用' : `${count} 件のコースに適用`),
-    remove: (count) => (count === 1 ? '1 件のコースから外す' : `${count} 件のコースから外す`)
+    color: '色',
+    academicYearColor: '学年度の色',
+    deleteOption: (value) => `「${value}」を削除`,
+    deleteOptionTitle: (value) => `「${value}」を削除しますか？`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `使用しているコースはありません。候補に表示されなくなるだけです。` : count === 1 ? `使用している 1 件のコースから削除されます。` : `使用している ${count} 件のコースから削除されます。`
   },
 
   ignoredFiles: {

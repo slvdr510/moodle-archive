@@ -147,6 +147,12 @@ async function migrateFromLegacyDatabase(db: IDBPDatabase<MoodleHistoryDB>): Pro
 // existing records just because the app's type changed. Normalize on read so
 // those pre-existing rows don't crash `.includes()` calls downstream.
 function normalizeCourse(course: Course): Course {
+  // An academic year set while it took only two years, kept as their pair: as text now.
+  const year = course.academicYear as unknown;
+  if (year && typeof year === 'object') {
+    const { start, end } = year as { start: string; end: string };
+    course = { ...course, academicYear: `${start}-${end}` };
+  }
   const withUrls = course.matchedUrls ? course : { ...course, matchedUrls: [] };
   // Courses tracked before `lastSyncedAt` existed don't have it either — fall
   // back to their creation time, which is the closest thing we know.

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Course } from '../src/types';
@@ -255,6 +255,53 @@ describe('CoursesPage toolbar overflow menu', () => {
     expect(exportCourseMock).toHaveBeenCalledWith('a');
   });
 
+  it("edits a course's info from its menu, in the dialog for every course, that one shown and saved", async () => {
+    const OLD = 'https://2024aulasvirtuales.uhu.es/course/view.php?id=241';
+    const NEW = 'https://aulasvirtuales.uhu.es/course/view.php?id=241';
+    allMock.mockResolvedValue([
+      makeCourse({ id: 'a', name: 'Course A', url: OLD, matchedUrls: [OLD] }),
+      makeCourse({ id: 'b', name: 'Course B', order: 1 }),
+      makeCourse({ id: 'h', name: 'Course H', order: 2, hidden: true })
+    ]);
+    renderCoursesPage();
+    await screen.findByText('Course A');
+
+    // The card's own "⋮" (the first is the toolbar's).
+    await userEvent.click(screen.getAllByTitle('More options')[1]);
+    await userEvent.click(screen.getByText('Edit course info'));
+    const regions = screen.getAllByRole('region');
+    // Every course, the hidden one too.
+    expect(regions.map((r) => r.getAttribute('aria-label'))).toEqual(['Course A', 'Course B', 'Course H']);
+    const target = screen.getByRole('region', { name: 'Course A' });
+    expect(target).toHaveClass('targeted');
+
+    const field = within(target).getByLabelText('Course URL');
+    await userEvent.clear(field);
+    await userEvent.type(field, NEW);
+    await userEvent.type(within(target).getByLabelText('Tag (abbreviation)'), 'CA');
+    // Stored as the field was left.
+    await waitFor(() => expect(putMock).toHaveBeenCalledWith(expect.objectContaining({ id: 'a', url: NEW, matchedUrls: [OLD, NEW] })));
+    // And what's still being typed, as it's closed.
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    await waitFor(() =>
+      expect(putMock).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'a', name: 'CA', tagged: true, url: NEW, matchedUrls: [OLD, NEW] }))
+    );
+    expect(putMock.mock.calls.every(([c]) => c.id === 'a')).toBe(true);
+    expect(screen.queryByRole('heading', { name: 'Edit course info' })).toBeNull();
+  });
+
+  it('"Edit course info" in the toolbar\'s menu opens it for every course, none marked', async () => {
+    allMock.mockResolvedValue([makeCourse({ id: 'a', name: 'Course A' }), makeCourse({ id: 'b', name: 'Course B', order: 1 })]);
+    renderCoursesPage();
+    await screen.findByText('Course A');
+
+    await userEvent.click(screen.getAllByTitle('More options')[0]);
+    await userEvent.click(screen.getByText('Edit course info'));
+    expect(screen.getAllByRole('region')).toHaveLength(2);
+    expect(document.querySelector('.course-info-block.targeted')).toBeNull();
+  });
+
   it('deleting a single course from its row menu asks for confirmation in a modal, then calls deleteCourse', async () => {
     allMock.mockResolvedValue([{ id: 'a', name: 'Course A', url: '', matchedUrls: [], createdAt: 0, lastSyncedAt: 0, order: 0, firstSyncCompleted: true }]);
     renderCoursesPage();
@@ -445,7 +492,7 @@ describe('CoursesPage dropping zip backups to import', () => {
 
     const message = await screen.findByText(NOT_A_BACKUP);
     expect(message).toHaveTextContent('"notes.pdf" is not a zip file in the course format used by this extension.');
-    expect(message).toHaveClass('error');
+    expect(message.closest('.status-toast')).toHaveClass('error');
     expect(importAllDataMock).not.toHaveBeenCalled();
   });
 
@@ -460,7 +507,7 @@ describe('CoursesPage dropping zip backups to import', () => {
     const message = await screen.findByText(NOT_A_BACKUP);
     expect(message).toHaveTextContent('"holiday-photos.zip" is not a zip file in the course format');
     expect(message).not.toHaveTextContent('Imported');
-    expect(message).toHaveClass('error');
+    expect(message.closest('.status-toast')).toHaveClass('error');
   });
 
   it('still imports the valid backups in a drop that also holds files that are not', async () => {
@@ -489,7 +536,7 @@ describe('CoursesPage dropping zip backups to import', () => {
     expect(message).toHaveTextContent('Imported 1 course(s), 2 file(s), 3 version(s).');
     expect(message).toHaveTextContent('"broken.zip": Error: disk full');
     expect(message).not.toHaveTextContent('course format');
-    expect(message).toHaveClass('error');
+    expect(message.closest('.status-toast')).toHaveClass('error');
   });
 
   it('shows a drop overlay while files are dragged over the page, but not for reordering a course', async () => {

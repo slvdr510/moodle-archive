@@ -34,6 +34,9 @@ export interface Course {
   color?: string;
   /** The institution's abbreviation ("UHU"), set by the user — shown on the course's card. */
   institution?: string;
+  /** The academic year the course is from, set by the user as any text ("26-27",
+   *  "2025/2026"…) — shown on its card as written. */
+  academicYear?: string;
   /** Files downloads leave as they are — no new versions, never marked deleted, never
    *  added if not tracked yet — as paths relative to the course root the file tree
    *  shows (see ignoredFiles.ts). */

@@ -56,7 +56,8 @@ export const en = {
     concurrentDownloads: 'Simultaneous downloads',
     sideMargin: 'Side margins',
     courseListStyle: 'Course list style',
-    setInstitution: 'Set institution for courses',
+    appearance: 'Appearance',
+    editInfo: 'Edit course info',
     hiddenCourses: 'Hidden courses',
     deleteAll: 'Delete all courses',
     backupSaved: 'Backup saved to your Downloads folder.',
@@ -98,13 +99,17 @@ export const en = {
     lastDownloaded: 'Last downloaded',
     openInMoodle: 'Open the course in Moodle',
     setTagName: 'Set tag (abbreviation)',
-    setFullName: 'Set full name',
     tagPlaceholder: 'Abbreviation, e.g. OS',
     fullNamePlaceholder: 'Full name (empty: the one from Moodle)',
-    setInstitution: 'Set institution (abbreviation)',
-    institutionPlaceholder: 'Institution abbreviation, e.g. UHU',
+    tag: 'Tag (abbreviation)',
+    fullName: 'Full name',
+    institutionPlaceholder: 'e.g. UHU',
     institution: 'Institution',
-    changeColor: 'Change color',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Academic year',
+    editInfo: 'Edit course info',
+    addOption: (value: string) => `Add "${value}"`,
+    showOptions: 'Show options',
     hideCourse: 'Hide course',
     deleteCourse: 'Delete course'
   },
@@ -204,21 +209,72 @@ export const en = {
   },
 
   courseColor: {
-    title: (name: string) => `Color of "${name}"`,
-    palette: 'Palette',
     custom: 'Custom color',
     automatic: 'Use automatic color'
   },
 
-  setInstitution: {
-    title: 'Set institution',
-    description: 'Choose the courses to give this institution. Leave it empty to remove the institution from them.',
-    courses: (count: number): string => (count === 0 ? 'Courses' : `Courses (${count} selected)`),
-    selectAll: 'Select all',
-    selectNone: 'Select none',
+  colorMenu: {
+    /** The field to write a color's code in: its name, and what to write. */
+    code: 'Hex code',
+    codeHint: 'Six digits, like FFFFFF',
+    /** Beside it: the browser's own color picker. */
+    more: 'More colors…'
+  },
+
+  appearance: {
+    title: 'Appearance',
+    /** Palettes to start from (see PALETTES in appearance.ts). */
+    palettes: 'Palettes',
+    paletteNames: {
+      default: 'Default',
+      ocean: 'Ocean',
+      forest: 'Forest',
+      lavender: 'Lavender',
+      warm: 'Warm',
+      contrast: 'High contrast'
+    },
+    /** A palette picked over colors set by hand: confirmed first. */
+    replaceTitle: 'Replace your colors?',
+    replaceMessage: "The colors you set in this theme are replaced by the palette's.",
+    replace: 'Replace',
+    /** Each of the interface's colors (see appearance.ts), by what it paints. */
+    colors: {
+      bg: 'Background',
+      surface: 'Secondary background',
+      fg: 'Text',
+      muted: 'Secondary text',
+      border: 'Borders',
+      accent: 'Buttons and links',
+      focus: 'Keyboard focus',
+      new: 'New files',
+      modified: 'Changed files',
+      deleted: 'Deleted files and dangerous actions',
+      unchanged: 'Unchanged files'
+    },
+    reset: 'Restore the default color',
+    resetAll: 'Reset colors',
+    resetTitle: { light: "Reset the light theme's colors?", dark: "Reset the dark theme's colors?" },
+    resetMessage: 'Every color you changed in it goes back to the default.'
+  },
+
+  courseUrl: {
+    label: 'Course URL',
+    invalid:
+      "That isn't the URL of a Moodle course page. It ends in /course/view.php?id= and the course number.",
+    taken: (name: string) => `"${name}" already has that URL.`,
+    previousKept:
+      'Its previous URLs are still recognized: downloads from them still go to this course.'
+  },
+
+  courseInfo: {
+    title: 'Edit course info',
     hidden: 'Hidden',
-    apply: (count: number): string => (count === 1 ? 'Apply to 1 course' : `Apply to ${count} courses`),
-    remove: (count: number): string => (count === 1 ? 'Remove from 1 course' : `Remove from ${count} courses`)
+    color: 'Color',
+    academicYearColor: 'Academic year color',
+    deleteOption: (value: string) => `Delete "${value}"`,
+    deleteOptionTitle: (value: string) => `Delete "${value}"?`,
+    deleteOptionMessage: (count: number): string =>
+      count === 0 ? `No course has it: it just won't be offered any more.` : count === 1 ? `It'll be removed from the 1 course that has it.` : `It'll be removed from the ${count} courses that have it.`
   },
 
   ignoredFiles: {

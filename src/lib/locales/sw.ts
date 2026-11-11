@@ -52,7 +52,8 @@ export const sw: Messages = {
     concurrentDownloads: 'Vipakuliwa kwa wakati mmoja',
     sideMargin: 'Pambizo za pembeni',
     courseListStyle: 'Mtindo wa orodha ya kozi',
-    setInstitution: 'Weka taasisi kwa kozi',
+    appearance: 'Mwonekano',
+    editInfo: 'Hariri taarifa za kozi',
     hiddenCourses: 'Kozi zilizofichwa',
     deleteAll: 'Futa kozi zote',
     backupSaved: 'Nakala rudufu imehifadhiwa kwenye folda yako ya Vipakuliwa.',
@@ -92,13 +93,17 @@ export const sw: Messages = {
     lastDownloaded: 'Ilipakuliwa mwisho',
     openInMoodle: 'Fungua kozi kwenye Moodle',
     setTagName: 'Weka lebo (kifupisho)',
-    setFullName: 'Weka jina kamili',
     tagPlaceholder: 'Kifupisho, k.m. OS',
     fullNamePlaceholder: 'Jina kamili (tupu: la Moodle)',
-    setInstitution: 'Weka taasisi (kifupisho)',
-    institutionPlaceholder: 'Kifupisho cha taasisi, k.m. UHU',
+    tag: 'Lebo (kifupisho)',
+    fullName: 'Jina kamili',
+    institutionPlaceholder: 'k.m. UHU',
     institution: 'Taasisi',
-    changeColor: 'Badilisha rangi',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Mwaka wa masomo',
+    editInfo: 'Hariri taarifa za kozi',
+    addOption: (value) => `Ongeza "${value}"`,
+    showOptions: 'Onyesha chaguo',
     hideCourse: 'Ficha kozi',
     deleteCourse: 'Futa kozi'
   },
@@ -199,21 +204,67 @@ export const sw: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Rangi ya "${name}"`,
-    palette: 'Rangi zilizopo',
     custom: 'Rangi maalum',
     automatic: 'Tumia rangi ya kiotomatiki'
   },
 
-  setInstitution: {
-    title: 'Weka taasisi',
-    description: 'Chagua kozi za kupewa taasisi hii. Iache tupu ili kuiondoa kwenye kozi hizo.',
-    courses: (count) => (count === 0 ? 'Kozi' : `Kozi (${count} zimechaguliwa)`),
-    selectAll: 'Chagua zote',
-    selectNone: 'Hakuna',
+  colorMenu: {
+    code: 'Msimbo wa hex',
+    codeHint: 'Tarakimu sita, kama FFFFFF',
+    more: 'Rangi zaidi…'
+  },
+
+  appearance: {
+    title: 'Mwonekano',
+    palettes: 'Paleti',
+    paletteNames: {
+      default: 'Chaguo-msingi',
+      ocean: 'Bahari',
+      forest: 'Msitu',
+      lavender: 'Lavenda',
+      warm: 'Joto',
+      contrast: 'Utofautishaji wa juu'
+    },
+    replaceTitle: 'Badilisha rangi zako?',
+    replaceMessage: 'Rangi ulizoweka kwenye mandhari haya zitabadilishwa na za paleti.',
+    replace: 'Badilisha',
+    colors: {
+      bg: 'Mandharinyuma',
+      surface: 'Mandharinyuma ya pili',
+      fg: 'Maandishi',
+      muted: 'Maandishi ya ziada',
+      border: 'Mipaka',
+      accent: 'Vitufe na viungo',
+      focus: 'Lengo la kibodi',
+      new: 'Faili mpya',
+      modified: 'Faili zilizobadilika',
+      deleted: 'Faili zilizofutwa na vitendo hatari',
+      unchanged: 'Faili zisizobadilika'
+    },
+    reset: 'Rejesha rangi ya chaguo-msingi',
+    resetAll: 'Weka upya rangi',
+    resetTitle: { light: 'Weka upya rangi za mandhari angavu?', dark: 'Weka upya rangi za mandhari meusi?' },
+    resetMessage: 'Rangi zote ulizobadilisha humo zitarudi kwenye chaguo-msingi.'
+  },
+
+  courseUrl: {
+    label: 'URL ya kozi',
+    invalid:
+      'Hii si URL ya ukurasa wa kozi ya Moodle. Inaishia na /course/view.php?id= na nambari ya kozi.',
+    taken: (name) => `"${name}" tayari ina URL hii.`,
+    previousKept:
+      'URL zake za awali bado zitatambuliwa: vipakuliwa kutoka hapo bado vitaingia kwenye kozi hii.'
+  },
+
+  courseInfo: {
+    title: 'Hariri taarifa za kozi',
     hidden: 'Imefichwa',
-    apply: (count) => (count === 1 ? 'Tumia kwa kozi 1' : `Tumia kwa kozi ${count}`),
-    remove: (count) => (count === 1 ? 'Ondoa kwenye kozi 1' : `Ondoa kwenye kozi ${count}`)
+    color: 'Rangi',
+    academicYearColor: 'Rangi ya mwaka wa masomo',
+    deleteOption: (value) => `Futa "${value}"`,
+    deleteOptionTitle: (value) => `Futa "${value}"?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Hakuna kozi iliyo nayo: haitaonyeshwa tena kama chaguo tu.` : count === 1 ? `Itaondolewa kwenye kozi 1 iliyo nayo.` : `Itaondolewa kwenye kozi ${count} zilizo nayo.`
   },
 
   ignoredFiles: {

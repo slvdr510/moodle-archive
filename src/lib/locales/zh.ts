@@ -52,7 +52,8 @@ export const zh: Messages = {
     concurrentDownloads: '同时下载数',
     sideMargin: '两侧边距',
     courseListStyle: '课程列表样式',
-    setInstitution: '为课程设置机构',
+    appearance: '外观',
+    editInfo: '编辑课程信息',
     hiddenCourses: '已隐藏的课程',
     deleteAll: '删除所有课程',
     backupSaved: '备份已保存到“下载”文件夹。',
@@ -86,13 +87,17 @@ export const zh: Messages = {
     lastDownloaded: '上次下载',
     openInMoodle: '在 Moodle 中打开课程',
     setTagName: '设置标签（缩写）',
-    setFullName: '设置全称',
     tagPlaceholder: '缩写，例如 OS',
     fullNamePlaceholder: '全称（留空则使用 Moodle 中的名称）',
-    setInstitution: '设置机构（缩写）',
-    institutionPlaceholder: '机构缩写，例如 UHU',
+    tag: '标签（缩写）',
+    fullName: '全称',
+    institutionPlaceholder: '例如 UHU',
     institution: '机构',
-    changeColor: '更改颜色',
+    academicYearPlaceholder: '26-27',
+    academicYear: '学年',
+    editInfo: '编辑课程信息',
+    addOption: (value) => `添加“${value}”`,
+    showOptions: '显示选项',
     hideCourse: '隐藏课程',
     deleteCourse: '删除课程'
   },
@@ -186,21 +191,67 @@ export const zh: Messages = {
   },
 
   courseColor: {
-    title: (name) => `“${name}”的颜色`,
-    palette: '调色板',
     custom: '自定义颜色',
     automatic: '使用自动颜色'
   },
 
-  setInstitution: {
-    title: '设置机构',
-    description: '选择要设置此机构的课程。留空则从这些课程中移除机构。',
-    courses: (count) => (count === 0 ? '课程' : `课程（已选 ${count} 个）`),
-    selectAll: '全选',
-    selectNone: '全不选',
+  colorMenu: {
+    code: '十六进制代码',
+    codeHint: '六位，例如 FFFFFF',
+    more: '更多颜色…'
+  },
+
+  appearance: {
+    title: '外观',
+    palettes: '调色板',
+    paletteNames: {
+      default: '默认',
+      ocean: '海洋',
+      forest: '森林',
+      lavender: '薰衣草',
+      warm: '暖色',
+      contrast: '高对比度'
+    },
+    replaceTitle: '替换你的颜色？',
+    replaceMessage: '你在此主题中设置的颜色将被调色板的颜色替换。',
+    replace: '替换',
+    colors: {
+      bg: '背景',
+      surface: '次要背景',
+      fg: '文字',
+      muted: '次要文字',
+      border: '边框',
+      accent: '按钮和链接',
+      focus: '键盘焦点',
+      new: '新文件',
+      modified: '已更改的文件',
+      deleted: '已删除的文件和危险操作',
+      unchanged: '未更改的文件'
+    },
+    reset: '恢复默认颜色',
+    resetAll: '重置颜色',
+    resetTitle: { light: '重置浅色主题的颜色？', dark: '重置深色主题的颜色？' },
+    resetMessage: '你更改过的所有颜色都会恢复为默认。'
+  },
+
+  courseUrl: {
+    label: '课程 URL',
+    invalid:
+      '这不是 Moodle 课程页面的 URL。它以 /course/view.php?id= 加课程编号结尾。',
+    taken: (name) => `“${name}”已使用此 URL。`,
+    previousKept:
+      '之前的 URL 仍可识别：从这些 URL 下载的内容仍会归入此课程。'
+  },
+
+  courseInfo: {
+    title: '编辑课程信息',
     hidden: '已隐藏',
-    apply: (count) => (count === 1 ? '应用到 1 个课程' : `应用到 ${count} 个课程`),
-    remove: (count) => (count === 1 ? '从 1 个课程移除' : `从 ${count} 个课程移除`)
+    color: '颜色',
+    academicYearColor: '学年颜色',
+    deleteOption: (value) => `删除“${value}”`,
+    deleteOptionTitle: (value) => `删除“${value}”？`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `没有课程使用它：只是不再作为选项显示。` : count === 1 ? `将从使用它的 1 门课程中移除。` : `将从使用它的 ${count} 门课程中移除。`
   },
 
   ignoredFiles: {

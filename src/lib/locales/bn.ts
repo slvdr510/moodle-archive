@@ -52,7 +52,8 @@ export const bn: Messages = {
     concurrentDownloads: 'একসাথে ডাউনলোড',
     sideMargin: 'পাশের মার্জিন',
     courseListStyle: 'কোর্স তালিকার ধরন',
-    setInstitution: 'কোর্সগুলোর প্রতিষ্ঠান দিন',
+    appearance: 'চেহারা',
+    editInfo: 'কোর্সগুলোর তথ্য সম্পাদনা করুন',
     hiddenCourses: 'লুকানো কোর্স',
     deleteAll: 'সব কোর্স মুছুন',
     backupSaved: 'ব্যাকআপ আপনার ডাউনলোডস ফোল্ডারে সংরক্ষিত হয়েছে।',
@@ -91,13 +92,17 @@ export const bn: Messages = {
     lastDownloaded: 'শেষ ডাউনলোড',
     openInMoodle: 'কোর্সটি Moodle-এ খুলুন',
     setTagName: 'ট্যাগ (সংক্ষিপ্ত রূপ) দিন',
-    setFullName: 'পূর্ণ নাম দিন',
     tagPlaceholder: 'সংক্ষিপ্ত রূপ, যেমন OS',
     fullNamePlaceholder: 'পূর্ণ নাম (খালি: Moodle-এর নাম)',
-    setInstitution: 'প্রতিষ্ঠান (সংক্ষিপ্ত রূপ) দিন',
-    institutionPlaceholder: 'প্রতিষ্ঠানের সংক্ষিপ্ত রূপ, যেমন UHU',
+    tag: 'ট্যাগ (সংক্ষিপ্ত রূপ)',
+    fullName: 'পূর্ণ নাম',
+    institutionPlaceholder: 'যেমন UHU',
     institution: 'প্রতিষ্ঠান',
-    changeColor: 'রং বদলান',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'শিক্ষাবর্ষ',
+    editInfo: 'কোর্সের তথ্য সম্পাদনা করুন',
+    addOption: (value) => `"${value}" যোগ করুন`,
+    showOptions: 'বিকল্পগুলো দেখান',
     hideCourse: 'কোর্স লুকান',
     deleteCourse: 'কোর্স মুছুন'
   },
@@ -197,21 +202,67 @@ export const bn: Messages = {
   },
 
   courseColor: {
-    title: (name) => `"${name}"-এর রং`,
-    palette: 'প্যালেট',
     custom: 'নিজের পছন্দের রং',
     automatic: 'স্বয়ংক্রিয় রং ব্যবহার করুন'
   },
 
-  setInstitution: {
-    title: 'প্রতিষ্ঠান দিন',
-    description: 'যে কোর্সগুলোতে এই প্রতিষ্ঠান দিতে চান সেগুলো বাছুন। সরাতে চাইলে খালি রাখুন।',
-    courses: (count) => (count === 0 ? 'কোর্স' : `কোর্স (${count}টি নির্বাচিত)`),
-    selectAll: 'সব নির্বাচন',
-    selectNone: 'কোনোটি নয়',
+  colorMenu: {
+    code: 'হেক্স কোড',
+    codeHint: 'ছয়টি অঙ্ক, যেমন FFFFFF',
+    more: 'আরও রং…'
+  },
+
+  appearance: {
+    title: 'চেহারা',
+    palettes: 'প্যালেট',
+    paletteNames: {
+      default: 'ডিফল্ট',
+      ocean: 'সমুদ্র',
+      forest: 'অরণ্য',
+      lavender: 'ল্যাভেন্ডার',
+      warm: 'উষ্ণ',
+      contrast: 'উচ্চ কনট্রাস্ট'
+    },
+    replaceTitle: 'আপনার রং বদলাবেন?',
+    replaceMessage: 'এই থিমে আপনার দেওয়া রংগুলোর জায়গায় প্যালেটের রং বসবে।',
+    replace: 'বদলান',
+    colors: {
+      bg: 'পটভূমি',
+      surface: 'দ্বিতীয় পটভূমি',
+      fg: 'লেখা',
+      muted: 'সহায়ক লেখা',
+      border: 'সীমানা',
+      accent: 'বোতাম ও লিংক',
+      focus: 'কীবোর্ড ফোকাস',
+      new: 'নতুন ফাইল',
+      modified: 'পরিবর্তিত ফাইল',
+      deleted: 'মুছে ফেলা ফাইল ও ঝুঁকিপূর্ণ কাজ',
+      unchanged: 'অপরিবর্তিত ফাইল'
+    },
+    reset: 'ডিফল্ট রং ফিরিয়ে আনুন',
+    resetAll: 'রং রিসেট করুন',
+    resetTitle: { light: 'হালকা থিমের রং রিসেট করবেন?', dark: 'গাঢ় থিমের রং রিসেট করবেন?' },
+    resetMessage: 'এতে বদলানো সব রং ডিফল্টে ফিরে যাবে।'
+  },
+
+  courseUrl: {
+    label: 'কোর্সের URL',
+    invalid:
+      'এটি কোনো Moodle কোর্স পেজের URL নয়। এটি /course/view.php?id= এবং কোর্স নম্বর দিয়ে শেষ হয়।',
+    taken: (name) => `"${name}"-এর এই URL-টি আগে থেকেই আছে।`,
+    previousKept:
+      'আগের URL-গুলোও চেনা থাকবে: সেখান থেকে ডাউনলোড এই কোর্সেই যাবে।'
+  },
+
+  courseInfo: {
+    title: 'কোর্সগুলোর তথ্য সম্পাদনা করুন',
     hidden: 'লুকানো',
-    apply: (count) => (count === 1 ? '১টি কোর্সে প্রয়োগ করুন' : `${count}টি কোর্সে প্রয়োগ করুন`),
-    remove: (count) => (count === 1 ? '১টি কোর্স থেকে সরান' : `${count}টি কোর্স থেকে সরান`)
+    color: 'রং',
+    academicYearColor: 'শিক্ষাবর্ষের রং',
+    deleteOption: (value) => `"${value}" মুছুন`,
+    deleteOptionTitle: (value) => `"${value}" মুছবেন?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `কোনো কোর্সে এটি নেই: শুধু আর বিকল্প হিসেবে দেখানো হবে না।` : count === 1 ? `যে কোর্সে এটি আছে সেখান থেকে সরানো হবে।` : `যে ${count}টি কোর্সে এটি আছে সেগুলো থেকে সরানো হবে।`
   },
 
   ignoredFiles: {

@@ -52,7 +52,8 @@ export const te: Messages = {
     concurrentDownloads: 'ఒకేసారి డౌన్‌లోడ్‌లు',
     sideMargin: 'పక్క మార్జిన్‌లు',
     courseListStyle: 'కోర్సుల జాబితా శైలి',
-    setInstitution: 'కోర్సులకు సంస్థను సెట్ చేయి',
+    appearance: 'రూపం',
+    editInfo: 'కోర్సుల సమాచారం సవరించు',
     hiddenCourses: 'దాచిన కోర్సులు',
     deleteAll: 'అన్ని కోర్సులను తొలగించు',
     backupSaved: 'బ్యాకప్ మీ డౌన్‌లోడ్‌ల ఫోల్డర్‌లో సేవ్ అయింది.',
@@ -91,13 +92,17 @@ export const te: Messages = {
     lastDownloaded: 'చివరి డౌన్‌లోడ్',
     openInMoodle: 'కోర్సును Moodleలో తెరువు',
     setTagName: 'ట్యాగ్ (సంక్షిప్త రూపం) సెట్ చేయి',
-    setFullName: 'పూర్తి పేరు సెట్ చేయి',
     tagPlaceholder: 'సంక్షిప్త రూపం, ఉదా. OS',
     fullNamePlaceholder: 'పూర్తి పేరు (ఖాళీ: Moodle లోనిది)',
-    setInstitution: 'సంస్థ (సంక్షిప్త రూపం) సెట్ చేయి',
-    institutionPlaceholder: 'సంస్థ సంక్షిప్త రూపం, ఉదా. UHU',
+    tag: 'ట్యాగ్ (సంక్షిప్త రూపం)',
+    fullName: 'పూర్తి పేరు',
+    institutionPlaceholder: 'ఉదా. UHU',
     institution: 'సంస్థ',
-    changeColor: 'రంగు మార్చు',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'విద్యా సంవత్సరం',
+    editInfo: 'కోర్సు సమాచారం సవరించు',
+    addOption: (value) => `"${value}" జోడించు`,
+    showOptions: 'ఎంపికలు చూపించు',
     hideCourse: 'కోర్సును దాచు',
     deleteCourse: 'కోర్సును తొలగించు'
   },
@@ -197,21 +202,67 @@ export const te: Messages = {
   },
 
   courseColor: {
-    title: (name) => `"${name}" రంగు`,
-    palette: 'పాలెట్',
     custom: 'మీ రంగు',
     automatic: 'ఆటోమేటిక్ రంగు వాడు'
   },
 
-  setInstitution: {
-    title: 'సంస్థను సెట్ చేయి',
-    description: 'ఈ సంస్థను ఇవ్వాల్సిన కోర్సులను ఎంచుకోండి. తీసివేయడానికి ఖాళీగా వదలండి.',
-    courses: (count) => (count === 0 ? 'కోర్సులు' : `కోర్సులు (${count} ఎంచుకున్నారు)`),
-    selectAll: 'అన్నీ ఎంచుకో',
-    selectNone: 'ఏదీ వద్దు',
+  colorMenu: {
+    code: 'హెక్స్ కోడ్',
+    codeHint: 'ఆరు అంకెలు, ఉదా. FFFFFF',
+    more: 'మరిన్ని రంగులు…'
+  },
+
+  appearance: {
+    title: 'రూపం',
+    palettes: 'రంగుల పాలెట్‌లు',
+    paletteNames: {
+      default: 'డిఫాల్ట్',
+      ocean: 'సముద్రం',
+      forest: 'అడవి',
+      lavender: 'లావెండర్',
+      warm: 'వెచ్చని',
+      contrast: 'అధిక కాంట్రాస్ట్'
+    },
+    replaceTitle: 'మీ రంగులను మార్చాలా?',
+    replaceMessage: 'ఈ థీమ్‌లో మీరు పెట్టిన రంగుల స్థానంలో పాలెట్ రంగులు వస్తాయి.',
+    replace: 'మార్చు',
+    colors: {
+      bg: 'నేపథ్యం',
+      surface: 'రెండో నేపథ్యం',
+      fg: 'వచనం',
+      muted: 'సహాయక వచనం',
+      border: 'అంచులు',
+      accent: 'బటన్లు మరియు లింకులు',
+      focus: 'కీబోర్డ్ ఫోకస్',
+      new: 'కొత్త ఫైళ్లు',
+      modified: 'మారిన ఫైళ్లు',
+      deleted: 'తొలగించిన ఫైళ్లు మరియు ప్రమాదకర చర్యలు',
+      unchanged: 'మారని ఫైళ్లు'
+    },
+    reset: 'డిఫాల్ట్ రంగును తిరిగి తెచ్చు',
+    resetAll: 'రంగులను రీసెట్ చేయి',
+    resetTitle: { light: 'లేత థీమ్ రంగులను రీసెట్ చేయాలా?', dark: 'ముదురు థీమ్ రంగులను రీసెట్ చేయాలా?' },
+    resetMessage: 'ఇందులో మీరు మార్చిన రంగులన్నీ డిఫాల్ట్‌కు తిరిగి వస్తాయి.'
+  },
+
+  courseUrl: {
+    label: 'కోర్సు URL',
+    invalid:
+      'ఇది Moodle కోర్సు పేజీ URL కాదు. ఇది /course/view.php?id= మరియు కోర్సు సంఖ్యతో ముగుస్తుంది.',
+    taken: (name) => `"${name}"కు ఇప్పటికే ఈ URL ఉంది.`,
+    previousKept:
+      'దాని పాత URLలు కూడా గుర్తించబడుతూనే ఉంటాయి: అక్కడి నుంచి వచ్చే డౌన్‌లోడ్‌లు ఈ కోర్సులోకే వెళ్తాయి.'
+  },
+
+  courseInfo: {
+    title: 'కోర్సుల సమాచారం సవరించు',
     hidden: 'దాచబడింది',
-    apply: (count) => (count === 1 ? '1 కోర్సుకు వర్తింపజేయి' : `${count} కోర్సులకు వర్తింపజేయి`),
-    remove: (count) => (count === 1 ? '1 కోర్సు నుండి తీసివేయి' : `${count} కోర్సుల నుండి తీసివేయి`)
+    color: 'రంగు',
+    academicYearColor: 'విద్యా సంవత్సరం రంగు',
+    deleteOption: (value) => `"${value}" తొలగించు`,
+    deleteOptionTitle: (value) => `"${value}" తొలగించాలా?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `ఏ కోర్సులోనూ ఇది లేదు: ఇకపై ఎంపికగా చూపబడదు అంతే.` : count === 1 ? `ఇది ఉన్న కోర్సు నుంచి తొలగించబడుతుంది.` : `ఇది ఉన్న ${count} కోర్సుల నుంచి తొలగించబడుతుంది.`
   },
 
   ignoredFiles: {

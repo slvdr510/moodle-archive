@@ -142,6 +142,38 @@ download is reported as interrupted. Then — as when the connection stays down,
 or Moodle asks you to log in again — nothing from that download is saved, and
 the course stays as it was.
 
+A download goes to its course by the course's URL in Moodle, so every Moodle
+site is apart, subdomain included: `aulasvirtuales.uhu.es` and
+`2024aulasvirtuales.uhu.es` are two sites, and a course in each is a course of
+its own, even with the same number or title. If a course moves, as when its
+site changes domain, set its new URL in **Edit course info**: downloads from
+there then go to it, and its old URLs still work.
+
+**Edit course info**, in a course's ⋮ menu (on its card or row) or in the
+course list's, lists every course, hidden ones too, as a block each: its tag,
+full name, institution, academic year (any text, such as 26-27, shown as you
+write it, as a label in that year's own color: one at random for a new year, which
+you can change beside its field), URL and color. Opened from a course, that course's block is shown first.
+The institution and academic year fields offer the ones already set on other
+courses, or add a new one; deleting one from that list (its bin, or Delete on it)
+takes it off every course that has it, after asking. A color's circle (the year's,
+or the rainbow one after the course color swatches) opens a small menu to write
+its code, such as FFFFFF (or FFF), or pick it in the browser's own color picker.
+There's no Save: a field is
+stored as you leave it or press Enter in it, and what you pick from a list or a
+color as you pick it. Esc, the × or a click outside closes it.
+
+**Appearance**, in the course list's ⋮ menu, sets the interface's own colors —
+background, text, borders, buttons and links, the keyboard's focus, and the
+colors that mark files as new, changed, deleted or unchanged — for the light
+theme and the dark one apart (the page shows the one being set while it's
+open). To start from, there are palettes — Default, Ocean, Forest, Lavender,
+Warm and High contrast — each with a light version and a dark one (it asks
+before one replaces colors you set yourself). Each color is set as a course color is, from its circle, and goes back to the
+default from the arrow beside it; **Reset colors** takes a whole theme back.
+Text on a color you pick turns dark if the color is too light for white. The
+colors are kept in this browser, like the other settings, not in backups.
+
 To add a file yourself, open a course in the dashboard and drop the file onto
 the page (or choose **Add file…** from the course's menu), then pick its
 folder. Same name in the same folder = a new version of that file; a new name =
@@ -163,7 +195,7 @@ browser or in another one — brings it all back.
 ### What a backup contains
 
 - **The courses**, with everything you set on them: tag (abbreviation), full
-  name, institution, color, and ignored files and folders.
+  name, institution, academic year, color, and ignored files and folders.
 - **Every file** of those courses, including the ones you added yourself.
 - **Every version** of every file, with its content — not just the latest.
 - **The recently opened** files of those courses.
@@ -196,9 +228,9 @@ What happens to each course in the backup depends on whether this browser
 already has it:
 
 - **A course it doesn't have** is added exactly as it was exported — tag, full
-  name, institution, color, ignored files, every file and every version. It
-  shows in the list (even if it was hidden when exported), and its files start
-  out as the baseline, with no **New** badges.
+  name, institution, academic year, color, ignored files, every file and every
+  version. It shows in the list (even if it was hidden when exported), and its
+  files start out as the baseline, with no **New** badges.
 - **A course it already has** is merged into the one you have, never duplicated:
   - Its files are compared by content. A file you don't have yet is added
     (marked **New**); one whose content you don't have yet gets it as a new
@@ -206,9 +238,9 @@ already has it:
     too, and nothing you already have is stored twice.
   - **Nothing is ever deleted or overwritten.** Files you have that aren't in
     the backup stay as they are.
-  - **What you set here wins:** the tag, full name, institution and color you
-    gave the course in this browser stay as they are, and so do its position in
-    the list and whether it's hidden. Whatever isn't set here is filled in from
+  - **What you set here wins:** the tag, full name, institution, academic year
+    and color you gave the course in this browser stay as they are, and so do
+    its position in the list and whether it's hidden. Whatever isn't set here is filled in from
     the backup — so a full name or a color set on another computer reaches this
     one too.
   - **Ignored files and folders** from both are kept, each one once.

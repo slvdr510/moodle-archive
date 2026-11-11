@@ -48,7 +48,9 @@ export default defineManifest(({ mode }) => ({
         strict_min_version: '140.0',
         // Nothing the extension reads ever leaves the browser (see the README).
         data_collection_permissions: { required: ['none'] }
-      }
+      },
+      // Firefox for Android only understood data_collection_permissions later, in 142.
+      gecko_android: { strict_min_version: '142.0' }
     }
   })
 }));

@@ -5,10 +5,13 @@ import '@fontsource/inter/latin-500.css';
 import '@fontsource/inter/latin-600.css';
 import '@fontsource/inter/latin-700.css';
 import { App } from './App';
+import { applyAppearance } from '../lib/appearance';
 import { applyDocumentLanguage, ensureMessages } from '../lib/i18n';
 import './styles.css';
 
 applyDocumentLanguage();
+// The interface's colors, as set in Appearance.
+applyAppearance();
 
 // The archive is the only copy of versions Moodle no longer has. The unlimitedStorage
 // permission already keeps Chrome from clearing it when the disk runs low; this asks

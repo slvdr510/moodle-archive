@@ -61,7 +61,8 @@ export const ru: Messages = {
     concurrentDownloads: 'Одновременные скачивания',
     sideMargin: 'Боковые поля',
     courseListStyle: 'Вид списка курсов',
-    setInstitution: 'Задать учреждение для курсов',
+    appearance: 'Оформление',
+    editInfo: 'Изменить данные курсов',
     hiddenCourses: 'Скрытые курсы',
     deleteAll: 'Удалить все курсы',
     backupSaved: 'Резервная копия сохранена в папку «Загрузки».',
@@ -101,13 +102,17 @@ export const ru: Messages = {
     lastDownloaded: 'Последнее скачивание',
     openInMoodle: 'Открыть курс в Moodle',
     setTagName: 'Задать метку (сокращение)',
-    setFullName: 'Задать полное название',
     tagPlaceholder: 'Сокращение, напр. ОС',
     fullNamePlaceholder: 'Полное название (пусто — из Moodle)',
-    setInstitution: 'Задать учреждение (сокращение)',
-    institutionPlaceholder: 'Сокращение учреждения, напр. UHU',
+    tag: 'Метка (сокращение)',
+    fullName: 'Полное название',
+    institutionPlaceholder: 'напр. UHU',
     institution: 'Учреждение',
-    changeColor: 'Изменить цвет',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Учебный год',
+    editInfo: 'Изменить данные курса',
+    addOption: (value) => `Добавить «${value}»`,
+    showOptions: 'Показать варианты',
     hideCourse: 'Скрыть курс',
     deleteCourse: 'Удалить курс'
   },
@@ -208,21 +213,67 @@ export const ru: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Цвет «${name}»`,
-    palette: 'Палитра',
     custom: 'Свой цвет',
     automatic: 'Использовать автоматический цвет'
   },
 
-  setInstitution: {
-    title: 'Задать учреждение',
-    description: 'Выберите курсы, которым задать это учреждение. Оставьте поле пустым, чтобы убрать его.',
-    courses: (count) => (count === 0 ? 'Курсы' : `Курсы (выбрано: ${count})`),
-    selectAll: 'Выбрать все',
-    selectNone: 'Ни одного',
+  colorMenu: {
+    code: 'Шестнадцатеричный код',
+    codeHint: 'Шесть цифр, например FFFFFF',
+    more: 'Другие цвета…'
+  },
+
+  appearance: {
+    title: 'Оформление',
+    palettes: 'Палитры',
+    paletteNames: {
+      default: 'По умолчанию',
+      ocean: 'Океан',
+      forest: 'Лес',
+      lavender: 'Лаванда',
+      warm: 'Тёплая',
+      contrast: 'Высокий контраст'
+    },
+    replaceTitle: 'Заменить ваши цвета?',
+    replaceMessage: 'Цвета, заданные вами для этой темы, будут заменены цветами палитры.',
+    replace: 'Заменить',
+    colors: {
+      bg: 'Фон',
+      surface: 'Дополнительный фон',
+      fg: 'Текст',
+      muted: 'Второстепенный текст',
+      border: 'Рамки',
+      accent: 'Кнопки и ссылки',
+      focus: 'Фокус клавиатуры',
+      new: 'Новые файлы',
+      modified: 'Изменённые файлы',
+      deleted: 'Удалённые файлы и опасные действия',
+      unchanged: 'Неизменённые файлы'
+    },
+    reset: 'Вернуть цвет по умолчанию',
+    resetAll: 'Сбросить цвета',
+    resetTitle: { light: 'Сбросить цвета светлой темы?', dark: 'Сбросить цвета тёмной темы?' },
+    resetMessage: 'Все изменённые в ней цвета вернутся к стандартным.'
+  },
+
+  courseUrl: {
+    label: 'URL курса',
+    invalid:
+      'Это не URL страницы курса Moodle. Он заканчивается на /course/view.php?id= и номер курса.',
+    taken: (name) => `У «${name}» уже есть этот URL.`,
+    previousKept:
+      'Прежние URL по-прежнему распознаются: загрузки с них по-прежнему попадают в этот курс.'
+  },
+
+  courseInfo: {
+    title: 'Изменить данные курсов',
     hidden: 'Скрыт',
-    apply: (count) => (count === 1 ? 'Применить к 1 курсу' : `Применить к курсам: ${count}`),
-    remove: (count) => (count === 1 ? 'Убрать у 1 курса' : `Убрать у курсов: ${count}`)
+    color: 'Цвет',
+    academicYearColor: 'Цвет учебного года',
+    deleteOption: (value) => `Удалить «${value}»`,
+    deleteOptionTitle: (value) => `Удалить «${value}»?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Ни у одного курса его нет: он просто больше не будет предлагаться.` : count === 1 ? `Он будет удалён из курса, у которого он есть.` : `Он будет удалён из курсов, у которых он есть: ${count}.`
   },
 
   ignoredFiles: {

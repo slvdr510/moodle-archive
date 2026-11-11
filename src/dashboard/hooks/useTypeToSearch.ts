@@ -8,6 +8,10 @@ import { dialogOpen, isTypingField } from './useScrollFromAnywhere';
  * whatever the box already holds. A dead key (the ´ of an "á") counts too, so the
  * accented letter it starts is put together in the box.
  *
+ * The keys that delete move it there too, and delete in the box: Backspace its last
+ * character, Delete all of it (selected first, for the key itself to take, so Ctrl+Z
+ * brings it back). From then on the focus is in the box, where keys work as usual.
+ *
  * Ctrl+F (⌘F) does it too, in place of the browser's find bar.
  *
  * Left alone: typing in another field, other shortcuts (Ctrl, Alt, ⌘), the space bar (it
@@ -33,10 +37,13 @@ export function useTypeToSearch(inputRef: RefObject<HTMLInputElement | null>): v
       // AltGr types characters too (@, #, €…), and Windows reports it as Ctrl+Alt.
       if ((e.ctrlKey || e.metaKey || e.altKey) && !e.getModifierState('AltGraph')) return;
       const typesCharacter = [...e.key].length === 1 && e.key !== ' ';
-      if (!typesCharacter && e.key !== 'Dead') return;
+      // Not with Shift: Shift+Delete cuts, which would put the search on the clipboard.
+      const deletes = (e.key === 'Backspace' || e.key === 'Delete') && !e.shiftKey;
+      if (!typesCharacter && e.key !== 'Dead' && !deletes) return;
 
       input.focus();
-      input.setSelectionRange(input.value.length, input.value.length);
+      if (e.key === 'Delete') input.select();
+      else input.setSelectionRange(input.value.length, input.value.length);
     }
 
     window.addEventListener('keydown', onKeyDown);

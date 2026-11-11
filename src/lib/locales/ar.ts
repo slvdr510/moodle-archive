@@ -52,7 +52,8 @@ export const ar: Messages = {
     concurrentDownloads: 'التنزيلات المتزامنة',
     sideMargin: 'الهوامش الجانبية',
     courseListStyle: 'نمط قائمة المقررات',
-    setInstitution: 'تعيين المؤسسة لمقررات',
+    appearance: 'المظهر',
+    editInfo: 'تعديل معلومات المقررات',
     hiddenCourses: 'المقررات المخفية',
     deleteAll: 'حذف جميع المقررات',
     backupSaved: 'تم حفظ النسخة الاحتياطية في مجلد التنزيلات.',
@@ -92,13 +93,17 @@ export const ar: Messages = {
     lastDownloaded: 'آخر تنزيل',
     openInMoodle: 'فتح المقرر في Moodle',
     setTagName: 'تعيين الوسم (الاختصار)',
-    setFullName: 'تعيين الاسم الكامل',
     tagPlaceholder: 'اختصار، مثل OS',
     fullNamePlaceholder: 'الاسم الكامل (فارغ: الاسم من Moodle)',
-    setInstitution: 'تعيين المؤسسة (الاختصار)',
-    institutionPlaceholder: 'اختصار المؤسسة، مثل UHU',
+    tag: 'الوسم (الاختصار)',
+    fullName: 'الاسم الكامل',
+    institutionPlaceholder: 'مثل UHU',
     institution: 'المؤسسة',
-    changeColor: 'تغيير اللون',
+    academicYearPlaceholder: '⁦26-27⁩',
+    academicYear: 'العام الدراسي',
+    editInfo: 'تعديل معلومات المقرر',
+    addOption: (value) => `إضافة "${value}"`,
+    showOptions: 'إظهار الخيارات',
     hideCourse: 'إخفاء المقرر',
     deleteCourse: 'حذف المقرر'
   },
@@ -198,21 +203,67 @@ export const ar: Messages = {
   },
 
   courseColor: {
-    title: (name) => `لون "${name}"`,
-    palette: 'لوحة الألوان',
     custom: 'لون مخصص',
     automatic: 'استخدام اللون التلقائي'
   },
 
-  setInstitution: {
-    title: 'تعيين المؤسسة',
-    description: 'اختر المقررات التي ستُعيَّن لها هذه المؤسسة. اتركها فارغة لإزالتها منها.',
-    courses: (count) => (count === 0 ? 'المقررات' : `المقررات (${count} محددة)`),
-    selectAll: 'تحديد الكل',
-    selectNone: 'لا شيء',
+  colorMenu: {
+    code: 'الرمز السداسي العشري',
+    codeHint: 'ستة أرقام، مثل FFFFFF',
+    more: 'ألوان أخرى…'
+  },
+
+  appearance: {
+    title: 'المظهر',
+    palettes: 'لوحات الألوان',
+    paletteNames: {
+      default: 'الافتراضية',
+      ocean: 'المحيط',
+      forest: 'الغابة',
+      lavender: 'الخزامى',
+      warm: 'دافئة',
+      contrast: 'تباين عالٍ'
+    },
+    replaceTitle: 'استبدال ألوانك؟',
+    replaceMessage: 'ستُستبدل الألوان التي ضبطتها في هذه السمة بألوان اللوحة.',
+    replace: 'استبدال',
+    colors: {
+      bg: 'الخلفية',
+      surface: 'الخلفية الثانوية',
+      fg: 'النص',
+      muted: 'النص الثانوي',
+      border: 'الحدود',
+      accent: 'الأزرار والروابط',
+      focus: 'تركيز لوحة المفاتيح',
+      new: 'الملفات الجديدة',
+      modified: 'الملفات المعدّلة',
+      deleted: 'الملفات المحذوفة والإجراءات الخطرة',
+      unchanged: 'الملفات غير المعدّلة'
+    },
+    reset: 'استعادة اللون الافتراضي',
+    resetAll: 'إعادة ضبط الألوان',
+    resetTitle: { light: 'إعادة ضبط ألوان السمة الفاتحة؟', dark: 'إعادة ضبط ألوان السمة الداكنة؟' },
+    resetMessage: 'ستعود كل الألوان التي غيّرتها فيها إلى الافتراضية.'
+  },
+
+  courseUrl: {
+    label: 'عنوان URL للمقرر',
+    invalid:
+      'هذا ليس عنوان URL لصفحة مقرر في Moodle. ينتهي بـ ⁦/course/view.php?id=⁩ ورقم المقرر.',
+    taken: (name) => `المقرر "${name}" يستخدم عنوان URL هذا بالفعل.`,
+    previousKept:
+      'تظل عناوين URL السابقة معروفة: التنزيلات منها تذهب إلى هذا المقرر.'
+  },
+
+  courseInfo: {
+    title: 'تعديل معلومات المقررات',
     hidden: 'مخفي',
-    apply: (count) => (count === 1 ? 'تطبيق على مقرر واحد' : `تطبيق على ${count} مقررات`),
-    remove: (count) => (count === 1 ? 'إزالة من مقرر واحد' : `إزالة من ${count} مقررات`)
+    color: 'اللون',
+    academicYearColor: 'لون العام الدراسي',
+    deleteOption: (value) => `حذف "${value}"`,
+    deleteOptionTitle: (value) => `حذف "${value}"؟`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `لا يستخدمه أي مقرر: لن يُعرض كخيار بعد الآن فقط.` : count === 1 ? `سيُزال من المقرر الذي يستخدمه.` : `سيُزال من المقررات التي تستخدمه (${count}).`
   },
 
   ignoredFiles: {

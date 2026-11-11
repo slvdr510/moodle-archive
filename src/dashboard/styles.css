@@ -1,5 +1,7 @@
 :root {
   color-scheme: light dark;
+  /* The browser's own controls (checkboxes, radio buttons, sliders) in the accent too. */
+  accent-color: var(--accent);
   --bg: #ffffff;
   --surface: #f8f9fb;
   --fg: #16181d;
@@ -11,6 +13,14 @@
   --modified: #d97706;
   --deleted: #dc2626;
   --unchanged: #6b7280;
+  /* The text on each of those colors, where there's some on it (a button, a badge):
+     white, unless the colors chosen in Appearance make it too light for that (see
+     appearance.ts). */
+  --on-accent: #ffffff;
+  --on-new: #ffffff;
+  --on-modified: #ffffff;
+  --on-deleted: #ffffff;
+  --on-unchanged: #ffffff;
   --radius: 10px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
   /* What has the keyboard's focus (see keyboardNavigation.ts): in the text's own color
@@ -121,11 +131,6 @@ body {
   /* Between the rows shown, so a missing one (no notice, nothing recently opened)
      leaves no extra room. The rows themselves have no margins here. */
   gap: var(--page-row-gap);
-}
-
-.course-files-page > .busy-notice,
-.course-files-page > .status-message {
-  margin: 0;
 }
 
 .course-files-page > * {
@@ -288,7 +293,7 @@ body {
 
 .header-picker-item.active {
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
 }
 
 .theme-selector {
@@ -397,8 +402,12 @@ body {
 }
 
 .course-files-toolbar {
-  position: relative;
-  justify-content: flex-start;
+  /* The back button, the course's name, and its buttons: each side as wide as the
+     buttons on the right (two, and the gap between them), so the name has all the
+     rest, in the page's very middle. */
+  display: grid;
+  grid-template-columns: calc(2 * 36px + 10px) minmax(0, 1fr) calc(2 * 36px + 10px);
+  align-items: start;
   border-bottom: none;
   /* No border to pad away from, and the room below it is the page's row gap (see
      .course-files-page). */
@@ -406,28 +415,46 @@ body {
   margin-bottom: 0;
 }
 
-.course-files-toolbar h2,
-.course-files-toolbar .course-name-input {
-  /* Anchored to the top of the row and given the same height as the buttons
-     beside it (rather than centered via top: 50% of the whole toolbar box,
-     which also counts the toolbar's own bottom padding and so drifts off the
-     buttons' actual vertical center), then centered within that with flex.
-     max-width leaves room for the back button on the left and, on the right,
-     the open-url button plus the "⋮" menu (see .course-files-toolbar-actions). */
-  position: absolute;
-  left: 50%;
-  top: 0;
-  height: 36px;
-  transform: translateX(-50%);
-  max-width: calc(100% - 230px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.course-files-toolbar > .back-button {
+  justify-self: start;
 }
 
+.course-files-toolbar .course-name-input {
+  justify-self: center;
+  align-self: center;
+}
+
+/* Never cut short: a name longer than the room for it goes on over more lines, as
+   many as it takes, the row growing with it; a single line is as tall as the
+   buttons beside it, centered on them. The academic year flows after it as a word
+   would: at the end of its last line, or on one of its own. */
 .course-files-toolbar h2 {
-  display: flex;
-  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding-block: calc((36px - 1.25em) / 2);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.course-page-title {
+  min-width: 0;
+  /* Even a name with nowhere to break (one long word) rather than go past its room. */
+  overflow-wrap: anywhere;
+}
+
+/* After the space written before it (for copying the title, or reading it aloud). */
+.course-page-academic-year {
+  /* Always whole: never broken over two lines. */
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: 0.1em;
+  /* The label it is on the cards (.course-academic-year), at the title's size. */
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--year-color, var(--muted)) 18%, transparent);
+  color: color-mix(in srgb, var(--year-color, var(--muted)) 72%, var(--fg));
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
 }
 
 .course-files-toolbar-actions {
@@ -435,6 +462,7 @@ body {
   align-items: center;
   gap: 10px;
   margin-inline-start: auto;
+  justify-self: end;
 }
 
 .toolbar-menu-button {
@@ -693,7 +721,7 @@ body {
 button {
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
   font-family: inherit;
   font-weight: 600;
   padding: 9px 16px;
@@ -750,6 +778,25 @@ button.danger:hover {
   border-color: var(--deleted);
 }
 
+/* Confirming something dangerous, in red from the start (ConfirmModal's strong); the
+   way out of it beside it is a .safe button: the accent color, every button's own,
+   the choice to fall back on. */
+button.danger.solid {
+  background: var(--deleted);
+  border-color: var(--deleted);
+  color: var(--on-deleted);
+}
+
+button.danger.solid:hover {
+  background: color-mix(in srgb, var(--deleted) 85%, black);
+  border-color: color-mix(in srgb, var(--deleted) 85%, black);
+  color: var(--on-deleted);
+}
+
+button.danger.solid:focus-visible {
+  outline-color: var(--deleted);
+}
+
 button:disabled {
   opacity: 0.55;
   cursor: default;
@@ -763,10 +810,6 @@ button:disabled {
 
 .hint-text.error {
   color: var(--deleted);
-}
-
-.hint-text.status-message {
-  text-align: center;
 }
 
 .file-list {
@@ -945,7 +988,11 @@ button:disabled {
   /* Also never so tall it reaches the footer when it shows (see --footer-room). */
   font-size: clamp(
     12px,
-    min(60cqh, calc((100cqh - var(--footer-room)) / 1.05), calc(100cqw / (var(--tag-length) * 0.62))),
+    min(
+      60cqh,
+      calc((100cqh - var(--footer-room) - var(--academic-year-room, 0px)) / 1.05),
+      calc(100cqw / (var(--tag-length) * 0.62))
+    ),
     72px
   );
   font-weight: 700;
@@ -1000,7 +1047,10 @@ button:disabled {
   /* Also never so tall that three lines reach the footer (see --footer-room). */
   font-size: clamp(
     11px,
-    min(calc(300cqw / (var(--name-length) * 0.58)), calc((100cqh - var(--footer-room)) / 3.75)),
+    min(
+      calc(300cqw / (var(--name-length) * 0.58)),
+      calc((100cqh - var(--footer-room) - var(--academic-year-room, 0px)) / 3.75)
+    ),
     22px
   );
   font-weight: 700;
@@ -1043,6 +1093,44 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* The academic year tells apart two editions of a course, so unlike the footer's it
+   always shows: on a card right under the tag or name, centered with it; at the end
+   of a row, just before the footer. */
+/* A label in its year's color (--year-color, see academicYearColors.ts): every course
+   of the same year alike. */
+.course-academic-year {
+  flex: none;
+  box-sizing: border-box;
+  /* Any text, so possibly a long one: cut off at the card's width. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--year-color, var(--muted)) 18%, transparent);
+  color: color-mix(in srgb, var(--year-color, var(--muted)) 72%, var(--fg));
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* On a card, the tag or name is sized to leave the year its line too (its 13px at
+   that line height, the label's 1px above and below, and the 4px between them), not
+   only the footer its room. */
+.course-list:not(.as-rows) .course-card-names.has-academic-year {
+  --academic-year-room: calc(13px * 1.35 + 2px + 4px);
+}
+
+/* In a row, at the end of the names, centered on them as the footer beside it is —
+   not on the first line of a name that wraps onto several. */
+.course-list.as-rows .course-academic-year {
+  max-width: 30%;
+  margin-inline-start: auto;
+  align-self: center;
 }
 
 /* On a card it only shows on hover (or while its menu is open), faded rather than
@@ -1118,9 +1206,11 @@ button.course-open-url {
   font-size: 15px;
 }
 
-.course-card .course-name-input {
-  width: 100%;
-  box-sizing: border-box;
+/* What's written isn't what it takes (an academic year that isn't one, a URL that
+   isn't a course page's). */
+.modal input.invalid {
+  border-color: var(--deleted);
+  outline-color: var(--deleted);
 }
 
 /* "Rows" style (Course list style): the same items as one boxed list, a row each —
@@ -1248,10 +1338,6 @@ button.course-open-url {
   margin-top: 0;
 }
 
-.course-list.as-rows .course-card .course-name-input {
-  width: auto;
-}
-
 .menu-button {
   background: none;
   border: none;
@@ -1307,6 +1393,24 @@ button.course-open-url {
   cursor: pointer;
   border-radius: 0;
   white-space: nowrap;
+}
+
+/* Its icon, if it has one, at its start. */
+.dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-menu-icon {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Its color with the item's, under the pointer or in focus (red, for a danger one). */
+.dropdown-menu button:hover .dropdown-menu-icon,
+.dropdown-menu button:focus-visible .dropdown-menu-icon {
+  color: inherit;
 }
 
 .dropdown-menu button:last-child {
@@ -1397,7 +1501,7 @@ button.course-open-url {
   height: 22px;
   border-radius: 50%;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 12px;
   font-weight: 700;
 }
@@ -1441,10 +1545,12 @@ button.course-open-url {
   box-shadow: 0 16px 48px rgba(16, 24, 40, 0.25);
 }
 
+/* Every dialog's title, centered. */
 .modal h2 {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
+  text-align: center;
 }
 
 .confirm-modal-title {
@@ -1459,11 +1565,17 @@ button.course-open-url {
   overflow: hidden;
 }
 
+/* A title with its × beside it: the title still in the dialog's middle, as wide as
+   fits between the × and as much room on the other side. */
 .modal-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+}
+
+.modal-header h2 {
+  grid-column: 2;
 }
 
 .modal-close-button {
@@ -1515,9 +1627,10 @@ button.course-open-url {
   cursor: not-allowed;
 }
 
+/* A dialog's buttons, centered under it, as its title is above. */
 .modal-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 8px;
   margin-top: 8px;
 }
@@ -1538,11 +1651,91 @@ button.course-open-url {
   white-space: nowrap;
 }
 
-/* The "Exporting…" / "Importing…" notice: on a row of its own, centered horizontally. */
-.busy-notice {
+/* What's going on and how it went (see StatusToasts): floating a quarter of the way
+   down the window, in the middle, over what's there rather than taking room from it.
+   Under dialogs (1100), over the rest. */
+.status-toasts {
+  position: fixed;
+  left: 50%;
+  top: 25vh;
+  transform: translateX(-50%);
+  z-index: 1050;
   display: flex;
-  justify-content: center;
-  margin-bottom: 18px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  /* Only the notices themselves take clicks, not the room around them. */
+  pointer-events: none;
+}
+
+.status-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 560px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13.5px;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.18);
+  animation: status-toast-in 0.18s ease-out;
+}
+
+.status-toast.busy .spinner-wrap {
+  color: var(--fg);
+}
+
+/* What went wrong: marked down its start in red. */
+.status-toast.error {
+  border-inline-start: 4px solid var(--deleted);
+}
+
+.status-toast.leaving {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.status-toast-text {
+  overflow-wrap: anywhere;
+}
+
+button.status-toast-close {
+  flex: none;
+  display: inline-flex;
+  padding: 3px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+}
+
+button.status-toast-close:hover {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+}
+
+@keyframes status-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-toast {
+    animation: none;
+  }
+
+  .status-toast.leaving {
+    transition: none;
+  }
 }
 
 .spinner {
@@ -2070,28 +2263,34 @@ button.course-open-url {
 
 .status-badge.status-new {
   background: var(--new);
+  color: var(--on-new);
 }
 
 .status-badge.status-modified {
   background: var(--modified);
+  color: var(--on-modified);
 }
 
 .status-badge.status-deleted {
   background: var(--deleted);
+  color: var(--on-deleted);
 }
 
 .status-badge.status-unchanged {
   background: var(--unchanged);
+  color: var(--on-unchanged);
 }
 
 /* Added by hand rather than downloaded from Moodle — see FileRecord.manual. */
 .status-badge.status-manual {
   background: var(--accent);
+  color: var(--on-accent);
 }
 
 /* Left as it is by downloads — see Course.ignoredPaths. */
 .status-badge.status-ignored {
   background: var(--unchanged);
+  color: var(--on-unchanged);
 }
 
 .folder-row-header .row-action-button {
@@ -2382,176 +2581,604 @@ button.course-open-url {
   min-width: 0;
 }
 
-.set-institution-modal {
-  width: 480px;
-  max-width: calc(100vw - 32px);
+/* A field with a list of what's already in use dropping from it (ComboBox): the
+   arrow that shows them all at its end, inside it. */
+.combo-box {
+  position: relative;
+  min-width: 0;
 }
 
-.set-institution-courses-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  font-size: 13px;
-  color: var(--muted);
+.combo-box > input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.set-institution-select-buttons {
-  display: flex;
-  gap: 12px;
+.combo-box.with-toggle > input {
+  padding-inline-end: 30px;
 }
 
-/* A button that reads as a plain text link. */
-button.link-button {
+.combo-box-toggle {
+  position: absolute;
+  inset-block: 1px;
+  inset-inline-end: 1px;
+  width: 28px;
+  display: grid;
+  place-items: center;
   padding: 0;
   border: none;
+  border-start-end-radius: 5px;
+  border-end-end-radius: 5px;
   background: none;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-button.link-button:hover {
-  background: none;
-  text-decoration: underline;
-}
-
-.set-institution-courses {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 280px;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.set-institution-courses li {
-  border-bottom: 1px solid var(--border);
-}
-
-.set-institution-courses li:last-child {
-  border-bottom: none;
-}
-
-/* Overrides .modal label's stacked layout: checkbox, name and tags in one line. */
-.modal label.set-institution-course {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  color: var(--fg);
-  font-size: 13.5px;
+  color: var(--muted);
   cursor: pointer;
 }
 
-.modal .set-institution-course input {
-  flex: none;
-  padding: 0;
+.combo-box-toggle:hover {
+  background: none;
+  color: var(--fg);
 }
 
-.set-institution-course-name {
-  flex: 1;
-  min-width: 0;
+.combo-box-toggle svg {
+  transition: transform 0.12s ease;
+}
+
+.combo-box.open .combo-box-toggle svg {
+  transform: rotate(180deg);
+}
+
+/* Placed by ComboBox, under its field (or over it), outside anything that would cut
+   it off — over dialogs too. Its look is the menus' (.dropdown-menu). */
+.combo-box-list {
+  position: fixed;
+  z-index: 1200;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  max-height: 264px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
+  padding: 4px 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.18);
+}
+
+.combo-box-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  color: var(--fg);
+  font-size: 13.5px;
+  font-weight: 500;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.combo-box-option:hover {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+/* The row highlighted from the keyboard, as the menus show the item in focus. */
+.combo-box-option.active {
+  background: var(--focus-bg);
+  box-shadow: var(--focus-bar);
+}
+
+.combo-box-option-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.set-institution-course-full-name {
-  color: var(--muted);
-}
-
-.set-institution-hidden {
+.combo-box-icon {
   flex: none;
+}
+
+/* An option's own color (an academic year's). */
+.combo-box-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.combo-box-check {
+  margin-inline-start: auto;
+  color: var(--accent);
+}
+
+/* Deleting an option: at the row's end, faint until the pointer's on it. */
+.combo-box-delete {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-block: -4px;
+  margin-inline: auto -6px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: none;
   color: var(--muted);
-  font-size: 12px;
+  opacity: 0.6;
+  cursor: pointer;
 }
 
-.course-color-modal {
-  width: 380px;
+.combo-box-check ~ .combo-box-delete {
+  margin-inline-start: 0;
+}
+
+.combo-box-option:hover .combo-box-delete,
+.combo-box-option.active .combo-box-delete {
+  opacity: 1;
+}
+
+.combo-box-delete:hover {
+  background: color-mix(in srgb, var(--deleted) 12%, transparent);
+  color: var(--deleted);
+  border: none;
+}
+
+/* Adding what's typed: set apart from the ones in use above it. */
+.combo-box-option.new {
+  color: var(--accent);
+}
+
+.combo-box-option + .combo-box-option.new {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 9px;
+}
+
+/* "Edit course info" (CourseInfoModal): a block per course, in one column that
+   scrolls between the title and the buttons. */
+.course-info-modal {
+  width: 720px;
   max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  box-sizing: border-box;
 }
 
-/* A miniature of the course's card, in the color being picked. */
-.course-color-preview {
+/* Its title centered over the blocks, its × at the end of the same line. */
+.course-info-list {
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Room for a block's focus ring and the scrollbar, inside the list. */
+  margin-inline: -6px;
+  padding: 2px 6px;
+  /* As the course page's list's: thin, no track, a faint thumb. */
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
+}
+
+/* Like the course's card: its color tinting it, a band of it along the top. */
+.course-info-block {
+  position: relative;
+  flex: none;
   overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 84px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 16px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--course-color) 6%, var(--bg));
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  background: color-mix(in srgb, var(--course-color) 5%, var(--bg));
 }
 
-.course-color-preview::before {
+.course-info-block::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 5px;
+  height: 4px;
   background: var(--course-color);
 }
 
-.course-color-preview span {
-  max-width: 90%;
+/* The course it was opened for. */
+.course-info-block.targeted {
+  border-color: color-mix(in srgb, var(--course-color) 60%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--course-color) 60%, var(--border));
+}
+
+.course-info-block-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.course-info-block-title {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 15px;
+  font-weight: 700;
 }
 
-.course-color-swatches {
+.course-info-block-subtitle {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.course-info-hidden {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.course-info-fields {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.course-info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.course-info-wide {
+  grid-column: 1 / -1;
+}
+
+.course-info-fields .hint-text {
+  font-size: 12.5px;
+}
+
+.course-info-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* An academic year's field, its color's well before it. */
+.course-info-year {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.course-info-year .combo-box {
+  flex: 1;
+}
+
+button.academic-year-color {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+
+/* No year stored yet to have a color. */
+button.academic-year-color.unset {
+  border: 2px dashed var(--border);
+  background: none;
+  opacity: 1;
+}
+
+.course-info-color {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.course-info-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 button.course-color-swatch {
-  height: 34px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: 50%;
   /* Over the generic button:hover fill, which would hide the swatch's own color. */
   transition: transform 0.1s ease;
 }
 
 button.course-color-swatch:hover {
   border-color: transparent;
-  transform: scale(1.06);
+  transform: scale(1.1);
 }
 
-button.course-color-swatch.active {
+button.course-color-swatch.active,
+.course-color-custom.active {
   border-color: var(--bg);
   box-shadow: 0 0 0 2px var(--fg);
 }
 
-/* Overrides .modal label's stacked layout: the color well, then its label. */
-.modal label.course-color-custom {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  color: var(--fg);
-  font-size: 13.5px;
-  cursor: pointer;
+/* The automatic color: its swatch, marked A. */
+button.course-color-swatch.auto {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.modal .course-color-custom input[type='color'] {
-  width: 44px;
-  height: 30px;
-  padding: 2px;
-  cursor: pointer;
+/* Any other color, written or from the browser's picker (a ColorMenu): a well the
+   size of a swatch, a rainbow until it's the one set. */
+button.course-color-custom {
+  width: 26px;
+  height: 26px;
+  background: conic-gradient(#e5484d, #d4a017, #30a46c, #0091ff, #8e4ec6, #e5484d);
 }
 
-button.course-color-auto {
-  align-self: flex-start;
+/* A ColorMenu's well: just its color (inline, or its class's), round. */
+button.color-menu-button {
+  display: block;
+  box-sizing: border-box;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
 }
 
-button.course-color-auto:disabled {
-  color: var(--muted);
+button.color-menu-button:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+button.color-menu-button:disabled {
   cursor: default;
-  text-decoration: none;
+}
+
+button.color-menu-button:focus-visible,
+button.color-menu-button[aria-expanded='true'] {
+  outline: none;
+  border-color: var(--bg);
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.color-menu-anchor {
+  display: contents;
+}
+
+/* What a ColorMenu opens under its well: the code to write, the browser's picker. */
+.color-menu {
+  position: fixed;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.18);
+}
+
+.color-menu-code {
+  display: flex;
+  align-items: center;
+  padding-inline: 8px 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  direction: ltr;
+}
+
+.color-menu-code:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.color-menu-code.invalid,
+.color-menu-code.invalid:focus-within {
+  border-color: var(--deleted);
+  box-shadow: 0 0 0 1px var(--deleted);
+}
+
+.modal .color-menu-code input {
+  width: 7ch;
+  padding: 6px 4px;
+  border: none;
+  outline: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  text-transform: uppercase;
+}
+
+.modal label.color-menu-picker {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  background: conic-gradient(#e5484d, #d4a017, #30a46c, #0091ff, #8e4ec6, #e5484d);
+}
+
+.modal label.color-menu-picker:focus-within {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
+}
+
+.modal .color-menu-picker input[type='color'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .course-info-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* "Appearance": a row for each of the interface's colors (see AppearanceModal). */
+.appearance-modal {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+}
+
+/* The theme being set: two halves of one control. */
+.appearance-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+button.appearance-mode {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+button.appearance-mode:hover {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  color: var(--fg);
+}
+
+button.appearance-mode.active {
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+}
+
+.appearance-colors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
+}
+
+.appearance-color {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.appearance-color:last-child {
+  border-bottom: none;
+}
+
+/* Edged, so a color the same as the dialog's (its background) still shows as a well. */
+button.appearance-swatch {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 25%, transparent);
+}
+
+.appearance-color-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.appearance-color-code {
+  flex: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--muted);
+  direction: ltr;
+}
+
+.appearance-color-reset {
+  flex: none;
+}
+
+/* Palettes to start from: a small picture of each, its name under it. */
+.appearance-palettes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+button.appearance-palette {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+button.appearance-palette:hover {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  border-color: color-mix(in srgb, var(--fg) 30%, var(--border));
+}
+
+button.appearance-palette.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.appearance-palette-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 7px;
+  border: 1px solid;
+  border-radius: 5px;
+}
+
+.appearance-palette-preview > span {
+  display: block;
+  height: 4px;
+  width: 70%;
+  border-radius: 2px;
+}
+
+.appearance-palette-preview > span:nth-child(2) {
+  width: 45%;
+}
+
+.appearance-palette-preview > .appearance-palette-accent {
+  width: 32%;
+  height: 7px;
+  margin-top: 2px;
+  border-radius: 999px;
+}
+
+.appearance-palette-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

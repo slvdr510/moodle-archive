@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/preact';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import type { ComponentChildren } from 'preact';
 import { useRef, useState } from 'react';
@@ -10,6 +10,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 const openVersionInBrowserMock = vi.hoisted(() => vi.fn());
 vi.mock('../src/lib/openFile', () => ({ openVersionInBrowser: openVersionInBrowserMock, downloadVersion: vi.fn() }));
 
+import { App } from '../src/dashboard/App';
 import { ConfirmModal } from '../src/dashboard/components/ConfirmModal';
 import { focusItem, neighbor } from '../src/dashboard/hooks/keyboardNavigation';
 import { useDialogKeys } from '../src/dashboard/hooks/useDialogKeys';
@@ -158,7 +159,7 @@ describe('the courses list with the keyboard', () => {
 
     await userEvent.keyboard('{Shift}');
     await waitFor(() => expect(menuItems()[0]).toHaveFocus());
-    expect(menuItems()[0]).toHaveTextContent('Set tag (abbreviation)');
+    expect(menuItems()[0]).toHaveTextContent('Edit course info');
     await userEvent.keyboard('{ArrowDown}');
     expect(menuItems()[1]).toHaveFocus();
     await userEvent.keyboard('{ArrowUp}{ArrowUp}');
@@ -167,6 +168,42 @@ describe('the courses list with the keyboard', () => {
     await userEvent.keyboard('{Escape}');
     expect(document.querySelector('.dropdown-menu')).toBeNull();
     expect(card('Course A')).toHaveFocus();
+  });
+
+  it("edits a course's info from its options, the focus in that course's block, then goes on from its card", async () => {
+    const { card } = await renderCourses();
+    const cardA = card('Course A');
+    await userEvent.keyboard('{ArrowRight}{Shift}');
+    await waitFor(() => expect(menuItems()[0]).toHaveFocus());
+    await userEvent.keyboard('{Enter}');
+    const block = await screen.findByRole('region', { name: 'Course A' });
+    await waitFor(() => expect(within(block).getByLabelText('Tag (abbreviation)')).toHaveFocus());
+
+    // Enter stores it, the dialog staying open; Escape closes it.
+    await userEvent.keyboard('CA{Enter}');
+    await waitFor(() => expect(cardA).toHaveTextContent('CA'));
+    expect(screen.getByRole('region', { name: 'CA' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('region')).toBeNull());
+    await waitFor(() => expect(cardA).toHaveFocus());
+    await userEvent.keyboard('{ArrowRight}');
+    expect(card('Course B')).toHaveFocus();
+  });
+
+  it('closes with Escape, storing what was typed, back on the card', async () => {
+    const { card } = await renderCourses();
+    const cardB = card('Course B');
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{Shift}');
+    await waitFor(() => expect(menuItems()[0]).toHaveFocus());
+    await userEvent.keyboard('{Enter}');
+    const block = await screen.findByRole('region', { name: 'Course B' });
+    await waitFor(() => expect(within(block).getByLabelText('Tag (abbreviation)')).toHaveFocus());
+
+    await userEvent.keyboard('CB{Escape}');
+    await waitFor(() => expect(screen.queryByRole('region')).toBeNull());
+    await waitFor(() => expect(cardB).toHaveTextContent('CB'));
+    expect((await courseStore.get('kb-b'))?.name).toBe('CB');
+    await waitFor(() => expect(cardB).toHaveFocus());
   });
 
   it('opens nothing with Shift held for a capital letter', async () => {
@@ -301,6 +338,42 @@ function MiddleList() {
   );
 }
 
+describe('back to the courses with Escape', () => {
+  async function openCourse() {
+    await courseStore.put(makeCourse('kb-esc', 'Course Esc', 0));
+    render(<App />);
+    // By its card: the other tests' courses are still in the database.
+    await userEvent.click(await screen.findByTitle('Course Esc'));
+    return screen.findByRole('textbox');
+  }
+
+  it('goes back straight from the search box, the course it came from in focus', async () => {
+    const search = await openCourse();
+    await userEvent.click(search);
+    await userEvent.keyboard('tema');
+
+    await userEvent.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.getByText('Course Esc').closest('li')).toHaveFocus());
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it("leaves Escape to the course's tag being edited, which cancels it", async () => {
+    await openCourse();
+    await userEvent.click(screen.getByTitle('More options'));
+    await userEvent.click(screen.getByText('Set tag (abbreviation)'));
+    const tag = await screen.findByDisplayValue('Course Esc');
+    // In focus as it opens, all of it selected.
+    expect(tag).toHaveFocus();
+    expect([(tag as HTMLInputElement).selectionStart, (tag as HTMLInputElement).selectionEnd]).toEqual([0, 10]);
+
+    await userEvent.keyboard('{Escape}');
+
+    await waitFor(() => expect(tag).not.toBeInTheDocument());
+    expect(screen.getByPlaceholderText('Type to search…')).toBeInTheDocument();
+  });
+});
+
 describe('a course page list with the keyboard, scrolled', () => {
   it('scrolls the list to keep the row in focus in its middle', async () => {
     render(<MiddleList />);
@@ -355,6 +428,24 @@ describe('keyboard or mouse', () => {
     move(14);
     move(18);
     expect(root).not.toHaveAttribute('data-keyboard-nav');
+    expect(row).not.toHaveFocus();
+  });
+
+  it('takes the focus off a row that shows it without the arrow keys, once the mouse really moves', () => {
+    render(<KeyboardModeList />);
+    const row = screen.getByText('row');
+    const move = (x: number, y = 10) => window.dispatchEvent(new MouseEvent('mousemove', { screenX: x, screenY: y }));
+    move(10);
+
+    // As a dialog closed from the keyboard gives it back to a course's card.
+    act(() => row.focus());
+    expect(document.documentElement).not.toHaveAttribute('data-keyboard-nav');
+    move(11);
+    move(10, 12);
+    expect(row).toHaveFocus();
+
+    move(14);
+    move(18);
     expect(row).not.toHaveFocus();
   });
 });

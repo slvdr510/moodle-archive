@@ -2,8 +2,9 @@
 // dev|build|package`): asks which browser it's for and runs that one's script — `npm
 // run dev:chrome`, `npm run build:firefox`… The first choice is picked to begin with
 // (Enter), the others are a ↓ away: for dev, Chrome, then Firefox; for build and
-// package, both, one after the other, then Chrome, then Firefox. With no terminal to
-// ask in, it's the first.
+// package, both, one after the other, then Chrome, then Firefox (packaging Firefox's
+// packages its source code too: package:source). With no terminal to ask in, it's the
+// first.
 import { spawn } from 'node:child_process';
 import { emitKeypressEvents } from 'node:readline';
 
@@ -26,9 +27,10 @@ const TASKS = {
   package: {
     verb: 'Package',
     choices: [
-      { label: 'Both', scripts: ['package:chrome', 'package:firefox'] },
+      // Firefox's with its source code too, which addons.mozilla.org asks for with it.
+      { label: 'Both', scripts: ['package:chrome', 'package:firefox', 'package:source'] },
       { label: 'Chrome', scripts: ['package:chrome'] },
-      { label: 'Firefox', scripts: ['package:firefox'] }
+      { label: 'Firefox', scripts: ['package:firefox', 'package:source'] }
     ]
   }
 };

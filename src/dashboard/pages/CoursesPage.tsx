@@ -10,24 +10,25 @@ import {
   type RefObject
 } from 'react';
 import { createPortal } from 'react-dom';
+import { assignAcademicYearColors } from '../../lib/academicYearColors';
 import { InvalidBackupError, exportAllData, exportCourse, importAllData } from '../../lib/backup';
 import { CARD_GAP, fitCardGrid } from '../../lib/cardLayout';
-import { withoutTag } from '../../lib/courseNames';
 import { assignAutoCourseColors, assignCourseColors } from '../../lib/courseColors';
 import { courseStore, deleteCourse, resetTrackedData } from '../../lib/db';
 import type { Course } from '../../types';
 import { ConcurrentDownloadsModal } from '../components/ConcurrentDownloadsModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CourseCard } from '../components/CourseCard';
-import { CourseColorModal } from '../components/CourseColorModal';
+import { CourseInfoModal } from '../components/CourseInfoModal';
+import { AppearanceModal } from '../components/AppearanceModal';
 import { CourseListStyleModal } from '../components/CourseListStyleModal';
 import { DownloadNameSettingsModal } from '../components/DownloadNameSettingsModal';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { HiddenCoursesModal } from '../components/HiddenCoursesModal';
 import { RecentSettingsModal } from '../components/RecentSettingsModal';
-import { SetInstitutionModal } from '../components/SetInstitutionModal';
 import { SideMarginModal } from '../components/SideMarginModal';
-import { Spinner } from '../components/Spinner';
+import { StatusToasts, type StatusMessage } from '../components/StatusToasts';
+import { useAcademicYearColors } from '../hooks/useAcademicYearColors';
 import { useCourseGridKeys } from '../hooks/useCourseGridKeys';
 import { useCourseListStyle } from '../hooks/useCourseListStyle';
 import { useElementWidth } from '../hooks/useElementWidth';
@@ -35,7 +36,6 @@ import { useFileDrop } from '../hooks/useFileDrop';
 import { focusItem } from '../hooks/keyboardNavigation';
 import { useT } from '../hooks/useTranslation';
 
-type TransientMessage = { kind: 'info' | 'error'; text: string };
 type PendingExport = { kind: 'all' } | { kind: 'course'; course: Course };
 type PendingDelete = { kind: 'all' } | { kind: 'course'; course: Course };
 
@@ -96,7 +96,7 @@ export function CoursesPage({
   // flashing the "no courses yet" messaging before the real list loads in.
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<'export' | 'import' | null>(null);
-  const [message, setMessage] = useState<TransientMessage | null>(null);
+  const [message, setMessage] = useState<StatusMessage | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [pendingExport, setPendingExport] = useState<PendingExport | null>(null);
@@ -107,8 +107,12 @@ export function CoursesPage({
   const [showConcurrentDownloads, setShowConcurrentDownloads] = useState(false);
   const [showSideMargin, setShowSideMargin] = useState(false);
   const [showListStyle, setShowListStyle] = useState(false);
-  const [showSetInstitution, setShowSetInstitution] = useState(false);
-  const [colorTarget, setColorTarget] = useState<Course | null>(null);
+  const [showAppearance, setShowAppearance] = useState(false);
+  // "Edit course info" while open: for every course, or for the one in courseId.
+  const [infoTarget, setInfoTarget] = useState<{ courseId?: string } | null>(null);
+  // The course "Edit course info" was opened for, to give the focus back to its card
+  // once it closes.
+  const infoReturnTo = useRef<string | undefined>(undefined);
   const [listStyle] = useCourseListStyle();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const courseListRef = useRef<HTMLUListElement>(null);
@@ -145,31 +149,26 @@ export function CoursesPage({
     return () => chrome.runtime.onMessage.removeListener(onMessage);
   }, []);
 
-  async function handleRenameCourse(course: Course, name: string | undefined) {
-    await courseStore.put(name === undefined ? withoutTag(course) : { ...course, name, tagged: true });
+  // What "Edit course info" saves: every course changed in it, at once.
+  async function handleSaveCourseInfo(changed: Course[]) {
+    await Promise.all(changed.map((course) => courseStore.put(course)));
     await reload();
   }
 
-  async function handleSetFullName(course: Course, fullName: string | undefined) {
-    await courseStore.put({ ...course, fullName });
-    await reload();
+  function openCourseInfo(courseId?: string) {
+    infoReturnTo.current = courseId;
+    setInfoTarget({ courseId });
   }
 
-  async function handleSetColor(course: Course, color: string | undefined) {
-    await courseStore.put({ ...course, color });
-    await reload();
-  }
-
-  async function handleSetInstitution(course: Course, institution: string | undefined) {
-    await courseStore.put({ ...course, institution });
-    await reload();
-  }
-
-  async function handleSetInstitutionFor(courseIds: string[], institution: string | undefined) {
-    const ids = new Set(courseIds);
-    await Promise.all(courses.filter((c) => ids.has(c.id)).map((c) => courseStore.put({ ...c, institution })));
-    await reload();
-  }
+  // Closed, the focus back on the card of the course it was opened for: what had it
+  // before (its menu) is gone. Unless it went somewhere else already.
+  useEffect(() => {
+    const courseId = infoReturnTo.current;
+    if (infoTarget !== null || !courseId) return;
+    infoReturnTo.current = undefined;
+    if (document.activeElement && document.activeElement !== document.body) return;
+    courseListRef.current?.querySelector<HTMLElement>(`[data-course-id="${CSS.escape(courseId)}"]`)?.focus({ preventScroll: true });
+  }, [infoTarget]);
 
   async function handleHideCourse(course: Course) {
     await courseStore.put({ ...course, hidden: true });
@@ -316,16 +315,15 @@ export function CoursesPage({
   // a file that isn't one. Ignored while something is already running or a dialog is open.
   const draggingFiles = useFileDrop(
     (dropped) => void importBackups(dropped),
-    busy !== null || pendingExport !== null || pendingDelete !== null || showHiddenModal || showRecentSettings || showDownloadNameSettings || showSideMargin || showListStyle || showSetInstitution || colorTarget !== null
+    busy !== null || pendingExport !== null || pendingDelete !== null || showHiddenModal || showRecentSettings || showDownloadNameSettings || showSideMargin || showListStyle || showAppearance || infoTarget !== null
   );
 
-  // Every institution already set, hidden courses included, to offer while typing one.
-  const institutionSuggestions = useMemo(
-    () => [...new Set(courses.flatMap((c) => (c.institution ? [c.institution] : [])))].sort(),
-    [courses]
-  );
   // Over every course, hidden ones included, so unhiding one never repaints the others.
   const courseColors = useMemo(() => assignCourseColors(courses), [courses]);
+  // Each academic year's, one given to a year as it first shows up (set by hand, or
+  // from a backup).
+  const yearColors = useAcademicYearColors();
+  useEffect(() => assignAcademicYearColors(courses.map((c) => c.academicYear)), [courses]);
   const autoCourseColors = useMemo(() => assignAutoCourseColors(courses), [courses]);
   const visibleCourses = courses.filter((c) => !c.hidden);
   // As cards, the courses go in balanced, centered rows (5 → 3 + 2, see cardLayout.ts);
@@ -362,17 +360,18 @@ export function CoursesPage({
             buttonClassName="secondary toolbar-menu-button"
             disabled={busy !== null}
             items={[
-              { label: t.courses.openAllUrls, onClick: handleOpenAllCourseUrls },
-              { label: t.courses.exportAll, onClick: () => setPendingExport({ kind: 'all' }) },
-              { label: t.courses.importCourses, onClick: handleImportClick },
-              { label: t.courses.setInstitution, onClick: () => setShowSetInstitution(true) },
-              { label: t.courses.recentSettings, onClick: () => setShowRecentSettings(true) },
-              { label: t.courses.downloadNameSettings, onClick: () => setShowDownloadNameSettings(true) },
-              { label: t.courses.concurrentDownloads, onClick: () => setShowConcurrentDownloads(true) },
-              { label: t.courses.sideMargin, onClick: () => setShowSideMargin(true) },
-              { label: t.courses.courseListStyle, onClick: () => setShowListStyle(true) },
-              { label: t.courses.hiddenCourses, onClick: () => setShowHiddenModal(true) },
-              { label: t.courses.deleteAll, onClick: () => setPendingDelete({ kind: 'all' }), danger: true }
+              { label: t.courses.openAllUrls, icon: 'external', onClick: handleOpenAllCourseUrls },
+              { label: t.courses.editInfo, icon: 'edit', onClick: () => openCourseInfo() },
+              { label: t.courses.exportAll, icon: 'export', onClick: () => setPendingExport({ kind: 'all' }) },
+              { label: t.courses.importCourses, icon: 'import', onClick: handleImportClick },
+              { label: t.courses.recentSettings, icon: 'recent', onClick: () => setShowRecentSettings(true) },
+              { label: t.courses.downloadNameSettings, icon: 'fileName', onClick: () => setShowDownloadNameSettings(true) },
+              { label: t.courses.concurrentDownloads, icon: 'speed', onClick: () => setShowConcurrentDownloads(true) },
+              { label: t.courses.sideMargin, icon: 'width', onClick: () => setShowSideMargin(true) },
+              { label: t.courses.courseListStyle, icon: 'layout', onClick: () => setShowListStyle(true) },
+              { label: t.courses.appearance, icon: 'palette', onClick: () => setShowAppearance(true) },
+              { label: t.courses.hiddenCourses, icon: 'hide', onClick: () => setShowHiddenModal(true) },
+              { label: t.courses.deleteAll, icon: 'delete', onClick: () => setPendingDelete({ kind: 'all' }), danger: true }
             ]}
           />,
           headerMenuSlot
@@ -386,13 +385,11 @@ export function CoursesPage({
         onChange={(e) => void handleImportFileChosen(e)}
       />
 
-      {busy && (
-        <div className="busy-notice">
-          <Spinner label={busy === 'export' ? t.common.exporting : t.common.importing} />
-        </div>
-      )}
-
-      {message && <p className={message.kind === 'error' ? 'hint-text status-message error' : 'hint-text status-message'}>{message.text}</p>}
+      <StatusToasts
+        busy={busy === 'export' ? t.common.exporting : busy === 'import' ? t.common.importing : null}
+        message={message}
+        onDismiss={() => setMessage(null)}
+      />
 
       {draggingFiles && (
         <div className="drop-overlay" aria-hidden="true">
@@ -458,23 +455,16 @@ export function CoursesPage({
       {showSideMargin && <SideMarginModal onClose={() => setShowSideMargin(false)} />}
 
       {showListStyle && <CourseListStyleModal onClose={() => setShowListStyle(false)} />}
+      {showAppearance && <AppearanceModal onClose={() => setShowAppearance(false)} />}
 
-      {colorTarget && (
-        <CourseColorModal
-          course={colorTarget}
-          autoColor={autoCourseColors.get(colorTarget.id) ?? '#2563eb'}
-          onSave={(color) => void handleSetColor(colorTarget, color)}
-          onClose={() => setColorTarget(null)}
-        />
-      )}
-
-      {showSetInstitution && (
-        <SetInstitutionModal
+      {infoTarget && (
+        <CourseInfoModal
           // Shown ones first, in the list's order, then the hidden ones.
           courses={[...visibleCourses, ...hiddenCourses]}
-          suggestions={institutionSuggestions}
-          onApply={(courseIds, institution) => void handleSetInstitutionFor(courseIds, institution)}
-          onClose={() => setShowSetInstitution(false)}
+          focusCourseId={infoTarget.courseId}
+          autoColors={autoCourseColors}
+          onSave={(changed) => void handleSaveCourseInfo(changed)}
+          onClose={() => setInfoTarget(null)}
         />
       )}
 
@@ -494,12 +484,9 @@ export function CoursesPage({
             <CourseCard
               course={course}
               color={courseColors.get(course.id)}
+              academicYearColor={course.academicYear ? yearColors[course.academicYear] : undefined}
               onOpen={() => onOpenCourse(course.id, course.name, courseUrlOf(course))}
-              onRename={(name) => void handleRenameCourse(course, name)}
-              onSetFullName={(fullName) => void handleSetFullName(course, fullName)}
-              onSetInstitution={(institution) => void handleSetInstitution(course, institution)}
-              onChangeColor={() => setColorTarget(course)}
-              institutionSuggestions={institutionSuggestions}
+              onEditInfo={() => openCourseInfo(course.id)}
               onDelete={() => setPendingDelete({ kind: 'course', course })}
               onExport={() => setPendingExport({ kind: 'course', course })}
               onHide={() => void handleHideCourse(course)}

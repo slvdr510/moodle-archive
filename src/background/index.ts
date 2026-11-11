@@ -2,6 +2,7 @@ import { base64ToBytes } from '../lib/base64';
 import { courseStore, stagingStore } from '../lib/db';
 import { migrateLegacyCourseTags } from '../lib/courseTagMigration';
 import { humanizeCourseTitle, matchCourseForResource } from '../lib/courseMatcher';
+import { courseHomeUrl } from '../lib/moodleUrl';
 import {
   downloadKey,
   isDownloadableUrl,
@@ -100,12 +101,15 @@ async function handleIgnoreRulesRequest({ courseUrl, courseTitle }: IgnoreRulesR
 async function findOrCreateCourse(courseUrl: string, courseTitle: string): Promise<Course> {
   const courses = await courseStore.all();
   const autoName = humanizeCourseTitle(courseTitle);
+  // Its main page's address, also for a download started from its Resources page.
+  const homeUrl = courseHomeUrl(courseUrl);
   const existing = matchCourseForResource(courseUrl, courseTitle, courses);
   if (existing) {
-    if (existing.matchedUrls.includes(courseUrl) && existing.autoName === autoName) return existing;
+    const known = existing.matchedUrls.some((url) => courseHomeUrl(url) === homeUrl);
+    if (known && existing.autoName === autoName) return existing;
     const updated: Course = {
       ...existing,
-      matchedUrls: existing.matchedUrls.includes(courseUrl) ? existing.matchedUrls : [...existing.matchedUrls, courseUrl],
+      matchedUrls: known ? existing.matchedUrls : [...existing.matchedUrls, homeUrl],
       autoName
     };
     await courseStore.put(updated);
@@ -117,8 +121,8 @@ async function findOrCreateCourse(courseUrl: string, courseTitle: string): Promi
     id: crypto.randomUUID(),
     name: autoName,
     autoName,
-    url: courseUrl,
-    matchedUrls: [courseUrl],
+    url: homeUrl,
+    matchedUrls: [homeUrl],
     createdAt: now,
     lastSyncedAt: now,
     order: now,

@@ -6,6 +6,7 @@ export function ConfirmModal({
   confirmLabel,
   cancelLabel,
   danger = false,
+  strong = false,
   onConfirm,
   onCancel
 }: {
@@ -15,6 +16,9 @@ export function ConfirmModal({
   /** Defaults to "Cancel" — for when declining is itself a choice ("Keep it"). */
   cancelLabel?: string;
   danger?: boolean;
+  /** For something dangerous: the confirm button in red, and the cancel one — in focus
+   *  as it opens — in the accent color, the safe choice that stands out. */
+  strong?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -29,10 +33,10 @@ export function ConfirmModal({
         {/* In focus as it opens (see useDialogKeys): the confirm button, or for something
             that can't be undone, the cancel one, so a stray Enter doesn't do it. */}
         <div className="modal-actions">
-          <button className="secondary" data-autofocus={danger || undefined} onClick={onCancel}>
+          <button className={danger && strong ? 'safe' : 'secondary'} data-autofocus={danger || undefined} onClick={onCancel}>
             {cancelLabel ?? t.common.cancel}
           </button>
-          <button className={danger ? 'danger' : undefined} data-autofocus={!danger || undefined} onClick={onConfirm}>
+          <button className={danger ? `danger${strong ? ' solid' : ''}` : undefined} data-autofocus={!danger || undefined} onClick={onConfirm}>
             {confirmLabel}
           </button>
         </div>

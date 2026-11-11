@@ -53,7 +53,8 @@ export const pcm: Messages = {
     concurrentDownloads: 'Downloads wey dey run together',
     sideMargin: 'Side margin dem',
     courseListStyle: 'How di course list go look',
-    setInstitution: 'Set institution for courses',
+    appearance: 'Appearance',
+    editInfo: 'Edit di courses info',
     hiddenCourses: 'Courses wey you hide',
     deleteAll: 'Comot all di courses',
     backupSaved: 'Backup don save for your Downloads folder.',
@@ -93,13 +94,17 @@ export const pcm: Messages = {
     lastDownloaded: 'Last time wey you download',
     openInMoodle: 'Open di course for Moodle',
     setTagName: 'Set tag (short name)',
-    setFullName: 'Set full name',
     tagPlaceholder: 'Short name, like OS',
     fullNamePlaceholder: 'Full name (empty: di one from Moodle)',
-    setInstitution: 'Set institution (short name)',
-    institutionPlaceholder: 'Institution short name, like UHU',
+    tag: 'Tag (short name)',
+    fullName: 'Full name',
+    institutionPlaceholder: 'like UHU',
     institution: 'Institution',
-    changeColor: 'Change color',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'School year',
+    editInfo: 'Edit di course info',
+    addOption: (value) => `Add "${value}"`,
+    showOptions: 'Show di options',
     hideCourse: 'Hide course',
     deleteCourse: 'Comot course'
   },
@@ -199,21 +204,67 @@ export const pcm: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Di color for "${name}"`,
-    palette: 'Colors',
     custom: 'Your own color',
     automatic: 'Use di automatic color'
   },
 
-  setInstitution: {
-    title: 'Set institution',
-    description: 'Choose di courses wey go get dis institution. Leave am empty to comot am from dem.',
-    courses: (count) => (count === 0 ? 'Courses' : `Courses (${count} selected)`),
-    selectAll: 'Select all',
-    selectNone: 'Select none',
+  colorMenu: {
+    code: 'Hex code',
+    codeHint: 'Six digits, like FFFFFF',
+    more: 'Oda colors…'
+  },
+
+  appearance: {
+    title: 'Appearance',
+    palettes: 'Color sets',
+    paletteNames: {
+      default: 'Default',
+      ocean: 'Ocean',
+      forest: 'Forest',
+      lavender: 'Lavender',
+      warm: 'Warm',
+      contrast: 'High contrast'
+    },
+    replaceTitle: 'Change your colors?',
+    replaceMessage: 'Di colors wey you set for dis theme go change to di set own.',
+    replace: 'Change am',
+    colors: {
+      bg: 'Background',
+      surface: 'Second background',
+      fg: 'Text',
+      muted: 'Small text',
+      border: 'Borders',
+      accent: 'Buttons and links',
+      focus: 'Keyboard focus',
+      new: 'New files',
+      modified: 'Files wey change',
+      deleted: 'Files wey dem delete and dangerous actions',
+      unchanged: 'Files wey no change'
+    },
+    reset: 'Bring back di default color',
+    resetAll: 'Reset colors',
+    resetTitle: { light: 'Reset di light theme colors?', dark: 'Reset di dark theme colors?' },
+    resetMessage: 'All di colors wey you change for am go go back to default.'
+  },
+
+  courseUrl: {
+    label: 'Di course URL',
+    invalid:
+      'Dis one no be Moodle course page URL. E dey end with /course/view.php?id= and di course number.',
+    taken: (name) => `"${name}" don already get dis URL.`,
+    previousKept:
+      'Dem go still sabi di old URLs: downloads from dem go still enter dis course.'
+  },
+
+  courseInfo: {
+    title: 'Edit di courses info',
     hidden: 'Hidden',
-    apply: (count) => (count === 1 ? 'Apply to 1 course' : `Apply to ${count} courses`),
-    remove: (count) => (count === 1 ? 'Comot from 1 course' : `Comot from ${count} courses`)
+    color: 'Color',
+    academicYearColor: 'School year color',
+    deleteOption: (value) => `Delete "${value}"`,
+    deleteOptionTitle: (value) => `Delete "${value}"?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `No course get am: e just no go show as option again.` : count === 1 ? `E go comot from di 1 course wey get am.` : `E go comot from di ${count} courses wey get am.`
   },
 
   ignoredFiles: {

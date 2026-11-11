@@ -52,7 +52,8 @@ export const pt: Messages = {
     concurrentDownloads: 'Downloads simultâneos',
     sideMargin: 'Margens laterais',
     courseListStyle: 'Estilo da lista de cursos',
-    setInstitution: 'Definir instituição de cursos',
+    appearance: 'Aparência',
+    editInfo: 'Editar informações dos cursos',
     hiddenCourses: 'Cursos ocultos',
     deleteAll: 'Excluir todos os cursos',
     backupSaved: 'Backup salvo na sua pasta Downloads.',
@@ -92,13 +93,17 @@ export const pt: Messages = {
     lastDownloaded: 'Último download',
     openInMoodle: 'Abrir o curso no Moodle',
     setTagName: 'Definir etiqueta (sigla)',
-    setFullName: 'Definir nome completo',
     tagPlaceholder: 'Sigla, ex.: SO',
     fullNamePlaceholder: 'Nome completo (vazio: o do Moodle)',
-    setInstitution: 'Definir instituição (sigla)',
-    institutionPlaceholder: 'Sigla da instituição, ex.: UHU',
+    tag: 'Etiqueta (sigla)',
+    fullName: 'Nome completo',
+    institutionPlaceholder: 'ex.: UHU',
     institution: 'Instituição',
-    changeColor: 'Mudar cor',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Ano letivo',
+    editInfo: 'Editar informações do curso',
+    addOption: (value) => `Adicionar "${value}"`,
+    showOptions: 'Mostrar opções',
     hideCourse: 'Ocultar curso',
     deleteCourse: 'Excluir curso'
   },
@@ -202,21 +207,67 @@ export const pt: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Cor de "${name}"`,
-    palette: 'Paleta',
     custom: 'Cor personalizada',
     automatic: 'Usar cor automática'
   },
 
-  setInstitution: {
-    title: 'Definir instituição',
-    description: 'Escolha os cursos que recebem esta instituição. Deixe vazio para removê-la deles.',
-    courses: (count) => (count === 0 ? 'Cursos' : `Cursos (${count} selecionados)`),
-    selectAll: 'Selecionar todos',
-    selectNone: 'Nenhum',
+  colorMenu: {
+    code: 'Código hexadecimal',
+    codeHint: 'Seis dígitos, como FFFFFF',
+    more: 'Mais cores…'
+  },
+
+  appearance: {
+    title: 'Aparência',
+    palettes: 'Paletas',
+    paletteNames: {
+      default: 'Padrão',
+      ocean: 'Oceano',
+      forest: 'Floresta',
+      lavender: 'Lavanda',
+      warm: 'Quente',
+      contrast: 'Alto contraste'
+    },
+    replaceTitle: 'Substituir suas cores?',
+    replaceMessage: 'As cores que você definiu neste tema são substituídas pelas da paleta.',
+    replace: 'Substituir',
+    colors: {
+      bg: 'Fundo',
+      surface: 'Fundo secundário',
+      fg: 'Texto',
+      muted: 'Texto secundário',
+      border: 'Bordas',
+      accent: 'Botões e links',
+      focus: 'Foco do teclado',
+      new: 'Arquivos novos',
+      modified: 'Arquivos alterados',
+      deleted: 'Arquivos excluídos e ações perigosas',
+      unchanged: 'Arquivos sem alterações'
+    },
+    reset: 'Restaurar a cor padrão',
+    resetAll: 'Redefinir cores',
+    resetTitle: { light: 'Redefinir as cores do tema claro?', dark: 'Redefinir as cores do tema escuro?' },
+    resetMessage: 'Todas as cores que você mudou nele voltam ao padrão.'
+  },
+
+  courseUrl: {
+    label: 'URL do curso',
+    invalid:
+      'Esta não é a URL da página de um curso do Moodle. Ela termina em /course/view.php?id= e o número do curso.',
+    taken: (name) => `"${name}" já tem essa URL.`,
+    previousKept:
+      'As URLs anteriores continuam sendo reconhecidas: os downloads a partir delas continuam indo para este curso.'
+  },
+
+  courseInfo: {
+    title: 'Editar informações dos cursos',
     hidden: 'Oculto',
-    apply: (count) => (count === 1 ? 'Aplicar a 1 curso' : `Aplicar a ${count} cursos`),
-    remove: (count) => (count === 1 ? 'Remover de 1 curso' : `Remover de ${count} cursos`)
+    color: 'Cor',
+    academicYearColor: 'Cor do ano letivo',
+    deleteOption: (value) => `Excluir "${value}"`,
+    deleteOptionTitle: (value) => `Excluir "${value}"?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Nenhum curso o tem: apenas deixará de ser oferecido.` : count === 1 ? `Será removido do curso que o tem.` : `Será removido dos ${count} cursos que o têm.`
   },
 
   ignoredFiles: {

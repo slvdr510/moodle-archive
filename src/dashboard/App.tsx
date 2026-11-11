@@ -8,7 +8,7 @@ import { useContentWidth } from './hooks/useSideMargin';
 import { useDialogKeys } from './hooks/useDialogKeys';
 import { useKeyboardMode } from './hooks/useKeyboardMode';
 import { useOptionsKey } from './hooks/useOptionsKey';
-import { dialogOpen, isTypingField } from './hooks/useScrollFromAnywhere';
+import { dialogOpen, keepsEscape } from './hooks/useScrollFromAnywhere';
 
 type View =
   | { name: 'courses' }
@@ -68,14 +68,14 @@ export function App() {
     }
   }
 
-  // Escape goes back from a course's page to the courses, unless something on it takes
-  // the key first: a dialog or a menu (closing), a field being typed in (the search box
-  // clearing itself, a name being edited).
+  // Escape goes back from a course's page to the courses — from its search box too —
+  // unless something on it takes the key first: a dialog or a menu (closing), the
+  // course's tag being edited (cancelling).
   useEffect(() => {
     if (view.name !== 'course-files') return;
     const { courseId } = view;
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== 'Escape' || e.defaultPrevented || dialogOpen() || isTypingField(e.target)) return;
+      if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing || dialogOpen() || keepsEscape(e.target)) return;
       e.preventDefault();
       setReturnFocusCourseId(courseId);
       backToCourses();

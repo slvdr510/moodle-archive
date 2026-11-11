@@ -52,7 +52,8 @@ export const id: Messages = {
     concurrentDownloads: 'Unduhan bersamaan',
     sideMargin: 'Margin samping',
     courseListStyle: 'Gaya daftar kursus',
-    setInstitution: 'Atur institusi untuk kursus',
+    appearance: 'Tampilan',
+    editInfo: 'Edit info kursus',
     hiddenCourses: 'Kursus tersembunyi',
     deleteAll: 'Hapus semua kursus',
     backupSaved: 'Cadangan disimpan ke folder Unduhan Anda.',
@@ -91,13 +92,17 @@ export const id: Messages = {
     lastDownloaded: 'Terakhir diunduh',
     openInMoodle: 'Buka kursus di Moodle',
     setTagName: 'Atur tag (singkatan)',
-    setFullName: 'Atur nama lengkap',
     tagPlaceholder: 'Singkatan, mis. SO',
     fullNamePlaceholder: 'Nama lengkap (kosong: dari Moodle)',
-    setInstitution: 'Atur institusi (singkatan)',
-    institutionPlaceholder: 'Singkatan institusi, mis. UHU',
+    tag: 'Tag (singkatan)',
+    fullName: 'Nama lengkap',
+    institutionPlaceholder: 'mis. UHU',
     institution: 'Institusi',
-    changeColor: 'Ubah warna',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Tahun ajaran',
+    editInfo: 'Edit info kursus',
+    addOption: (value) => `Tambahkan "${value}"`,
+    showOptions: 'Tampilkan pilihan',
     hideCourse: 'Sembunyikan kursus',
     deleteCourse: 'Hapus kursus'
   },
@@ -197,21 +202,67 @@ export const id: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Warna "${name}"`,
-    palette: 'Palet',
     custom: 'Warna kustom',
     automatic: 'Gunakan warna otomatis'
   },
 
-  setInstitution: {
-    title: 'Atur institusi',
-    description: 'Pilih kursus yang diberi institusi ini. Biarkan kosong untuk menghapusnya dari kursus itu.',
-    courses: (count) => (count === 0 ? 'Kursus' : `Kursus (${count} dipilih)`),
-    selectAll: 'Pilih semua',
-    selectNone: 'Tidak ada',
+  colorMenu: {
+    code: 'Kode heksadesimal',
+    codeHint: 'Enam digit, misalnya FFFFFF',
+    more: 'Warna lainnya…'
+  },
+
+  appearance: {
+    title: 'Tampilan',
+    palettes: 'Palet',
+    paletteNames: {
+      default: 'Bawaan',
+      ocean: 'Samudra',
+      forest: 'Hutan',
+      lavender: 'Lavender',
+      warm: 'Hangat',
+      contrast: 'Kontras tinggi'
+    },
+    replaceTitle: 'Ganti warna Anda?',
+    replaceMessage: 'Warna yang Anda atur di tema ini diganti dengan warna palet.',
+    replace: 'Ganti',
+    colors: {
+      bg: 'Latar belakang',
+      surface: 'Latar belakang sekunder',
+      fg: 'Teks',
+      muted: 'Teks sekunder',
+      border: 'Garis tepi',
+      accent: 'Tombol dan tautan',
+      focus: 'Fokus keyboard',
+      new: 'File baru',
+      modified: 'File yang berubah',
+      deleted: 'File yang dihapus dan tindakan berbahaya',
+      unchanged: 'File yang tidak berubah'
+    },
+    reset: 'Pulihkan warna bawaan',
+    resetAll: 'Atur ulang warna',
+    resetTitle: { light: 'Atur ulang warna tema terang?', dark: 'Atur ulang warna tema gelap?' },
+    resetMessage: 'Semua warna yang Anda ubah di sini kembali ke bawaan.'
+  },
+
+  courseUrl: {
+    label: 'URL kursus',
+    invalid:
+      'Itu bukan URL halaman kursus Moodle. URL-nya diakhiri /course/view.php?id= dan nomor kursus.',
+    taken: (name) => `"${name}" sudah memakai URL itu.`,
+    previousKept:
+      'URL sebelumnya tetap dikenali: unduhan dari sana tetap masuk ke kursus ini.'
+  },
+
+  courseInfo: {
+    title: 'Edit info kursus',
     hidden: 'Disembunyikan',
-    apply: (count) => (count === 1 ? 'Terapkan ke 1 kursus' : `Terapkan ke ${count} kursus`),
-    remove: (count) => (count === 1 ? 'Hapus dari 1 kursus' : `Hapus dari ${count} kursus`)
+    color: 'Warna',
+    academicYearColor: 'Warna tahun ajaran',
+    deleteOption: (value) => `Hapus "${value}"`,
+    deleteOptionTitle: (value) => `Hapus "${value}"?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Tidak ada kursus yang memakainya: hanya tidak akan ditawarkan lagi.` : count === 1 ? `Ini akan dihapus dari 1 kursus yang memakainya.` : `Ini akan dihapus dari ${count} kursus yang memakainya.`
   },
 
   ignoredFiles: {

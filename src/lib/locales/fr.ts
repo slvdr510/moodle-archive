@@ -52,7 +52,8 @@ export const fr: Messages = {
     concurrentDownloads: 'Téléchargements simultanés',
     sideMargin: 'Marges latérales',
     courseListStyle: 'Style de la liste des cours',
-    setInstitution: 'Définir l’établissement de cours',
+    appearance: 'Apparence',
+    editInfo: 'Modifier les infos des cours',
     hiddenCourses: 'Cours masqués',
     deleteAll: 'Supprimer tous les cours',
     backupSaved: 'Sauvegarde enregistrée dans votre dossier Téléchargements.',
@@ -94,13 +95,17 @@ export const fr: Messages = {
     lastDownloaded: 'Dernier téléchargement',
     openInMoodle: 'Ouvrir le cours dans Moodle',
     setTagName: 'Définir l’étiquette (sigle)',
-    setFullName: 'Définir le nom complet',
     tagPlaceholder: 'Sigle, p. ex. SE',
     fullNamePlaceholder: 'Nom complet (vide : celui de Moodle)',
-    setInstitution: 'Définir l’établissement (sigle)',
-    institutionPlaceholder: 'Sigle de l’établissement, p. ex. UHU',
+    tag: 'Étiquette (sigle)',
+    fullName: 'Nom complet',
+    institutionPlaceholder: 'p. ex. UHU',
     institution: 'Établissement',
-    changeColor: 'Changer la couleur',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Année universitaire',
+    editInfo: 'Modifier les infos du cours',
+    addOption: (value) => `Ajouter « ${value} »`,
+    showOptions: 'Afficher les options',
     hideCourse: 'Masquer le cours',
     deleteCourse: 'Supprimer le cours'
   },
@@ -203,21 +208,67 @@ export const fr: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Couleur de « ${name} »`,
-    palette: 'Palette',
     custom: 'Couleur personnalisée',
     automatic: 'Utiliser la couleur automatique'
   },
 
-  setInstitution: {
-    title: 'Définir l’établissement',
-    description: 'Choisissez les cours auxquels donner cet établissement. Laissez-le vide pour le leur retirer.',
-    courses: (count) => (count === 0 ? 'Cours' : `Cours (${count} sélectionnés)`),
-    selectAll: 'Tout sélectionner',
-    selectNone: 'Aucun',
+  colorMenu: {
+    code: 'Code hexadécimal',
+    codeHint: 'Six chiffres, par ex. FFFFFF',
+    more: 'Plus de couleurs…'
+  },
+
+  appearance: {
+    title: 'Apparence',
+    palettes: 'Palettes',
+    paletteNames: {
+      default: 'Par défaut',
+      ocean: 'Océan',
+      forest: 'Forêt',
+      lavender: 'Lavande',
+      warm: 'Chaude',
+      contrast: 'Contraste élevé'
+    },
+    replaceTitle: 'Remplacer vos couleurs ?',
+    replaceMessage: 'Les couleurs que vous avez choisies pour ce thème sont remplacées par celles de la palette.',
+    replace: 'Remplacer',
+    colors: {
+      bg: 'Arrière-plan',
+      surface: 'Arrière-plan secondaire',
+      fg: 'Texte',
+      muted: 'Texte secondaire',
+      border: 'Bordures',
+      accent: 'Boutons et liens',
+      focus: 'Focus du clavier',
+      new: 'Fichiers nouveaux',
+      modified: 'Fichiers modifiés',
+      deleted: 'Fichiers supprimés et actions dangereuses',
+      unchanged: 'Fichiers inchangés'
+    },
+    reset: 'Rétablir la couleur par défaut',
+    resetAll: 'Réinitialiser les couleurs',
+    resetTitle: { light: 'Réinitialiser les couleurs du thème clair ?', dark: 'Réinitialiser les couleurs du thème sombre ?' },
+    resetMessage: 'Toutes les couleurs que vous y avez modifiées reviennent à celles par défaut.'
+  },
+
+  courseUrl: {
+    label: 'URL du cours',
+    invalid:
+      "Ce n'est pas l'URL d'une page de cours Moodle. Elle se termine par /course/view.php?id= suivi du numéro du cours.",
+    taken: (name) => `« ${name} » a déjà cette URL.`,
+    previousKept:
+      'Ses anciennes URL restent reconnues : les téléchargements depuis celles-ci vont toujours dans ce cours.'
+  },
+
+  courseInfo: {
+    title: 'Modifier les infos des cours',
     hidden: 'Masqué',
-    apply: (count) => (count === 1 ? 'Appliquer à 1 cours' : `Appliquer à ${count} cours`),
-    remove: (count) => (count === 1 ? 'Retirer de 1 cours' : `Retirer de ${count} cours`)
+    color: 'Couleur',
+    academicYearColor: "Couleur de l'année universitaire",
+    deleteOption: (value) => `Supprimer « ${value} »`,
+    deleteOptionTitle: (value) => `Supprimer « ${value} » ?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Aucun cours ne l'a : il ne sera simplement plus proposé.` : count === 1 ? `Il sera retiré du cours qui l'a.` : `Il sera retiré des ${count} cours qui l'ont.`
   },
 
   ignoredFiles: {

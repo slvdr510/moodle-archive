@@ -24,6 +24,14 @@ export function isTypingField(el: EventTarget | null): boolean {
   return el instanceof HTMLElement && (el.isContentEditable || el.matches('input, textarea, select'));
 }
 
+/** Whether Escape pressed in `el` is for it alone: a field being typed in, where it
+ *  cancels what's being written (a course's tag). Not one marked
+ *  data-passes-escape, which has nothing to cancel — a search box: there Escape does
+ *  what it does on the rest of the page. */
+export function keepsEscape(el: EventTarget | null): boolean {
+  return isTypingField(el) && !(el as HTMLElement).hasAttribute('data-passes-escape');
+}
+
 /**
  * Lets the mouse wheel and the keyboard (page keys, Home/End, space) scroll
  * `listRef`'s list from anywhere on the window, not only with the pointer over it or

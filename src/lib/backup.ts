@@ -171,9 +171,9 @@ export interface ImportSummary {
 
 /**
  * A course being imported over a local one with the same id. What's set locally
- * always stays — order, hidden state, and the tag, full name, institution and color
- * the user chose — so an import never overwrites a choice made here; what's unset
- * locally is filled in from the import. Ignored files are those of both, each once.
+ * always stays — order, hidden state, and the tag, full name, institution, academic
+ * year and color the user chose — so an import never overwrites a choice made here;
+ * what's unset locally is filled in from the import. Ignored files are those of both, each once.
  * URLs are merged, and the later of the two downloads kept.
  */
 export function mergeImportedCourse(existing: Course, imported: Course): Course {
@@ -184,6 +184,7 @@ export function mergeImportedCourse(existing: Course, imported: Course): Course 
     lastSyncedAt: Math.max(existing.lastSyncedAt, imported.lastSyncedAt),
     fullName: existing.fullName ?? imported.fullName,
     institution: existing.institution ?? imported.institution,
+    academicYear: existing.academicYear ?? imported.academicYear,
     color: existing.color ?? imported.color,
     autoName: existing.autoName ?? imported.autoName
   };

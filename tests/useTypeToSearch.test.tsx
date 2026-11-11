@@ -45,6 +45,61 @@ describe('useTypeToSearch', () => {
     expect(screen.getByLabelText('Search')).toHaveValue('tema');
   });
 
+  // A browser deletes in the box the delete key moved the focus to (as it does with a
+  // character); user-event deletes where the key was pressed instead. So these check
+  // where the key leaves the focus and the caret, and the keys that follow.
+  it('takes Backspace from anywhere to the end of the box, for it to delete the last character', async () => {
+    const user = userEvent.setup();
+    render(<Page initialQuery="tema 3" />);
+    const search = screen.getByLabelText<HTMLInputElement>('Search');
+    screen.getByRole('button', { name: 'Export' }).focus();
+
+    await user.keyboard('{Backspace}');
+    expect(search).toHaveFocus();
+    expect([search.selectionStart, search.selectionEnd]).toEqual([6, 6]);
+
+    await user.keyboard('{Backspace}{Backspace}');
+    expect(search).toHaveValue('tema');
+  });
+
+  it('takes Delete from anywhere to the box with all of it selected, for it to empty it', async () => {
+    const user = userEvent.setup();
+    render(<Page initialQuery="tema 3" />);
+    const search = screen.getByLabelText<HTMLInputElement>('Search');
+    screen.getByRole('button', { name: 'Export' }).focus();
+
+    await user.keyboard('{Delete}');
+    expect(search).toHaveFocus();
+    expect([search.selectionStart, search.selectionEnd]).toEqual([0, 6]);
+
+    await user.keyboard('{Delete}pdf');
+    expect(search).toHaveValue('pdf');
+  });
+
+  it('goes to the box with a delete key even when there is nothing to delete', async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+
+    await user.keyboard('{Backspace}');
+
+    expect(screen.getByLabelText('Search')).toHaveFocus();
+    expect(screen.getByLabelText('Search')).toHaveValue('');
+  });
+
+  it('leaves Shift+Delete (cut) alone, and deleting in another field', async () => {
+    const user = userEvent.setup();
+    render(<Page initialQuery="tema" />);
+    const search = screen.getByLabelText('Search');
+
+    await user.keyboard('{Shift>}{Delete}{/Shift}');
+    expect(search).not.toHaveFocus();
+
+    await user.click(screen.getByLabelText('Course name'));
+    await user.keyboard('{Backspace}');
+    expect(screen.getByLabelText('Course name')).toHaveValue('Rede');
+    expect(search).toHaveValue('tema');
+  });
+
   it('leaves typing in another field alone', async () => {
     const user = userEvent.setup();
     render(<Page />);

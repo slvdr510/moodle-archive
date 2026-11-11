@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isTypingField } from './useScrollFromAnywhere';
 
 // How far from where it was the pointer has to go to take over from the keyboard. A
 // mouse no one is moving can still report moves — a trackpad under a resting finger, a
@@ -13,7 +14,10 @@ const TAKE_OVER_DISTANCE_PX = 6;
  * [data-keyboard-nav] in styles.css). Once the mouse really moves, the pointer counts
  * again, and what the arrow keys left in focus in a list loses it, so only what's under
  * the pointer shows; the next arrow key goes on from there all the same (see
- * useCourseGridKeys and useFileListKeys).
+ * useCourseGridKeys and useFileListKeys). Likewise what's in focus in a list, shown as
+ * under the pointer, without the arrow keys having been used: a course's card the
+ * focus went back to as a dialog or menu was closed from the keyboard. Otherwise,
+ * once the pointer has been over it and left, it'd still look as if under it.
  */
 export function useKeyboardMode(): void {
   useEffect(() => {
@@ -25,7 +29,7 @@ export function useKeyboardMode(): void {
 
     function onMouseMove(e: MouseEvent): void {
       const here = { x: e.screenX, y: e.screenY };
-      if (!('keyboardNav' in root.dataset)) {
+      if (!('keyboardNav' in root.dataset) && !focusShownInList()) {
         last = here;
         anchor = null;
         return;
@@ -46,4 +50,12 @@ export function useKeyboardMode(): void {
       delete root.dataset.keyboardNav;
     };
   }, []);
+}
+
+/** What in a list has the focus and shows it, as if under the pointer (see the
+ *  :focus-visible rules in styles.css). Not a field being typed in. */
+function focusShownInList(): HTMLElement | undefined {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !active.closest('.file-list, .course-list') || isTypingField(active)) return undefined;
+  return active.matches(':focus-visible') ? active : undefined;
 }

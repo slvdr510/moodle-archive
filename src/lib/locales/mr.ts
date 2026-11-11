@@ -52,7 +52,8 @@ export const mr: Messages = {
     concurrentDownloads: 'एकाच वेळी डाउनलोड',
     sideMargin: 'बाजूचे समास',
     courseListStyle: 'कोर्स यादीची शैली',
-    setInstitution: 'कोर्सना संस्था सेट करा',
+    appearance: 'स्वरूप',
+    editInfo: 'कोर्सची माहिती संपादित करा',
     hiddenCourses: 'लपवलेले कोर्स',
     deleteAll: 'सर्व कोर्स हटवा',
     backupSaved: 'बॅकअप तुमच्या डाउनलोड्स फोल्डरमध्ये जतन झाला.',
@@ -91,13 +92,17 @@ export const mr: Messages = {
     lastDownloaded: 'शेवटचे डाउनलोड',
     openInMoodle: 'कोर्स Moodle मध्ये उघडा',
     setTagName: 'टॅग (संक्षेप) सेट करा',
-    setFullName: 'पूर्ण नाव सेट करा',
     tagPlaceholder: 'संक्षेप, उदा. OS',
     fullNamePlaceholder: 'पूर्ण नाव (रिकामे: Moodle मधील)',
-    setInstitution: 'संस्था (संक्षेप) सेट करा',
-    institutionPlaceholder: 'संस्थेचा संक्षेप, उदा. UHU',
+    tag: 'टॅग (संक्षेप)',
+    fullName: 'पूर्ण नाव',
+    institutionPlaceholder: 'उदा. UHU',
     institution: 'संस्था',
-    changeColor: 'रंग बदला',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'शैक्षणिक वर्ष',
+    editInfo: 'कोर्सची माहिती संपादित करा',
+    addOption: (value) => `"${value}" जोडा`,
+    showOptions: 'पर्याय दाखवा',
     hideCourse: 'कोर्स लपवा',
     deleteCourse: 'कोर्स हटवा'
   },
@@ -197,21 +202,67 @@ export const mr: Messages = {
   },
 
   courseColor: {
-    title: (name) => `"${name}" चा रंग`,
-    palette: 'पॅलेट',
     custom: 'आपला रंग',
     automatic: 'आपोआप रंग वापरा'
   },
 
-  setInstitution: {
-    title: 'संस्था सेट करा',
-    description: 'ज्या कोर्सना ही संस्था द्यायची ते निवडा. काढण्यासाठी रिकामे ठेवा.',
-    courses: (count) => (count === 0 ? 'कोर्स' : `कोर्स (${count} निवडले)`),
-    selectAll: 'सर्व निवडा',
-    selectNone: 'काहीही नाही',
+  colorMenu: {
+    code: 'हेक्स कोड',
+    codeHint: 'सहा अंक, उदा. FFFFFF',
+    more: 'आणखी रंग…'
+  },
+
+  appearance: {
+    title: 'स्वरूप',
+    palettes: 'रंगसंच',
+    paletteNames: {
+      default: 'मूळ',
+      ocean: 'सागर',
+      forest: 'जंगल',
+      lavender: 'लॅव्हेंडर',
+      warm: 'उबदार',
+      contrast: 'उच्च कॉन्ट्रास्ट'
+    },
+    replaceTitle: 'तुमचे रंग बदलायचे?',
+    replaceMessage: 'या थीममध्ये तुम्ही ठेवलेल्या रंगांच्या जागी रंगसंचाचे रंग येतील.',
+    replace: 'बदला',
+    colors: {
+      bg: 'पार्श्वभूमी',
+      surface: 'दुय्यम पार्श्वभूमी',
+      fg: 'मजकूर',
+      muted: 'दुय्यम मजकूर',
+      border: 'कडा',
+      accent: 'बटणे आणि दुवे',
+      focus: 'कीबोर्ड फोकस',
+      new: 'नवीन फायली',
+      modified: 'बदललेल्या फायली',
+      deleted: 'हटवलेल्या फायली आणि धोकादायक क्रिया',
+      unchanged: 'न बदललेल्या फायली'
+    },
+    reset: 'मूळ रंग परत आणा',
+    resetAll: 'रंग रीसेट करा',
+    resetTitle: { light: 'फिकट थीमचे रंग रीसेट करायचे?', dark: 'गडद थीमचे रंग रीसेट करायचे?' },
+    resetMessage: 'यात बदललेले सर्व रंग मूळ रंगांवर परत येतील.'
+  },
+
+  courseUrl: {
+    label: 'कोर्सची URL',
+    invalid:
+      'ही Moodle कोर्स पेजची URL नाही. ती /course/view.php?id= आणि कोर्स क्रमांकाने संपते.',
+    taken: (name) => `"${name}" कडे ही URL आधीच आहे.`,
+    previousKept:
+      'आधीच्या URL ही ओळखल्या जात राहतील: तिथून होणारे डाउनलोड या कोर्समध्येच जातील.'
+  },
+
+  courseInfo: {
+    title: 'कोर्सची माहिती संपादित करा',
     hidden: 'लपवलेला',
-    apply: (count) => (count === 1 ? '1 कोर्सला लागू करा' : `${count} कोर्सना लागू करा`),
-    remove: (count) => (count === 1 ? '1 कोर्समधून काढा' : `${count} कोर्समधून काढा`)
+    color: 'रंग',
+    academicYearColor: 'शैक्षणिक वर्षाचा रंग',
+    deleteOption: (value) => `"${value}" हटवा`,
+    deleteOptionTitle: (value) => `"${value}" हटवायचे?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `कोणत्याही कोर्समध्ये हे नाही: फक्त पुढे पर्याय म्हणून दिसणार नाही.` : count === 1 ? `ज्या कोर्समध्ये हे आहे त्यातून काढले जाईल.` : `ज्या ${count} कोर्समध्ये हे आहे त्यांतून काढले जाईल.`
   },
 
   ignoredFiles: {

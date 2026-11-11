@@ -52,7 +52,8 @@ export const de: Messages = {
     concurrentDownloads: 'Gleichzeitige Downloads',
     sideMargin: 'Seitenränder',
     courseListStyle: 'Stil der Kursliste',
-    setInstitution: 'Einrichtung für Kurse festlegen',
+    appearance: 'Darstellung',
+    editInfo: 'Kursinfos bearbeiten',
     hiddenCourses: 'Ausgeblendete Kurse',
     deleteAll: 'Alle Kurse löschen',
     backupSaved: 'Sicherung in deinem Downloads-Ordner gespeichert.',
@@ -94,13 +95,17 @@ export const de: Messages = {
     lastDownloaded: 'Zuletzt heruntergeladen',
     openInMoodle: 'Kurs in Moodle öffnen',
     setTagName: 'Kürzel festlegen',
-    setFullName: 'Vollständigen Namen festlegen',
     tagPlaceholder: 'Kürzel, z. B. BS',
     fullNamePlaceholder: 'Vollständiger Name (leer: der aus Moodle)',
-    setInstitution: 'Einrichtung festlegen (Kürzel)',
-    institutionPlaceholder: 'Kürzel der Einrichtung, z. B. UHU',
+    tag: 'Kürzel',
+    fullName: 'Vollständiger Name',
+    institutionPlaceholder: 'z. B. UHU',
     institution: 'Einrichtung',
-    changeColor: 'Farbe ändern',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Studienjahr',
+    editInfo: 'Kursinfos bearbeiten',
+    addOption: (value) => `„${value}“ hinzufügen`,
+    showOptions: 'Optionen anzeigen',
     hideCourse: 'Kurs ausblenden',
     deleteCourse: 'Kurs löschen'
   },
@@ -203,21 +208,67 @@ export const de: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Farbe von „${name}“`,
-    palette: 'Palette',
     custom: 'Eigene Farbe',
     automatic: 'Automatische Farbe verwenden'
   },
 
-  setInstitution: {
-    title: 'Einrichtung festlegen',
-    description: 'Wähle die Kurse, die diese Einrichtung bekommen. Leer lassen, um sie bei ihnen zu entfernen.',
-    courses: (count) => (count === 0 ? 'Kurse' : `Kurse (${count} ausgewählt)`),
-    selectAll: 'Alle auswählen',
-    selectNone: 'Keine',
+  colorMenu: {
+    code: 'Hex-Code',
+    codeHint: 'Sechs Stellen, z. B. FFFFFF',
+    more: 'Weitere Farben…'
+  },
+
+  appearance: {
+    title: 'Darstellung',
+    palettes: 'Paletten',
+    paletteNames: {
+      default: 'Standard',
+      ocean: 'Ozean',
+      forest: 'Wald',
+      lavender: 'Lavendel',
+      warm: 'Warm',
+      contrast: 'Hoher Kontrast'
+    },
+    replaceTitle: 'Deine Farben ersetzen?',
+    replaceMessage: 'Die Farben, die du in diesem Design gesetzt hast, werden durch die der Palette ersetzt.',
+    replace: 'Ersetzen',
+    colors: {
+      bg: 'Hintergrund',
+      surface: 'Zweiter Hintergrund',
+      fg: 'Text',
+      muted: 'Nebentext',
+      border: 'Rahmen',
+      accent: 'Schaltflächen und Links',
+      focus: 'Tastaturfokus',
+      new: 'Neue Dateien',
+      modified: 'Geänderte Dateien',
+      deleted: 'Gelöschte Dateien und gefährliche Aktionen',
+      unchanged: 'Unveränderte Dateien'
+    },
+    reset: 'Standardfarbe wiederherstellen',
+    resetAll: 'Farben zurücksetzen',
+    resetTitle: { light: 'Farben des hellen Designs zurücksetzen?', dark: 'Farben des dunklen Designs zurücksetzen?' },
+    resetMessage: 'Alle darin geänderten Farben werden auf den Standard zurückgesetzt.'
+  },
+
+  courseUrl: {
+    label: 'Kurs-URL',
+    invalid:
+      'Das ist keine URL einer Moodle-Kursseite. Sie endet auf /course/view.php?id= und die Kursnummer.',
+    taken: (name) => `„${name}“ hat diese URL bereits.`,
+    previousKept:
+      'Seine bisherigen URLs werden weiterhin erkannt: Downloads von dort landen weiter in diesem Kurs.'
+  },
+
+  courseInfo: {
+    title: 'Kursinfos bearbeiten',
     hidden: 'Ausgeblendet',
-    apply: (count) => (count === 1 ? 'Auf 1 Kurs anwenden' : `Auf ${count} Kurse anwenden`),
-    remove: (count) => (count === 1 ? 'Bei 1 Kurs entfernen' : `Bei ${count} Kursen entfernen`)
+    color: 'Farbe',
+    academicYearColor: 'Farbe des Studienjahrs',
+    deleteOption: (value) => `„${value}“ löschen`,
+    deleteOptionTitle: (value) => `„${value}“ löschen?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Kein Kurs hat es: Es wird nur nicht mehr angeboten.` : count === 1 ? `Es wird aus dem einen Kurs entfernt, der es hat.` : `Es wird aus den ${count} Kursen entfernt, die es haben.`
   },
 
   ignoredFiles: {

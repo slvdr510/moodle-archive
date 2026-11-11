@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
+import { cleanup, render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CourseCard } from '../src/dashboard/components/CourseCard';
@@ -26,9 +26,7 @@ function makeCourse(overrides: Partial<Course> = {}): Course {
 // The actual reordering/export/hide logic lives in CoursesPage (see CoursesPage.test.tsx);
 // these are just inert defaults so CourseCard's required props are met.
 const dragNoops = {
-  onSetFullName: vi.fn(),
-  onSetInstitution: vi.fn(),
-  onChangeColor: vi.fn(),
+  onEditInfo: vi.fn(),
   onExport: vi.fn(),
   onHide: vi.fn(),
   onDragStart: vi.fn(),
@@ -42,7 +40,7 @@ const dragNoops = {
 describe('CourseCard', () => {
   it('opens the course when the row is clicked', async () => {
     const onOpen = vi.fn();
-    render(<CourseCard course={makeCourse()} onOpen={onOpen} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} />);
+    render(<CourseCard course={makeCourse()} onOpen={onOpen} onDelete={vi.fn()} {...dragNoops} />);
 
     await userEvent.click(screen.getByText('F GII Recursos CVUHU RE'));
     expect(onOpen).toHaveBeenCalledOnce();
@@ -50,51 +48,29 @@ describe('CourseCard', () => {
 
   it('shows the menu on "⋮" click without opening the course', async () => {
     const onOpen = vi.fn();
-    render(<CourseCard course={makeCourse()} onOpen={onOpen} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} />);
+    render(<CourseCard course={makeCourse()} onOpen={onOpen} onDelete={vi.fn()} {...dragNoops} />);
 
     await userEvent.click(screen.getByTitle('More options'));
 
-    expect(screen.getByText('Set tag (abbreviation)')).toBeInTheDocument();
-    expect(screen.getByText('Delete course')).toBeInTheDocument();
+    // Its info edited all in one place, then what's done with the course itself.
+    expect([...document.querySelectorAll('.dropdown-menu button')].map((b) => b.textContent)).toEqual([
+      'Edit course info',
+      'Export',
+      'Hide course',
+      'Delete course'
+    ]);
+    // Each with its icon at its start, left out of what's read aloud.
+    for (const button of document.querySelectorAll('.dropdown-menu button')) {
+      expect(button.firstElementChild).toHaveClass('dropdown-menu-icon');
+      expect(button.firstElementChild).toHaveAttribute('aria-hidden', 'true');
+    }
     expect(onOpen).not.toHaveBeenCalled();
-  });
-
-  it('"Set tag (abbreviation)" switches to an editable input, and Enter commits the rename', async () => {
-    const onRename = vi.fn();
-    const onOpen = vi.fn();
-    render(<CourseCard course={makeCourse()} onOpen={onOpen} onRename={onRename} onDelete={vi.fn()} {...dragNoops} />);
-
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set tag (abbreviation)'));
-
-    const input = screen.getByDisplayValue('F GII Recursos CVUHU RE');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'Fisica');
-    fireEvent.keyDown(input, { key: 'Enter' });
-
-    expect(onRename).toHaveBeenCalledWith('Fisica');
-    expect(onOpen).not.toHaveBeenCalled();
-  });
-
-  it('Escape cancels the rename without calling onRename', async () => {
-    const onRename = vi.fn();
-    render(<CourseCard course={makeCourse()} onOpen={vi.fn()} onRename={onRename} onDelete={vi.fn()} {...dragNoops} />);
-
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set tag (abbreviation)'));
-
-    const input = screen.getByDisplayValue('F GII Recursos CVUHU RE');
-    await userEvent.type(input, ' extra');
-    fireEvent.keyDown(input, { key: 'Escape' });
-
-    expect(onRename).not.toHaveBeenCalled();
-    expect(screen.getByText('F GII Recursos CVUHU RE')).toBeInTheDocument();
   });
 
   it('"Delete course" calls onDelete without opening the course', async () => {
     const onDelete = vi.fn();
     const onOpen = vi.fn();
-    render(<CourseCard course={makeCourse()} onOpen={onOpen} onRename={vi.fn()} onDelete={onDelete} {...dragNoops} />);
+    render(<CourseCard course={makeCourse()} onOpen={onOpen} onDelete={onDelete} {...dragNoops} />);
 
     await userEvent.click(screen.getByTitle('More options'));
     await userEvent.click(screen.getByText('Delete course'));
@@ -110,7 +86,7 @@ describe('CourseCard', () => {
       <CourseCard
         course={makeCourse()}
         onOpen={onOpen}
-        onRename={vi.fn()}
+       
         onDelete={vi.fn()}
         {...dragNoops}
         onExport={onExport}
@@ -131,7 +107,7 @@ describe('CourseCard', () => {
       <CourseCard
         course={makeCourse()}
         onOpen={onOpen}
-        onRename={vi.fn()}
+       
         onDelete={vi.fn()}
         {...dragNoops}
         onHide={onHide}
@@ -148,7 +124,7 @@ describe('CourseCard', () => {
   it('closes the menu when clicking outside of it', async () => {
     render(
       <div>
-        <CourseCard course={makeCourse()} onOpen={vi.fn()} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} />
+        <CourseCard course={makeCourse()} onOpen={vi.fn()} onDelete={vi.fn()} {...dragNoops} />
         <button>outside</button>
       </div>
     );
@@ -163,7 +139,7 @@ describe('CourseCard', () => {
   it('shows how long ago the course was last downloaded, instead of its URL', () => {
     const lastSyncedAt = Date.now() - 3 * 60 * 60 * 1000; // 3 hours ago
     render(
-      <CourseCard course={makeCourse({ lastSyncedAt })} onOpen={vi.fn()} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} />
+      <CourseCard course={makeCourse({ lastSyncedAt })} onOpen={vi.fn()} onDelete={vi.fn()} {...dragNoops} />
     );
     expect(screen.getByTitle('Last downloaded')).toHaveTextContent('3h ago');
   });
@@ -173,7 +149,7 @@ describe('CourseCard', () => {
     vi.stubGlobal('chrome', { tabs: { create: createMock } });
     const onOpen = vi.fn();
 
-    render(<CourseCard course={makeCourse()} onOpen={onOpen} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} />);
+    render(<CourseCard course={makeCourse()} onOpen={onOpen} onDelete={vi.fn()} {...dragNoops} />);
     await userEvent.click(screen.getByTitle('Open the course in Moodle'));
 
     expect(createMock).toHaveBeenCalledWith({ url: 'https://moodle.example/course/view.php?id=1' });
@@ -187,7 +163,7 @@ describe('CourseCard', () => {
       <CourseCard
         course={makeCourse({ name: 'SO', tagged: true, autoName: 'Sistemas Operativos' })}
         onOpen={vi.fn()}
-        onRename={vi.fn()}
+       
         onDelete={vi.fn()}
         {...dragNoops}
       />
@@ -201,7 +177,7 @@ describe('CourseCard', () => {
       <CourseCard
         course={makeCourse({ name: 'SO', tagged: true, autoName: 'F GII SO', fullName: 'Sistemas Operativos' })}
         onOpen={vi.fn()}
-        onRename={vi.fn()}
+       
         onDelete={vi.fn()}
         {...dragNoops}
       />
@@ -210,109 +186,41 @@ describe('CourseCard', () => {
     expect(screen.queryByText('F GII SO')).toBeNull();
   });
 
-  it('"Set full name" edits the full name, and emptying it goes back to the Moodle one', async () => {
-    const onSetFullName = vi.fn();
-    const { rerender } = render(
-      <CourseCard course={makeCourse()} onOpen={vi.fn()} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} onSetFullName={onSetFullName} />
-    );
-
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set full name'));
-    const input = screen.getByPlaceholderText('Full name (empty: the one from Moodle)');
-    await userEvent.type(input, 'Física General');
-    fireEvent.keyDown(input, { key: 'Enter' });
-    expect(onSetFullName).toHaveBeenLastCalledWith('Física General');
-
-    rerender(
-      <CourseCard
-        course={makeCourse({ fullName: 'Física General' })}
-        onOpen={vi.fn()}
-        onRename={vi.fn()}
-        onDelete={vi.fn()}
-        {...dragNoops}
-        onSetFullName={onSetFullName}
-      />
-    );
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set full name'));
-    const filled = screen.getByDisplayValue('Física General');
-    await userEvent.clear(filled);
-    fireEvent.keyDown(filled, { key: 'Enter' });
-    expect(onSetFullName).toHaveBeenLastCalledWith(undefined);
-  });
-
-  it('shows the institution set on a course, and edits it from the menu', async () => {
-    const onSetInstitution = vi.fn();
-    const { rerender } = render(
-      <CourseCard course={makeCourse()} onOpen={vi.fn()} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} onSetInstitution={onSetInstitution} />
-    );
+  it('shows the institution and the academic year set on a course, the year as it was typed', () => {
+    const { rerender } = render(<CourseCard course={makeCourse()} onOpen={vi.fn()} onDelete={vi.fn()} {...dragNoops} />);
     expect(screen.queryByTitle('Institution')).toBeNull();
-
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set institution (abbreviation)'));
-    const input = screen.getByPlaceholderText('Institution abbreviation, e.g. UHU');
-    await userEvent.type(input, 'UHU');
-    fireEvent.keyDown(input, { key: 'Enter' });
-    expect(onSetInstitution).toHaveBeenLastCalledWith('UHU');
+    expect(screen.queryByTitle(/^Academic year/)).toBeNull();
 
     rerender(
       <CourseCard
-        course={makeCourse({ institution: 'UHU' })}
+        course={makeCourse({ institution: 'UHU', academicYear: '25-26' })}
         onOpen={vi.fn()}
-        onRename={vi.fn()}
         onDelete={vi.fn()}
         {...dragNoops}
-        onSetInstitution={onSetInstitution}
       />
     );
     expect(screen.getByTitle('Institution')).toHaveTextContent('UHU');
+    expect(screen.getByTitle(/^Academic year/)).toHaveTextContent('25-26');
 
-    // Emptying it removes it.
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set institution (abbreviation)'));
-    const filled = screen.getByDisplayValue('UHU');
-    await userEvent.clear(filled);
-    fireEvent.keyDown(filled, { key: 'Enter' });
-    expect(onSetInstitution).toHaveBeenLastCalledWith(undefined);
-  });
+    rerender(<CourseCard course={makeCourse({ academicYear: '2025-2026' })} onOpen={vi.fn()} onDelete={vi.fn()} {...dragNoops} />);
+    expect(screen.getByTitle(/^Academic year/)).toHaveTextContent('2025-2026');
+    // Whole in its tooltip, if cut off.
+    expect(screen.getByTitle(/^Academic year/)).toHaveAttribute('title', 'Academic year: 2025-2026');
 
-  it('emptying the tag and pressing Enter removes it', async () => {
-    const onRename = vi.fn();
-    render(
-      <CourseCard
-        course={makeCourse({ name: 'SO', tagged: true, autoName: 'Sistemas Operativos' })}
-        onOpen={vi.fn()}
-        onRename={onRename}
-        onDelete={vi.fn()}
-        {...dragNoops}
-      />
+    // In its year's color.
+    rerender(
+      <CourseCard course={makeCourse({ academicYear: '25-26' })} academicYearColor="#3f9c45" onOpen={vi.fn()} onDelete={vi.fn()} {...dragNoops} />
     );
-
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set tag (abbreviation)'));
-    const input = screen.getByDisplayValue('SO');
-    await userEvent.clear(input);
-    fireEvent.keyDown(input, { key: 'Enter' });
-    expect(onRename).toHaveBeenCalledWith(undefined);
+    expect(screen.getByTitle(/^Academic year/).style.getPropertyValue('--year-color')).toBe('#3f9c45');
   });
 
-  it('emptying the tag field of a course with no tag does nothing', async () => {
-    const onRename = vi.fn();
-    render(<CourseCard course={makeCourse()} onOpen={vi.fn()} onRename={onRename} onDelete={vi.fn()} {...dragNoops} />);
-
+  it('"Edit course info" asks for it for this course, without opening the course', async () => {
+    const onEditInfo = vi.fn();
+    const onOpen = vi.fn();
+    render(<CourseCard course={makeCourse()} onOpen={onOpen} onDelete={vi.fn()} {...dragNoops} onEditInfo={onEditInfo} />);
     await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Set tag (abbreviation)'));
-    const input = screen.getByDisplayValue('F GII Recursos CVUHU RE');
-    await userEvent.clear(input);
-    fireEvent.keyDown(input, { key: 'Enter' });
-    expect(onRename).not.toHaveBeenCalled();
-  });
-
-  it('"Change color" asks for the color picker', async () => {
-    const onChangeColor = vi.fn();
-    render(<CourseCard course={makeCourse()} onOpen={vi.fn()} onRename={vi.fn()} onDelete={vi.fn()} {...dragNoops} onChangeColor={onChangeColor} />);
-    await userEvent.click(screen.getByTitle('More options'));
-    await userEvent.click(screen.getByText('Change color'));
-    expect(onChangeColor).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getByText('Edit course info'));
+    expect(onEditInfo).toHaveBeenCalledOnce();
+    expect(onOpen).not.toHaveBeenCalled();
   });
 });

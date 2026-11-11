@@ -52,7 +52,8 @@ export const vi: Messages = {
     concurrentDownloads: 'Tải xuống đồng thời',
     sideMargin: 'Lề hai bên',
     courseListStyle: 'Kiểu danh sách khóa học',
-    setInstitution: 'Đặt cơ sở cho các khóa học',
+    appearance: 'Giao diện',
+    editInfo: 'Sửa thông tin các khóa học',
     hiddenCourses: 'Khóa học bị ẩn',
     deleteAll: 'Xóa tất cả khóa học',
     backupSaved: 'Đã lưu bản sao lưu vào thư mục Tải xuống.',
@@ -91,13 +92,17 @@ export const vi: Messages = {
     lastDownloaded: 'Tải xuống lần cuối',
     openInMoodle: 'Mở khóa học trong Moodle',
     setTagName: 'Đặt nhãn (viết tắt)',
-    setFullName: 'Đặt tên đầy đủ',
     tagPlaceholder: 'Viết tắt, vd. HĐH',
     fullNamePlaceholder: 'Tên đầy đủ (để trống: tên trên Moodle)',
-    setInstitution: 'Đặt cơ sở (viết tắt)',
-    institutionPlaceholder: 'Tên viết tắt của cơ sở, vd. UHU',
+    tag: 'Nhãn (viết tắt)',
+    fullName: 'Tên đầy đủ',
+    institutionPlaceholder: 'vd. UHU',
     institution: 'Cơ sở',
-    changeColor: 'Đổi màu',
+    academicYearPlaceholder: '26-27',
+    academicYear: 'Năm học',
+    editInfo: 'Sửa thông tin khóa học',
+    addOption: (value) => `Thêm "${value}"`,
+    showOptions: 'Hiện các lựa chọn',
     hideCourse: 'Ẩn khóa học',
     deleteCourse: 'Xóa khóa học'
   },
@@ -197,21 +202,67 @@ export const vi: Messages = {
   },
 
   courseColor: {
-    title: (name) => `Màu của "${name}"`,
-    palette: 'Bảng màu',
     custom: 'Màu tùy chỉnh',
     automatic: 'Dùng màu tự động'
   },
 
-  setInstitution: {
-    title: 'Đặt cơ sở',
-    description: 'Chọn các khóa học sẽ được gán cơ sở này. Để trống để gỡ cơ sở khỏi chúng.',
-    courses: (count) => (count === 0 ? 'Khóa học' : `Khóa học (đã chọn ${count})`),
-    selectAll: 'Chọn tất cả',
-    selectNone: 'Bỏ chọn',
+  colorMenu: {
+    code: 'Mã hex',
+    codeHint: 'Sáu chữ số, ví dụ FFFFFF',
+    more: 'Thêm màu…'
+  },
+
+  appearance: {
+    title: 'Giao diện',
+    palettes: 'Bảng màu',
+    paletteNames: {
+      default: 'Mặc định',
+      ocean: 'Đại dương',
+      forest: 'Rừng',
+      lavender: 'Oải hương',
+      warm: 'Ấm',
+      contrast: 'Tương phản cao'
+    },
+    replaceTitle: 'Thay màu của bạn?',
+    replaceMessage: 'Các màu bạn đã đặt trong giao diện này sẽ được thay bằng màu của bảng màu.',
+    replace: 'Thay',
+    colors: {
+      bg: 'Nền',
+      surface: 'Nền phụ',
+      fg: 'Chữ',
+      muted: 'Chữ phụ',
+      border: 'Viền',
+      accent: 'Nút và liên kết',
+      focus: 'Tiêu điểm bàn phím',
+      new: 'Tệp mới',
+      modified: 'Tệp đã thay đổi',
+      deleted: 'Tệp đã xóa và thao tác nguy hiểm',
+      unchanged: 'Tệp không đổi'
+    },
+    reset: 'Khôi phục màu mặc định',
+    resetAll: 'Đặt lại màu',
+    resetTitle: { light: 'Đặt lại màu của giao diện sáng?', dark: 'Đặt lại màu của giao diện tối?' },
+    resetMessage: 'Mọi màu bạn đã đổi sẽ trở về mặc định.'
+  },
+
+  courseUrl: {
+    label: 'URL khóa học',
+    invalid:
+      'Đây không phải URL trang khóa học Moodle. URL đó kết thúc bằng /course/view.php?id= và số của khóa học.',
+    taken: (name) => `"${name}" đã có URL này.`,
+    previousKept:
+      'Các URL trước đó vẫn được nhận ra: lượt tải xuống từ đó vẫn vào khóa học này.'
+  },
+
+  courseInfo: {
+    title: 'Sửa thông tin các khóa học',
     hidden: 'Đã ẩn',
-    apply: (count) => (count === 1 ? 'Áp dụng cho 1 khóa học' : `Áp dụng cho ${count} khóa học`),
-    remove: (count) => (count === 1 ? 'Gỡ khỏi 1 khóa học' : `Gỡ khỏi ${count} khóa học`)
+    color: 'Màu',
+    academicYearColor: 'Màu năm học',
+    deleteOption: (value) => `Xóa "${value}"`,
+    deleteOptionTitle: (value) => `Xóa "${value}"?`,
+    deleteOptionMessage: (count) =>
+      count === 0 ? `Không khóa học nào dùng nó: chỉ là sẽ không còn được gợi ý nữa.` : count === 1 ? `Nó sẽ bị gỡ khỏi khóa học đang dùng nó.` : `Nó sẽ bị gỡ khỏi ${count} khóa học đang dùng nó.`
   },
 
   ignoredFiles: {

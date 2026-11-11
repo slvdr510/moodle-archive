@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useT } from '../hooks/useTranslation';
+import { MenuIcon, type MenuIconName } from './MenuIcon';
 
 export interface DropdownMenuItem {
   label: string;
   onClick: () => void;
   danger?: boolean;
+  /** Shown at its start. */
+  icon?: MenuIconName;
 }
 
 /** Where a menu hangs from: the top and bottom edges of what it's for, and the x the
@@ -167,7 +170,8 @@ export function MenuPopup({
             item.onClick();
           }}
         >
-          {item.label}
+          {item.icon && <MenuIcon name={item.icon} />}
+          <span className="dropdown-menu-label">{item.label}</span>
         </button>
       ))}
     </div>,

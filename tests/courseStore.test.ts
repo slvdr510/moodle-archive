@@ -25,6 +25,23 @@ describe('courseStore normalization', () => {
     expect(all.find((c) => c.id === legacyCourse.id)?.firstSyncCompleted).toBe(true);
   });
 
+  it('reads an academic year kept as its two years as the text it showed as', async () => {
+    const course = {
+      id: crypto.randomUUID(),
+      name: 'Course',
+      url: '',
+      matchedUrls: [],
+      createdAt: 1_000,
+      lastSyncedAt: 1_000,
+      order: 0,
+      firstSyncCompleted: true,
+      hidden: false,
+      academicYear: { start: '25', end: '26' }
+    } as unknown as Course;
+    await courseStore.put(course);
+    expect((await courseStore.get(course.id))?.academicYear).toBe('25-26');
+  });
+
   it('leaves an explicit firstSyncCompleted: false alone', async () => {
     const course: Course = {
       id: crypto.randomUUID(),
